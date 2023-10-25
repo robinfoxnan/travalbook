@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_newgroup"
+        android:name="com.bird2fish.travelbook.ui.creategroup.creategroup"
+        android:label="@string/menu_newgroup"
+        tools:layout="@layout/fragment_creategroup" />
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.bird2fish.travelbook.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+
+    <fragment
+        android:id="@+id/nav_playground"
+        android:name="com.bird2fish.travelbook.ui.playgroud.PlaygroundFragment"
+        android:label="@string/menu_playgrourd"
+        tools:layout="@layout/fragment_playground" />
+
+    <fragment
+        android:id="@+id/nav_favourite"
+        android:name="com.bird2fish.travelbook.ui.fav.favFragment"
+        android:label="@string/menu_favourite"
+        tools:layout="@layout/fragment_fav" />
+
+    <fragment
+        android:id="@+id/nav_track"
+        android:name="com.bird2fish.travelbook.ui.tracks.maptrack"
+        android:label="fragment_maptrack"
+        tools:layout="@layout/fragment_maptrack" />
+
+    <fragment
+        android:id="@+id/nav_contract"
+        android:name="com.bird2fish.travelbook.ui.contract.ContractFragment"
+        android:label="@string/menu_contract"
+        tools:layout="@layout/fragment_contract" />
+
+    <fragment
+        android:id="@+id/nav_setting"
+        android:name="com.bird2fish.travelbook.ui.setting.SettingsFragment"
+        android:label="SettingsFragment" />
+    <activity
+        android:id="@+id/nav_map"
+        android:name="com.bird2fish.travelbook.TencentMapActivity"
+        android:label="activity_tencent_map"
+        tools:layout="@layout/activity_tencent_map" />
+</navigation>

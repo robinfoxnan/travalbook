@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:id="@+id/nav_group_session">
+        <item
+            android:id="@+id/nav_newgroup"
+            android:enabled="true"
+            android:icon="@drawable/groups_create"
+            android:title="@string/menu_newgroup"
+            android:visible="true" />
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/msg_ask_question"
+            android:title="@string/menu_home" />
+        <item
+            android:id="@+id/nav_playground"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="@string/menu_playgrourd" />
+        <item
+            android:id="@+id/nav_favourite"
+            android:icon="@drawable/emoji_tabs_faves"
+            android:title="@string/menu_favourite" />
+    </group>
+    <group android:id="@+id/nav_group_map">
+        <item
+            android:id="@+id/nav_map"
+            android:icon="@drawable/msg_map"
+            android:title="@string/menu_map" />
+        <item
+            android:id="@+id/nav_track"
+            android:icon="@drawable/msg_pinnedlist"
+            android:title="@string/menu_track" />
+    </group>
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_contract"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="@string/menu_contract" />
+        <item
+            android:id="@+id/nav_setting"
+            android:icon="@drawable/msg_settings"
+            android:title="@string/menu_setting" />
+    </group>
+</menu>

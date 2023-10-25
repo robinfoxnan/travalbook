@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- 腾讯地图 SDK 要求的权限(开始) -->
+    <!-- 访问网络获取地图服务 -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- 上网 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- 检查网络可用性 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- 访问WiFi状态 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 需要外部存储写权限用于保存地图缓存 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- 获取 device id 辨别设备 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" /> <!-- Needed for video calls, adding an avatar pic when registering new accounts reading attachments. -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- Enable installation on devices without the camera: some features won't be available -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" /> <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" /> <!-- Store tinode IM id as a record in the address book -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" /> <!-- Creating and storing tinode credentials in the AccountManager -->
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" /> <!-- Accessing Tinode-authenticated accounts on Android pre-M (23). -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" /> <!-- Make current user discoverable by other users -->
+    <uses-permission android:name="android.permission.READ_PROFILE" /> <!-- Check if account sync is enabled -->
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" /> <!-- Enable sync if it's disabled -->
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" /> <!-- Record audio messages -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- Needed for audio visualization and audio recording adjustments. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- Needed for incoming call notifications -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
+    <uses-feature android:name="android.hardware.location.network" /> <!-- NORMAL PERMISSIONS, automatically granted -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- DANGEROUS PERMISSIONS, must request -->
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/icon_5_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/icon_5_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TravelBook"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:label="@string/title_activity_login"
+            android:exported="true"
+            />
+
+        <service
+            android:name=".core.HttpService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".TencentMapActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.TravelBook.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity> <!-- TRACKER SERVICE -->
+        <service
+            android:name=".core.TrackerService"
+            android:exported="false"
+            android:foregroundServiceType="location">
+            <intent-filter>
+                <action android:name="org.y20k.trackbook.action.START" />
+                <action android:name="org.y20k.trackbook.action.STOP" />
+                <action android:name="org.y20k.trackbook.action.DISMISS" />
+            </intent-filter>
+        </service> <!-- TRACKING TOGGLE SERVICE SYSTEM QUICK SETTINGS -->
+        <meta-data
+            android:name="TencentMapSDK"
+            android:value="J7ABZ-JIFLJ-RW5FA-K545P-IEAQF-WQBBN" />
+    </application>
+
+</manifest>
