@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.material.navigation.NavigationView
@@ -22,7 +23,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.TrackerService
+import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityMainBinding
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
@@ -110,6 +113,7 @@ class MainActivity : AppCompatActivity() {
         var headerLayout = navigationView.getHeaderView(0);
         var userNameview = headerLayout.findViewById<TextView>(R.id.textNick);
         var userInfoview = headerLayout.findViewById<TextView>(R.id.textInfo);
+        var userIcon = headerLayout.findViewById<ImageView>(R.id.imageViewIcon)
 
         // 保存到全局的单件模式中
         val user = CurrentUser.getUser()
@@ -121,6 +125,8 @@ class MainActivity : AppCompatActivity() {
             val info = "${user.userId} (${user.uid})"
             userNameview.setText(user.nickName);
             userInfoview.setText(info);
+            val iconId = UiHelper.getIconResId(user.icon)
+            userIcon.setImageResource(iconId)
         }
     }
 
@@ -189,6 +195,32 @@ class MainActivity : AppCompatActivity() {
             if (!bound){
                 this.bindService(Intent(this, TrackerService::class.java), connection, Context.BIND_AUTO_CREATE)
             }
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////
+    private fun bindHttp(){
+        val intent = Intent(this, HttpService::class.java)
+        bindService(intent, conn, AppCompatActivity.BIND_AUTO_CREATE);
+    }
+
+    // 绑定到消息
+    private var serviceHttp: HttpService? = null
+    private var isBoundHttp = false
+
+    private val conn: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            isBoundHttp = true
+            val httpBinder = binder as HttpService.HttpBinder
+            serviceHttp = httpBinder.getService()
+            //Log.i("DemoLog", "ActivityA onServiceConnected")
+
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            isBoundHttp = false
+            serviceHttp = null
+            //Log.i("DemoLog", "ActivityA onServiceDisconnected")
         }
     }
 }

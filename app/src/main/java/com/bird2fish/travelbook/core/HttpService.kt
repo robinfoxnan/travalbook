@@ -7,10 +7,14 @@ import android.os.IBinder
 import android.util.Log
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
+import com.bird2fish.travelbook.ui.contact.Friend
+import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.bird2fish.travelbook.ui.data.model.LoggedInUser
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
+import java.util.LinkedList
 
 
 class HttpService : Service() {
@@ -24,6 +28,11 @@ class HttpService : Service() {
     }
     fun setServer(url :String){
         this.host = url
+    }
+
+    fun initServer(){
+        host = PreferencesHelper.getHostName()
+        schema = PreferencesHelper.getHostSchema()
     }
     // 获取此类的引用
     inner class HttpBinder : Binder() {
@@ -272,6 +281,7 @@ class HttpService : Service() {
                     fakeUser.sid = user.getLong("sid").toString()
                     fakeUser.nickName = user.getString("nick")
                     fakeUser.userId = user.getString("name")
+                    fakeUser.icon = user.getString("icon")
 
                     fakeUser.phone = user.getString("phone")
                     fakeUser.email = user.getString("email")
@@ -294,5 +304,230 @@ class HttpService : Service() {
         }
 
         return fakeUser
+    }
+
+    // 解析返回的粉丝数据
+    private fun parseFollower(node:  JSONArray):LinkedList<Friend> {
+        var lst = LinkedList<Friend>()
+        for (i in 0 until node.length()) {
+            try {
+                val user = node.getJSONObject(i);
+                var fakeUser = Friend()
+                fakeUser.uid = user.getString("id")
+                fakeUser.icon = user.getString("icon")
+                fakeUser.nick = user.getString("alias")
+                val mask = user.getInt("visible")
+                fakeUser.show = (mask and 8) != 0
+                fakeUser.isFriend = true
+
+                lst.add(fakeUser)
+            }catch(e: Exception){
+
+            }
+        }
+        return lst
+    }
+    // 查询自己关注列表
+    /*
+        {
+        "state": "ok",
+        "count": 1,
+        "list": [
+            {
+                "id": 1004,
+                "icon": "sys:icon/1.jpg",
+                "ctm": 1695200220490,
+                "alias": "robin",
+                "label": "",
+                "visible": 7,
+                "block": false
+            }
+        ]
+    }
+     */
+    fun getFollowList(uid: String, sid:String) : LinkedList<Friend> {
+        //构建url地址
+        var url1 = "${schema}://${host}/v1/user/listfriends?type=1&&uid=${uid}&sid=${sid}"
+
+        try {
+            var client = OkHttpClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+                val data = jsonObject.getJSONArray("list")
+                var lst = parseFollower(data)
+                return lst
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+
+        return LinkedList<Friend>()
+    }
+
+    fun getFollowList(): LinkedList<Friend>{
+        val user = CurrentUser.getUser()
+        if (user != null)
+        {
+            return getFollowList(user.uid, user.sid)
+        }else
+        {
+            return LinkedList<Friend>()
+        }
+
+    }
+
+    // 搜索人员添加好友
+    fun searchForFriend(fid: String): LinkedList<Friend>{
+        val user = CurrentUser.getUser()
+        if (user != null)
+        {
+
+            val tempUser = getUserInfo(user.uid, user.sid, fid)
+            if (tempUser.uid == fid){
+                var friend = Friend()
+                friend.fromUser(tempUser)
+                var lst = LinkedList<Friend>()
+                lst.add(friend)
+                return lst
+            }
+        }
+        return LinkedList<Friend>()
+
+    }
+
+    // 设置关注的好友，是否显示等信息，备注等；取消关注好友等
+    fun setFollowUserInfo(friend: Friend): Boolean {
+
+        val user = CurrentUser.getUser()
+        if (user == null)
+            return false
+        var str = "show"
+        if (friend.show == false){
+            str = "ignore"
+        }
+
+        var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=${str}"
+
+        try {
+            var client = OkHttpClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+
+                return true
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+    }
+
+    fun removeFriend(friend: Friend) :Boolean{
+        val user = CurrentUser.getUser()
+        if (user == null)
+            return false
+        var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=remove"
+
+        try {
+            var client = OkHttpClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+
+                return true
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+
+    }
+
+    // 设置关注某人
+    // http://localhost:7817/v1/user/addfriendreq?uid=1005&sid=6812630841045951575&fid=1004
+    /*
+    {
+        "state": "ok",
+        "detail": "add friend ok"
+    }
+     */
+    fun setFollowHim(friend:Friend): Boolean {
+        //构建url地址
+        val user = CurrentUser.getUser()
+        if (user == null)
+            return false
+        var url1 = "${schema}://${host}/v1/user/addfriendreq?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
+
+        try {
+            var client = OkHttpClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+
+                return true
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+    }
+
+    // 查询好友信息
+    // http://localhost:7817/v1/gpx/position?
+    //    {
+    //        "uid":"1005",
+    //        "sid":"6812630841045951575",
+    //        "fid":"1004"
+    //    }
+    //    {
+    //        "state": "OK",
+    //        "pt": {
+    //        "uid": "1004",
+    //        "lat": 40,
+    //        "lon": 116,
+    //        "ele": 100,
+    //        "speed": 0,
+    //        "tm": 1007
+    //        }
+    //    }
+    fun getUserLocation(friend: Friend) : Boolean {
+        return true
     }
 }

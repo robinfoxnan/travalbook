@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <ImageView
+        android:id="@+id/iconTv"
+        android:layout_width="67dp"
+        android:layout_height="62dp"
+        android:layout_marginStart="5dp"
+        android:layout_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteY="0dp"
+        tools:srcCompat="@drawable/widget_avatar_3" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="78dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        app:layout_constraintStart_toEndOf="@+id/iconTv">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="70px"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/nameTv"
+                android:layout_width="145dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:text="TextView"
+                android:textColor="#898989"
+                android:textSize="16sp" />
+
+            <Switch
+                android:id="@+id/switch_follow"
+                android:layout_width="111dp"
+                android:layout_height="wrap_content"
+                android:text="关注"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/phoneTv"
+                android:layout_width="145dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:text="TextView"
+                android:textColor="#898989"
+                android:textSize="16sp" />
+
+            <CheckBox
+                android:id="@+id/shareTv"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="显示位置"
+                android:textColor="#898989"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

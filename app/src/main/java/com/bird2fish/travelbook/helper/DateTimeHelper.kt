@@ -102,5 +102,9 @@ object DateTimeHelper {
         return timeDifference
     }
 
+    fun getTimestamp() :Long{
+        return  System.currentTimeMillis()
+    }
+
 
 }

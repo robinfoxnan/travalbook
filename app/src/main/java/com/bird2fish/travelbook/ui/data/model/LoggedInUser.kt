@@ -1,7 +1,5 @@
 package com.bird2fish.travelbook.ui.data.model
 
-import android.system.Int64Ref
-
 /**
  * Data class that captures user information for logged in users retrieved from LoginRepository
  */
@@ -18,6 +16,7 @@ data class LoggedInUser(
     var age : String = "",
     var ip : String = "",
     var region : String = "",
+    var mask : Int = 0
 )
 
 class CurrentUser {
@@ -32,6 +31,8 @@ class CurrentUser {
 
             }
 
+
+
         @Synchronized
         fun setUser(u: LoggedInUser) {
             this.user = u
@@ -41,6 +42,10 @@ class CurrentUser {
         fun getUser() :LoggedInUser?{
             return this.user
         }
+
+
+
+
     }
 
 

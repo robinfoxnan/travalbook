@@ -24,8 +24,11 @@ import com.tencent.tencentmap.mapsdk.maps.model.LatLng
 import com.tencent.tencentmap.mapsdk.maps.model.MarkerOptions
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.Keys
 import com.bird2fish.travelbook.core.TrackerService
+import com.bird2fish.travelbook.core.UiHelper
+import com.bird2fish.travelbook.ui.contact.Friend
 
 class TencentMapActivity : AppCompatActivity() {
 
@@ -41,10 +44,11 @@ class TencentMapActivity : AppCompatActivity() {
     private var trackingState: Int = Keys.STATE_TRACKING_NOT
     private var gpsProviderActive: Boolean = false
     private var networkProviderActive: Boolean = false
-    private var currentBestLocation: Location?  = null
+    //private var currentBestLocation: Location?  = null
     //private lateinit var layout: MapFragmentLayoutHolder
     private  var trackerService: TrackerService? = null
-    private lateinit var  mMarker:com.tencent.tencentmap.mapsdk.maps.model.Marker
+    private lateinit var  mMarker:com.tencent.tencentmap.mapsdk.maps.model.Marker   // 自己的位置
+    private var markersMap =  mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         TencentMapInitializer.setAgreePrivacy(true)
@@ -69,6 +73,11 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap = mapView!!.map
         initToolBar()
         initMapOutlook()
+
+        // list
+        markersMap.clear()
+        val lst = GlobalData.getCopyOfFriendList()
+
     }
 
     private fun initToolBar() {
@@ -159,23 +168,111 @@ class TencentMapActivity : AppCompatActivity() {
         //tencentMap!!.setLocationSource(this)
         //设置当前位置可见
         tencentMap!!.isMyLocationEnabled = true
-        setMarker()
+        initMyMarker()
         //addLine();
     }
 
+    protected fun updateMarkers(){
+        if (trackerService==null){
+            UiHelper.showMessage(this, "未启动位置服务！请开启位置服务与授权，并重启程序")
+            return
+        }
 
+        val mapFriend = trackerService!!.getLastPointMap()
 
-    protected fun setMarker() {
+        // 删除多余的控件，更新部分
+        for (key:String in markersMap.keys) {
+            //println("$key -> $value")
+            if (!mapFriend.containsKey(key)){
+                markersMap.remove(key)
+            }
+            val f = mapFriend[key]
+            if (!f!!.isShare)  // 未加好友，或者无数据
+            {
+                UiHelper.showCenterMessage(this, "未能获取${f.uid} ${f.nick} 的位置")
+                markersMap.remove(key)
+            }
+            // 更新位置
+            val marker = markersMap[key]
+            marker!!.isInfoWindowEnable = true
+            marker!!.title = "${f.nick}"
+            val position = LatLng(f.lat, f.lon)
+            marker!!.position = position
+
+            // 删除
+            mapFriend.remove(key)
+        }
+
+        // 把剩下的新建一个标记
+        for ((k, f) in mapFriend) {
+            val marker = createMarker(f)
+            markersMap.put(k, marker)
+        }
+
+    }
+
+    // 根据好友信息新建一个标记控件
+    protected fun createMarker(friend: Friend): com.tencent.tencentmap.mapsdk.maps.model.Marker
+    {
+        var lat = friend.lat
+        var lon = friend.lon
+        var title = "${friend.nick}"
+
+        val position = LatLng(lat, lon)
+        val options = MarkerOptions(position)
+        options.infoWindowEnable(false) //默认为true
+        options.title(title) //标注的InfoWindow的标题
+        options.snippet("当前速度${friend.speed},高度${friend.ele}") //标注的InfoWindow的内容
+
+        val marker = tencentMap!!.addMarker(options)
+
+        //开启信息窗口
+        marker.isInfoWindowEnable = true
+        //marker.title = title
+        marker.position = position
+        marker.showInfoWindow()
+        return  marker
+    }
+
+    // 移动镜头
+    protected  fun moveCamera(friend: Friend?){
+        var lat = 39.908710
+        var lon = 116.397499
+        var pos  = LatLng(lat, lon)
+        if (friend != null){
+            lat = friend.lat
+            lon = friend.lon
+            pos = LatLng(lat, lon)
+        }
+        else if (GlobalData.currentBestLocation != null)
+        {
+            lat = GlobalData.currentBestLocation!!.latitude
+            lon = GlobalData.currentBestLocation!!.longitude
+            pos = LatLng(lat, lon)
+        }
+
+        val cameraSigma = CameraUpdateFactory.newCameraPosition(
+            CameraPosition(
+                pos,  //中心点坐标，地图目标经纬度
+                12f,  //目标缩放级别
+                0f,  //目标倾斜角[0.0 ~ 45.0] (垂直地图时为0)
+                0f
+            )
+        ) //目标旋转角 0~360° (正北方为0)
+        tencentMap!!.moveCamera(cameraSigma) //移动地图
+    }
+
+    protected fun initMyMarker() {
         //通过MarkerOptions配置
         var lat = 39.908710
         var lon = 116.397499
-        var title = "初始位置"
+        var title = "我的位置未知"
 
-        if (currentBestLocation != null)
+        if (GlobalData.currentBestLocation != null)
         {
-            lat = currentBestLocation!!.latitude
-            lon = currentBestLocation!!.longitude
-            title = "当前位置"
+            lat = GlobalData.currentBestLocation!!.latitude
+            lon = GlobalData.currentBestLocation!!.longitude
+            title = "我的位置"
         }
 
         val position = LatLng(lat, lon)
@@ -183,14 +280,14 @@ class TencentMapActivity : AppCompatActivity() {
         val options = MarkerOptions(position)
         options.infoWindowEnable(false) //默认为true
         options.title(title) //标注的InfoWindow的标题
-        options.snippet("地址: 北京市东城区东长安街") //标注的InfoWindow的内容
+        //options.snippet("地址: 北京市东城区东长安街") //标注的InfoWindow的内容
 
         //options.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker));//设置自定义Marker图标
         this.mMarker = tencentMap!!.addMarker(options)
 
     //开启信息窗口
         mMarker.isInfoWindowEnable = true
-        mMarker.title = "飞鸟"
+        mMarker.title = title
         val pos = position
         mMarker.position = pos
         val cameraSigma = CameraUpdateFactory.newCameraPosition(
@@ -205,16 +302,16 @@ class TencentMapActivity : AppCompatActivity() {
         mMarker.showInfoWindow()
     }
 
+    // 定时器会调用这里
     protected fun updateMarker(){
 
         var lat = 39.908710
         var lon = 116.397499
-        var title = "初始位置"
-        if (currentBestLocation != null)
+        var title = "我的位置"
+        if (GlobalData.currentBestLocation != null)
         {
-            lat = currentBestLocation!!.latitude
-            lon = currentBestLocation!!.longitude
-            title = "当前位置"
+            lat = GlobalData.currentBestLocation!!.latitude
+            lon = GlobalData.currentBestLocation!!.longitude
 
             val pos = LatLng(lat, lon)
             mMarker.position = pos
@@ -222,6 +319,11 @@ class TencentMapActivity : AppCompatActivity() {
             mMarker.snippet = ""
             mMarker.refreshInfoWindow()
         }
+
+        // 更新好友位置
+        updateMarkers()
+
+        moveCamera(null)
     }
 
 
@@ -407,7 +509,7 @@ class TencentMapActivity : AppCompatActivity() {
         override fun run() {
             // pull current state from service
             if (trackerService != null){
-                currentBestLocation = trackerService!!.currentBestLocation
+                //GlobalData.currentBestLocation = trackerService!!.currentBestLocation
                 //track = trackerService.track
                 gpsProviderActive = trackerService!!.gpsProviderActive
                 networkProviderActive = trackerService!!.networkProviderActive

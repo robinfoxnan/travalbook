@@ -54,6 +54,7 @@
     <string name="toast_message_save_gpx">Saving recording as GPX.</string>
     <string name="title_activity_login">登录</string>
     <string name="prompt_email">填号码登录，或填名字注册</string>
+    <string name="prompt_search_user">通过号码搜索</string>
     <string name="prompt_password">密码</string>
     <string name="action_sign_in">登录或注册</string>
     <string name="action_sign_in_short">登录</string>

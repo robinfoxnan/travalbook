@@ -38,7 +38,7 @@
 
     <fragment
         android:id="@+id/nav_contract"
-        android:name="com.bird2fish.travelbook.ui.contract.ContractFragment"
+        android:name="com.bird2fish.travelbook.ui.contact.ContactFragment"
         android:label="@string/menu_contract"
         tools:layout="@layout/fragment_contract" />
 

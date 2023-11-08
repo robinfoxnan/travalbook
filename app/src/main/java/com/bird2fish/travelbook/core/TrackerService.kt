@@ -23,6 +23,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import com.bird2fish.travelbook.core.Track
 import com.bird2fish.travelbook.helper.*
+import com.bird2fish.travelbook.ui.contact.Friend
 import java.util.*
 import org.json.*
 
@@ -578,5 +579,9 @@ class TrackerService: Service(), SensorEventListener {
 //    }
 //    // TODO remove
 
+    // 在地图中使用
+    fun getLastPointMap() : MutableMap<String, Friend>{
+        return HttpWorker.get().getLastPointMap()
+    }
 
 }

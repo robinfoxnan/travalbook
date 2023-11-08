@@ -3,13 +3,16 @@ package com.bird2fish.travelbook.core
 import android.location.Location
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
+import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.tencent.map.lib.models.ReturnInfoModelClass.BaseFloatReturnInfo
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.text.SimpleDateFormat
+import java.util.LinkedList
 
 
 class HttpWorker {
@@ -19,6 +22,9 @@ class HttpWorker {
     private var listIndex = 0
     private var uid = "13800138000"
     val lock = Any()
+
+    val lockFriendMap = Any()
+    private var lastpointList :LinkedList<Friend> = LinkedList()
 
     private var host :String = "" //""127.0.0.1:7787"
     private var schema:String = "http"
@@ -111,6 +117,9 @@ class HttpWorker {
                 gpxList1.clear()
             }
 
+            // 更新好友位置信息
+            getLastPoint()
+
             // 长时间工作后需要检查是否需要退出
             if (!bRunning){
                 return
@@ -135,6 +144,8 @@ class HttpWorker {
         {
             return
         }
+        // 设置当前自己的位置
+        GlobalData.currentBestLocation = location
 
         //构建url地址
         var url = "${schema}://${host}/v1/gpx/updatepoint"
@@ -179,4 +190,86 @@ class HttpWorker {
         }
 
     }// end of upload
+
+    // 返回一个map,方便查看
+    fun getLastPointMap() : MutableMap<String, Friend>{
+        var friendMap = mutableMapOf("0" to  Friend())
+        friendMap.clear()
+        synchronized(lockFriendMap){
+            for (i in 0 until lastpointList.size){
+                val fid = lastpointList[i].uid
+                if (lastpointList[i].isShare)  // 能获取数据的才添加
+                {
+                    friendMap.put(fid, lastpointList[i])
+                }
+
+            }
+        }
+        return friendMap
+    }
+
+    // 针对每一个关注的好友，获取位置
+    private fun getLastPoint(friend: Friend) :Boolean {
+        //构建url地址
+        val user = CurrentUser.getUser()
+        if (user == null)
+            return false
+
+        var url1 = "${schema}://${host}/v1/gpx/position?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
+
+        try {
+            var client = OkHttpClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+                val pt = jsonObject.getJSONObject("pt")
+                if (pt != null){
+                    friend.isShare = true
+                    friend.lon = pt.getDouble("lon")
+                    friend.lat = pt.getDouble("lat")
+                    friend.ele = pt.getDouble("ele")
+                    friend.speed = pt.getDouble("speed")
+                    friend.tm = pt.getLong("tm")
+                    return true
+                }
+            }else{
+                val code = jsonObject.getString("code")
+                friend.isShare = false
+                LogHelper.d("user id=${user.uid} return positon err = ${code}")
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+            friend.isShare = false
+        }
+        return false
+    }
+
+
+    // 按照列表更新位置信息
+    private fun getLastPoint(){
+        if (!GlobalData.shouldViewFriendLocation) {return }
+
+        if (GlobalData.followList == null || GlobalData.followList.isEmpty()){
+            val lst = GlobalData.getHttpServ().getFollowList()
+            GlobalData.setFollowers(1, lst)
+        }
+
+        var lst = GlobalData.getCopyOfFriendList()
+        for (i in 0 until lst.size){
+            getLastPoint(lst[i])
+        }
+
+        synchronized(lockFriendMap){
+            lastpointList = lst
+        }
+    }
 }

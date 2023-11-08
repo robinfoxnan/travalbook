@@ -48,6 +48,8 @@ class LoginActivity : AppCompatActivity() {
         val password = binding.password
         val login = binding.login
         val loading = binding.loading
+        var imageview = binding.imageViewTitle
+        imageview!!.setImageResource(R.drawable.logo)
 
         loginViewModel = ViewModelProvider(this, LoginViewModelFactory())
             .get(LoginViewModel::class.java)

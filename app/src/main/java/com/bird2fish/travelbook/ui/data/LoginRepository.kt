@@ -1,5 +1,6 @@
 package com.bird2fish.travelbook.ui.data
 
+import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
@@ -46,10 +47,12 @@ class LoginRepository(val dataSource: LoginDataSource) {
         this.user = loggedInUser
         // 保存到全局的单件模式中
         CurrentUser.setUser(loggedInUser)
+        GlobalData.getHttpServ().initServer()
 
         // 写到配置文件中
         PreferencesHelper.saveUserInfo(loggedInUser.userId, loggedInUser.pwd,
             loggedInUser.uid, loggedInUser.sid)
+
 
 
     }
