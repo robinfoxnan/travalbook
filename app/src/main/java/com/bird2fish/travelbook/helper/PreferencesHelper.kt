@@ -201,7 +201,7 @@ object PreferencesHelper {
     }
 
     fun getHostName() : String{
-        var host= sharedPreferences.getString("hostname", "10.0.2.2:7817")
+        var host= sharedPreferences.getString("hostname", "8.140.203.92:7817")
         return host!!
     }
 

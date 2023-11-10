@@ -22,7 +22,7 @@ class GlobalData {
         var friendListIndex :Int = 0
 
         // 自己当前最好的位置
-        var currentBestLocation: Location?  = null
+        var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
         var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
 
         private var glock = Any()
@@ -30,6 +30,13 @@ class GlobalData {
             synchronized(glock) {
                 return followList!!.size
             }
+        }
+
+        fun createLocation(latitude: Double, longitude: Double): Location {
+            val location = Location("manual_provider") // 你可以指定一个提供者名称，这里使用 "manual_provider" 作为示例
+            location.latitude = latitude
+            location.longitude = longitude
+            return location
         }
 
         // 计算副本

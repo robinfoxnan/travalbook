@@ -3,18 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".activity.TencentMapActivity">
+
     <item
-        android:id="@+id/memu_map_item_search"
-        android:icon="@android:drawable/ic_menu_manage"
+        android:id="@+id/memu_map_item_magnify"
+        android:icon="@android:drawable/ic_menu_zoom"
         android:orderInCategory="100"
-        android:title="search"
+        android:title="放大"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/memu_map_item_demag"
+        android:icon="@android:drawable/ic_menu_search"
+        android:orderInCategory="100"
+        android:title="缩小"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/memu_map_item_list"
-        android:icon="@android:drawable/ic_menu_manage"
+        android:icon="@android:drawable/ic_menu_my_calendar"
         android:orderInCategory="100"
-        android:title="list"
-        app:showAsAction="ifRoom"
-        />
+        android:title="信息"
+        app:showAsAction="ifRoom" />
 </menu>

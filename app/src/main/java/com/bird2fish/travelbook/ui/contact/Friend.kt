@@ -20,7 +20,8 @@ data  class Friend (
     var level:String = "",
     var show: Boolean = false,
     var isFriend: Boolean = false,
-    var tm: Long = DateTimeHelper.getTimestamp()
+    var tm: Long = DateTimeHelper.getTimestamp(),
+    var msg:String = ""
 ){
     fun fromUser(user: LoggedInUser){
         this.uid = user.uid

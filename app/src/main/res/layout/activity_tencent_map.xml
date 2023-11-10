@@ -15,9 +15,29 @@
         android:background="#673AB7"
         tools:ignore="MissingConstraints" />
 
-    <LinearLayout
-        android:id="@+id/layout_mapll"
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"></LinearLayout>
+        android:layout_height="match_parent">
+
+        <!-- 腾讯地图视图 -->
+        <LinearLayout
+            android:id="@+id/layout_mapll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"></LinearLayout>
+
+        <!-- 底部工具条-->
+        <include layout="@layout/pop_location"
+            android:id="@+id/overlayView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+             />
+
+        <!-- 设置透明度的颜色，这里是半透明的红色 -->
+
+
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

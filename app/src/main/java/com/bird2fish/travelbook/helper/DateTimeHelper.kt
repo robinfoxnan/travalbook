@@ -63,7 +63,19 @@ object DateTimeHelper {
 
         return timeString
     }
+    fun convertTimestampToDateString(timestamp: Long):String{
+        return convertTimestampToDateString(timestamp, "yyyy-MM-dd HH:mm:ss")
+    }
 
+    fun getTimeStamp():Long{
+        return System.currentTimeMillis() // 当前时间的毫秒时间戳
+    }
+
+    fun convertTimestampToDateString(timestamp: Long, pattern: String): String {
+        val dateFormat = SimpleDateFormat(pattern)
+        val date = Date(timestamp)
+        return dateFormat.format(date)
+    }
 
     /* 生成日期字符串，给文件名使用  */
     fun convertToSortableDateString(date: Date): String {

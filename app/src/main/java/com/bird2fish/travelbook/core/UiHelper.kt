@@ -1,9 +1,16 @@
 package com.bird2fish.travelbook.core
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.util.TypedValue
 import android.view.Gravity
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.ui.contact.Friend
 
 object UiHelper {
 
@@ -78,4 +85,60 @@ object UiHelper {
 
         return  R.drawable.icon1
     }
+
+    // 为地图创建小图标
+    fun getSmallIconBitmap(name :String, ctx: Context) :Bitmap{
+        val id = getIconResId(name)
+        val bitmapOld = BitmapFactory.decodeResource(ctx.resources, id)
+        val bitmapIcon = Bitmap.createScaledBitmap(bitmapOld, 160, 160, false)
+        return bitmapIcon
+    }
+
+    fun resizeImage(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+        val bmpWidth = bitmap.width
+        val bmpHeight = bitmap.height
+
+        val scaleWidth = width.toFloat() / bmpWidth
+        val scaleHeight = height.toFloat() / bmpHeight
+
+        val matrix = Matrix()
+        matrix.postScale(scaleWidth, scaleHeight)
+
+        return Bitmap.createBitmap(bitmap, 0, 0, bmpWidth, bmpHeight, matrix, true)
+    }
+
+    // 创建 ImageView 并设置参数
+    fun createImageViewForBottomView(ctx: Context, friend:Friend?): ImageView {
+        val imageView = ImageView(ctx)
+        val sizePx = dpToPx(50f, ctx).toInt()
+
+        // 设置图标大小
+        val params = LinearLayout.LayoutParams(sizePx, sizePx)
+
+        // 设置图标之间的间隔
+        params.marginStart = dpToPx(8.0f, ctx).toInt()
+        imageView.layoutParams = params
+
+        // 设置图标资源
+        var id = R.drawable.icon1
+        if (friend != null){
+            id = getIconResId(friend.icon)
+        }
+        imageView.setImageResource(id)
+
+        // 设置圆角背景
+        imageView.setBackgroundResource(R.drawable.rounded_border)
+
+        return imageView
+    }
+
+    // 将 dp 转换为像素
+    private fun dpToPx(dp: Float, context: Context): Float {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dp,
+            context.resources.displayMetrics
+        )
+    }
+
 }

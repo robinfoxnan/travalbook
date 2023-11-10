@@ -198,11 +198,7 @@ class HttpWorker {
         synchronized(lockFriendMap){
             for (i in 0 until lastpointList.size){
                 val fid = lastpointList[i].uid
-                if (lastpointList[i].isShare)  // 能获取数据的才添加
-                {
-                    friendMap.put(fid, lastpointList[i])
-                }
-
+                friendMap.put(fid, lastpointList[i])
             }
         }
         return friendMap
@@ -242,6 +238,7 @@ class HttpWorker {
             }else{
                 val code = jsonObject.getString("code")
                 friend.isShare = false
+                friend.msg = "不是对方好友"
                 LogHelper.d("user id=${user.uid} return positon err = ${code}")
             }
         }catch (e: Exception) {
@@ -249,6 +246,7 @@ class HttpWorker {
             e.printStackTrace();
             LogHelper.e("$e.message")
             friend.isShare = false
+            friend.msg = "网络错误" + "$e.message"
         }
         return false
     }
