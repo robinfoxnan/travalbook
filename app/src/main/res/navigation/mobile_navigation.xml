@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@id/nav_track">
 
     <fragment
         android:id="@+id/nav_newgroup"
@@ -33,7 +33,7 @@
     <fragment
         android:id="@+id/nav_track"
         android:name="com.bird2fish.travelbook.ui.tracks.maptrack"
-        android:label="fragment_maptrack"
+        android:label="@string/menu_track"
         tools:layout="@layout/fragment_maptrack" />
 
     <fragment
@@ -45,7 +45,7 @@
     <fragment
         android:id="@+id/nav_setting"
         android:name="com.bird2fish.travelbook.ui.setting.SettingsFragment"
-        android:label="SettingsFragment" />
+        android:label="@string/menu_setting" />
     <activity
         android:id="@+id/nav_map"
         android:name="com.bird2fish.travelbook.TencentMapActivity"

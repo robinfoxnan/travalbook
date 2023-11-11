@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="shema_array">
+        <item>http</item>
+        <item>https</item>
+        <!-- 可以继续添加更多的选项 -->
+    </string-array>
+</resources>

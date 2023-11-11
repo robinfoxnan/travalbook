@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,6 +24,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.get
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.TrackerService
@@ -70,8 +73,10 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        // activity_main.xml 的根节点
+        // 左侧导航栏里面的菜单在这里
         val drawerLayout: DrawerLayout = binding.drawerLayout
+
+
         // 侧边栏导航视图
         val navView: NavigationView = binding.navView
         // 如果是彩色图标，重新设置图标颜色
@@ -83,7 +88,8 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_newgroup, R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
+                // 这里先隐藏一组，暂时用不这么多
+                //R.id.nav_newgroup, R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
                 R.id.nav_map, R.id.nav_track,
                 R.id.nav_contract, R.id.nav_setting
             ), drawerLayout

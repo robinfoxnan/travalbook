@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
-
+<!-- 这里先隐藏一组，暂时用不这么多
     <group android:id="@+id/nav_group_session">
         <item
             android:id="@+id/nav_newgroup"
@@ -23,6 +23,7 @@
             android:icon="@drawable/emoji_tabs_faves"
             android:title="@string/menu_favourite" />
     </group>
+    -->
     <group android:id="@+id/nav_group_map">
         <item
             android:id="@+id/nav_map"

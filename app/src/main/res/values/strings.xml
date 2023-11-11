@@ -18,8 +18,19 @@
     <string name="menu_map">地图</string>
     <string name="menu_track">轨迹</string>
     <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
+    <string name="setting_header1">信号采集与同步</string>
+    <string name="setting_header2">测试</string>
+    <string name="setting_schema">通信模式</string>
+    <string name="setting_host">地址域名</string>
+    <string name="setting_schema_def">http</string>
+    <string name="setting_host_def">8.140.203.92:7817</string>
+    <string name="setting_server_save">保存</string>
+    <string name="setting_server_cancel">取消</string>
+
+    <string name="setting_use_net_signal">是否使用WIFI提供的位置</string>
+    <string name="setting_use_gps_signal">是否使用GPS提供的位置</string>
+    <string name="setting_signal_interval">上报位置信息周期</string>
+    <string name="setting_refresh_interval">获取好友位置信息周期</string>
 
     <!-- Notification -->
     <string name="notification_title_trackbook_running">记录中</string>

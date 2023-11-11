@@ -46,7 +46,7 @@ class GlobalData {
                 for (i  in followList.size-1 downTo 0)
                 {
                     if (followList[i].show){
-                        lst.add(friendList[i])
+                        lst.add(followList[i])
                     }
                 }
                 return lst

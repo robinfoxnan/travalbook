@@ -26,11 +26,9 @@
         android:layout_marginTop="3dp"
         android:layout_marginBottom="3dp"
         android:background="#aaaaaa"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        />
 
     <TextView
         android:id="@+id/tv_friend_info"
@@ -49,6 +47,18 @@
         android:paddingTop="5dp"
         android:paddingRight="5dp"
         android:paddingBottom="5dp"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_friend_msg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingTop="5dp"
+        android:paddingRight="5dp"
+        android:paddingBottom="5dp"
+        android:text=""
+        android:textColor="#FF5722"
         android:textSize="16sp" />
     <!-- 设置分割线高度为1dp，颜色为黑色 -->
 

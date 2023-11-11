@@ -63,6 +63,25 @@ object DateTimeHelper {
 
         return timeString
     }
+
+    fun formatTimeDifference(timestamp: Long): String {
+        val currentTime = System.currentTimeMillis()
+        val differenceInMillis = currentTime - timestamp
+
+        val days = TimeUnit.MILLISECONDS.toDays(differenceInMillis)
+        val hours = TimeUnit.MILLISECONDS.toHours(differenceInMillis) % 24
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(differenceInMillis) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(differenceInMillis) % 60
+
+        return when {
+            days > 0 -> " ($days 天前)"
+            hours > 0 -> " ($hours 小时前)"
+            minutes > 0 -> " ($minutes 分钟前)"
+            else -> " ($seconds 秒前)"
+        }
+    }
+
+
     fun convertTimestampToDateString(timestamp: Long):String{
         return convertTimestampToDateString(timestamp, "yyyy-MM-dd HH:mm:ss")
     }

@@ -69,6 +69,7 @@
                 android:layout_height="30dp"
                 android:text="显示位置"
                 android:textColor="#898989"
+                android:layoutDirection="rtl"
                 android:textSize="16sp" />
         </LinearLayout>
     </LinearLayout>

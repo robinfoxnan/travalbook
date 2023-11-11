@@ -84,7 +84,7 @@ object Keys {
     const val DEFAULT_RFC2822_DATE: String = "Thu, 01 Jan 1970 01:00:00 +0100"  // --> Date(0)
     const val ONE_HOUR_IN_MILLISECONDS: Int = 3600000
     const val EMPTY_STRING_RESOURCE: Int = 0
-    const val REQUEST_CURRENT_LOCATION_INTERVAL: Long = 1000L                   // 1 second in milliseconds
+    const val REQUEST_CURRENT_LOCATION_INTERVAL: Long = 5000L                   // 1 second in milliseconds
     const val ADD_WAYPOINT_TO_TRACK_INTERVAL: Long = 1000L                      // 1 second in milliseconds
     const val SAVE_TEMP_TRACK_INTERVAL: Long = 9000L                            // 9 seconds in milliseconds
     const val SIGNIFICANT_TIME_DIFFERENCE: Long = 120000L                       // 2 minutes in milliseconds

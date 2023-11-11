@@ -29,7 +29,7 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
-        android:contentDescription="just test it"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        android:contentDescription="open the drawer"
+        app:srcCompat="@drawable/ic_notification_icon_small_24dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
