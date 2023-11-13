@@ -47,7 +47,7 @@ class HttpService : Service() {
     //private val generator: Random = Random()
 
     override fun onCreate() {
-        Log.i("DemoLog", "TestService -> onCreate, Thread: " + Thread.currentThread().name)
+        Log.i("HttpService", "HttpService -> onCreate, Thread: " + Thread.currentThread().name)
         super.onCreate()
         host = PreferencesHelper.getHostName()
         schema = PreferencesHelper.getHostSchema()
@@ -55,19 +55,19 @@ class HttpService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(
-            "DemoLog",
-            "TestService -> onStartCommand, startId: " + startId + ", Thread: " + Thread.currentThread().name
+            "HttpService",
+            "HttpService -> onStartCommand, startId: " + startId + ", Thread: " + Thread.currentThread().name
         )
         return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.i("DemoLog", "TestService -> onBind, Thread: " + Thread.currentThread().name)
+        Log.i("HttpService", "HttpService -> onBind, Thread: " + Thread.currentThread().name)
         return binder
     }
 
     override fun onUnbind(intent: Intent): Boolean {
-        Log.i("DemoLog", "TestService -> onUnbind, from:" + intent.getStringExtra("from"))
+        Log.i("HttpService", "HttpService -> onUnbind, from:" + intent.getStringExtra("from"))
         return false
     }
 

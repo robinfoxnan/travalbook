@@ -1,10 +1,12 @@
 package com.bird2fish.travelbook.core
 
 import android.location.Location
+import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.tencent.map.geolocation.TencentLocation
 import com.tencent.map.lib.models.ReturnInfoModelClass.BaseFloatReturnInfo
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -17,8 +19,8 @@ import java.util.LinkedList
 
 class HttpWorker {
     private var bRunning: Boolean = false
-    private var gpxList0 = ArrayList<Location>(60)
-    private var gpxList1 = ArrayList<Location>(60)
+    private var gpxList0 = ArrayList<TencentLocation>(60)
+    private var gpxList1 = ArrayList<TencentLocation>(60)
     private var listIndex = 0
     private var uid = "13800138000"
     val lock = Any()
@@ -72,7 +74,7 @@ class HttpWorker {
         }
     }
 
-    public fun pushGpx(location: Location){
+    public fun pushGpx(location: TencentLocation){
         synchronized(lock) {
             if (listIndex == 0)
                 gpxList0.add(location)
@@ -84,6 +86,7 @@ class HttpWorker {
     // 这里使用双队列切换
     private fun doWork(){
         var lastIndex: Int = 0
+        var lastUpdateTm:Long = 0
         while (bRunning){
             // 先同步切换入队的队列，
             synchronized(lock) {
@@ -117,14 +120,19 @@ class HttpWorker {
                 gpxList1.clear()
             }
 
-            // 更新好友位置信息
-            getLastPoint()
+            // 定期更新好友位置信息
+            val tm = DateTimeHelper.getTimeStamp()
+            if ((tm - lastUpdateTm) > GlobalData.intervalOfRefresh)
+            {
+                getLastPoint()
+                lastUpdateTm = tm
+            }
 
             // 长时间工作后需要检查是否需要退出
             if (!bRunning){
                 return
             }
-            Thread.sleep(2000)
+            Thread.sleep(1000)
         }
     }
 
@@ -138,14 +146,12 @@ class HttpWorker {
 //    }
 
     // http://localhost:7817/v1/gpx/updatepoint
-    private fun uploadLocation(location: Location){
+    private fun uploadLocation(location: TencentLocation){
         val user = CurrentUser.getUser()
         if (user == null)
         {
             return
         }
-        // 设置当前自己的位置
-        GlobalData.currentBestLocation = location
 
         //构建url地址
         var url = "${schema}://${host}/v1/gpx/updatepoint"
@@ -157,6 +163,10 @@ class HttpWorker {
         jsonObject.put("lat",location.latitude)
         jsonObject.put("lon",location.longitude)
         jsonObject.put("ele", location.altitude)
+        if (location.city != null)  jsonObject.put("city", location.city)
+        if (location.address != null)  jsonObject.put("addr", location.address)
+        if (location.street != null)  jsonObject.put("street", location.street)
+
         if (location.speed < 0.1)
             jsonObject.put("speed", 0)
         else

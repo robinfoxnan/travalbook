@@ -54,11 +54,10 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.2.0'
 
-    implementation files('libs\\tencent-mapsdk-android-official-release.4.5.10.8b22fda.jar')
-    // 地图库 新版本不能用
-    //implementation 'com.tencent.map:tencent-map-vector-sdk:5.1.0'
+    implementation files('libs\\tencent-mapsdk-android-official-release.5.2.1.18c8cd09.jar')
+    implementation files('libs\\TencentLocationSDK_v7.5.3.2_re68728c45_20230927114248_release.jar')
     // 地图组件库，包括小车平移、点聚合等组件功能，详见开发指南。
-    implementation 'com.tencent.map:sdk-utilities:1.0.9'
+    //implementation 'com.tencent.map:sdk-utilities:1.0.9'
 
     implementation 'androidx.annotation:annotation:1.5.0'
     testImplementation 'junit:junit:4.13.2'

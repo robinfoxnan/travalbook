@@ -12,6 +12,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.bird2fish.travelbook.core.Keys
 import com.bird2fish.travelbook.MainActivity
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.TencentMapActivity
 import com.bird2fish.travelbook.core.TrackerService
 
 
@@ -96,7 +97,7 @@ class NotificationHelper(private val trackerService: TrackerService) {
         trackerService, 16,
         Intent(trackerService, TrackerService::class.java).setAction(Keys.ACTION_RESUME),PendingIntent.FLAG_IMMUTABLE)
     private val showActionPendingIntent: PendingIntent? = TaskStackBuilder.create(trackerService).run {
-        addNextIntentWithParentStack(Intent(trackerService, MainActivity::class.java))
+        addNextIntentWithParentStack(Intent(trackerService, TencentMapActivity::class.java))
         getPendingIntent(10, PendingIntent.FLAG_IMMUTABLE)
     }
 

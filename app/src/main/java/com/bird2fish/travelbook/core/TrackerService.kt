@@ -12,20 +12,19 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.location.Criteria
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.*
 import androidx.core.content.ContextCompat
+import com.bird2fish.travelbook.helper.*
+import com.bird2fish.travelbook.ui.contact.Friend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
-import com.bird2fish.travelbook.core.Track
-import com.bird2fish.travelbook.helper.*
-import com.bird2fish.travelbook.ui.contact.Friend
 import java.util.*
-import org.json.*
 
 
 /*
@@ -285,11 +284,13 @@ class TrackerService: Service(), SensorEventListener {
         return object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 // update currentBestLocation if a better location is available
-                if (LocationHelper.isBetterLocation(location, currentBestLocation)) {
+                //if (LocationHelper.isBetterLocation(location, currentBestLocation)) {
                     currentBestLocation = location
+                System.out.printf("%f, %f, %f, %f, %f, %s\n", location.latitude, location.longitude,
+                    location.altitude, location.speed, location.accuracy, location.provider)
                     // 在线程中上报对应的数据
-                    HttpWorker.get().pushGpx(location)
-                }
+                    //HttpWorker.get().pushGpx(location)
+                //}
             }
             override fun onProviderEnabled(provider: String) {
                 LogHelper.v(TAG, "onProviderEnabled $provider")
@@ -335,8 +336,17 @@ class TrackerService: Service(), SensorEventListener {
                         Manifest.permission.ACCESS_FINE_LOCATION
                     ) == PackageManager.PERMISSION_GRANTED) {
                     // adds GPS location listener
+                    val criteria = Criteria()
+                    criteria.accuracy = Criteria.ACCURACY_FINE // 或者 Criteria.ACCURACY_HIGH
+
+//                    var bestProvider = locationManager.getBestProvider(criteria, true)
+//                    System.out.println(bestProvider)
+//                    if (bestProvider == null){
+//                        bestProvider = LocationManager.GPS_PROVIDER
+//                    }
                     locationManager.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER,
+                        //bestProvider,
                         0,
                         0f,
                         gpsLocationListener
@@ -373,6 +383,7 @@ class TrackerService: Service(), SensorEventListener {
                     // adds Network location listener
                     locationManager.requestLocationUpdates(
                         LocationManager.NETWORK_PROVIDER,
+                        //LocationManager.FUSED_PROVIDER,
                         0,
                         0f,
                         networkLocationListener

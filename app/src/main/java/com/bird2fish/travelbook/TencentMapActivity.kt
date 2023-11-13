@@ -16,12 +16,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import com.bird2fish.travelbook.core.GlobalData
-import com.bird2fish.travelbook.core.Keys
-import com.bird2fish.travelbook.core.TrackerService
-import com.bird2fish.travelbook.core.UiHelper
+import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.LogHelper
+import com.bird2fish.travelbook.helper.PermissionHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.tencent.tencentmap.mapsdk.maps.*
@@ -60,7 +58,6 @@ class TencentMapActivity : AppCompatActivity() {
         setContentView(R.layout.activity_tencent_map)
 
         // 取得LinearLayout 物件
-        // 取得LinearLayout 物件
         val ll = findViewById<View>(R.id.layout_mapll) as LinearLayout
 
         val options = TencentMapOptions()
@@ -68,9 +65,8 @@ class TencentMapActivity : AppCompatActivity() {
 
         mapView = TextureMapView(this, options)
         mapView!!.isOpaque = false
-        ll.addView(mapView)
 
-        //创建tencentMap地图对象，可以完成对地图的几乎所有操作
+        ll.addView(mapView)
 
         //创建tencentMap地图对象，可以完成对地图的几乎所有操作
         tencentMap = mapView!!.map
@@ -81,6 +77,17 @@ class TencentMapActivity : AppCompatActivity() {
         //tencentMap.setMapType(TencentMap.MAP_TYPE_NORMAL);
 
         initBottomView()
+
+        // 开始请求权限
+        if (PermissionHelper.checkLoctionPermission(this))
+        {
+            startTencentLocaionService()
+        }else{
+            val ret = PermissionHelper.requestLocationPermission(this)
+            if (ret){
+                startTencentLocaionService()
+            }
+        }
     }
 
     // 初始化底部视图，将自己的图标加进去
@@ -96,9 +103,9 @@ class TencentMapActivity : AppCompatActivity() {
             onImageIconClick(me)
         }
         linearLayout.addView(imageView)
-
     }
 
+    // 对点击的marker设置为顶层
     fun resetZIndex(uid: String){
         if (markersMap.containsKey(uid)){
             mMarker.setZIndex(0f);
@@ -135,12 +142,19 @@ class TencentMapActivity : AppCompatActivity() {
         if (f.uid == CurrentUser.getUser()!!.uid){
 
 
-            if (GlobalData.currentBestLocation != null){
+            if (GlobalData.currentTLocation != null){
                 info=  String.format("位置：(%.6f, %.6f) 高度：%.0f 速度：%.1f",
-                    GlobalData.currentBestLocation!!.latitude,
-                    GlobalData.currentBestLocation!!.longitude,
-                    GlobalData.currentBestLocation!!.altitude,
-                    GlobalData.currentBestLocation!!.speed)
+                    GlobalData.currentTLocation!!.latitude,
+                    GlobalData.currentTLocation!!.longitude,
+                    GlobalData.currentTLocation!!.altitude,
+                    GlobalData.currentTLocation!!.speed)
+
+
+                val pos = LatLng(GlobalData.currentTLocation!!.latitude, GlobalData.currentTLocation!!.longitude)
+
+                mMarker.position = pos
+                mMarker.snippet = "${pos.latitude}, ${pos.longitude}"
+                mMarker.refreshInfoWindow()
                 moveCamera(null)
                 resetZIndex(f.uid)
 
@@ -171,7 +185,6 @@ class TencentMapActivity : AppCompatActivity() {
 
     // 更新好友图标
     private fun updateBottomView(friendList: Map<String, Friend>){
-
         val linearLayout = this.findViewById<LinearLayout>(R.id.linear_layout_icons)
         // 先检查是否有不需要显示的, 不再朋友列表中，说明不需要显示了
         for ((key, icon) in iconsMap){
@@ -198,8 +211,8 @@ class TencentMapActivity : AppCompatActivity() {
             }
         }
 
-        // 首测获得位置，需要初始化信息栏
-        if (!isInitedInfo && GlobalData.currentBestLocation != null){
+        // 首测获得位置，需要初始化我的信息栏，并移动镜头
+        if (!isInitedInfo && GlobalData.currentTLocation != null){
 
             var friend = Friend()
             friend.fromUser(CurrentUser.getUser()!!)
@@ -217,14 +230,21 @@ class TencentMapActivity : AppCompatActivity() {
         toolbar.title = "动态位置" //设置主标题名称
         //toolbar.subtitle = "" //设置副标题名称
         setSupportActionBar(toolbar)
-        toolbar.setNavigationIcon(R.drawable.calls_back);//是左边的图标样式
+        toolbar.setNavigationIcon(R.drawable.msg_photo_settings);//是左边的图标样式
 
     }
 
     // 手动返回主页，主要是需要关闭那个导航抽屉
     fun backToMainActivity(){
-        finish()
-        MainActivity.topActivity!!.closeDrawer()
+        //finish()
+        var intent: Intent = Intent()
+        intent.setClass(this, MainActivity::class.java)
+        startActivity(intent)
+        if (MainActivity.topActivity != null)
+        {
+            MainActivity.topActivity!!.closeDrawer()
+        }
+
     }
 
     // 自定义工具条图标点击的事件：放大，缩小，工具条
@@ -310,20 +330,13 @@ class TencentMapActivity : AppCompatActivity() {
         mapUiSettings.isRotateGesturesEnabled = false
         //tencentMap!!.isMyLocationEnabled = true
 
-
-
         initMyMarker()
         //addLine();
     }
 
     protected fun updateMarkers(){
-        if (trackerService==null){
-            val msg = "未启动位置服务！请开启位置服务与授权，并重启程序"
-            showMsg(msg)
-            return
-        }
         // 获取目前的好友位置列表
-        val mapFriend = trackerService!!.getLastPointMap()
+        val mapFriend = HttpWorker.get().getLastPointMap()
         // 更新底部状态条
         updateBottomView(mapFriend)
 
@@ -403,10 +416,10 @@ class TencentMapActivity : AppCompatActivity() {
             lon = friend.lon
             pos = LatLng(lat, lon)
         }
-        else if (GlobalData.currentBestLocation != null)
+        else if (GlobalData.currentTLocation != null)
         {
-            lat = GlobalData.currentBestLocation!!.latitude
-            lon = GlobalData.currentBestLocation!!.longitude
+            lat = GlobalData.currentTLocation!!.latitude
+            lon = GlobalData.currentTLocation!!.longitude
             pos = LatLng(lat, lon)
         }else{
             return
@@ -424,15 +437,15 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
     protected fun initMyMarker() {
-        //通过MarkerOptions配置
-        var lat = 39.908710
-        var lon = 116.397499
+        //通过MarkerOptions配置,出生地在天安门
+        var lat:Double = 39.908710
+        var lon:Double = 116.397499
         var title = "正在获取位置……"
 
-        if (GlobalData.currentBestLocation != null)
+        if (GlobalData.currentTLocation != null)
         {
-            lat = GlobalData.currentBestLocation!!.latitude
-            lon = GlobalData.currentBestLocation!!.longitude
+            lat = GlobalData.currentTLocation!!.latitude
+            lon = GlobalData.currentTLocation!!.longitude
             title = "当前位置"
         }
 
@@ -447,17 +460,15 @@ class TencentMapActivity : AppCompatActivity() {
         val custom = BitmapDescriptorFactory.fromBitmap(bitmapIcon)
         options.icon(custom)
 
-        //options.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker));//设置自定义Marker图标
         this.mMarker = tencentMap!!.addMarker(options)
+        //开启信息窗口
+//        mMarker.isInfoWindowEnable = true
+//        mMarker.title = title
 
-    //开启信息窗口
-        mMarker.isInfoWindowEnable = true
-        mMarker.title = title
-        val pos = position
-        mMarker.position = pos
+        mMarker.position = position
         val cameraSigma = CameraUpdateFactory.newCameraPosition(
             CameraPosition(
-                pos,  //中心点坐标，地图目标经纬度
+                position,  //中心点坐标，地图目标经纬度
                 12f,  //目标缩放级别
                 0f,  //目标倾斜角[0.0 ~ 45.0] (垂直地图时为0)
                 0f
@@ -466,50 +477,101 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap!!.moveCamera(cameraSigma) //移动地图
         mMarker.showInfoWindow()
 
-        // 第一次更新好友位置
-        //updateMarkers()
     }
 
-    // 定时器会调用这里
-    protected fun updateMarker(){
 
-        var lat = 39.908710
-        var lon = 116.397499
+    // 定时器会调用这里
+    protected fun updateMyMarker(){
+
         var title = "当前位置"
-        if (GlobalData.currentBestLocation != null)
+        if (GlobalData.currentTLocation != null)
         {
-            lat = GlobalData.currentBestLocation!!.latitude
-            lon = GlobalData.currentBestLocation!!.longitude
+            val lat: Double = GlobalData.currentTLocation!!.latitude
+            val lon: Double  = GlobalData.currentTLocation!!.longitude
 
             val pos = LatLng(lat, lon)
 
-            //tencentMap?.myLocation?.set(GlobalData.currentBestLocation)
-            mMarker.position = pos
-            mMarker.title = title
-            mMarker.snippet = ""
+            mMarker.title = "${pos.latitude}, ${pos.longitude}"
+            mMarker.snippet = GlobalData.currentTLocation!!.street
+            mMarker.showInfoWindow()
+            mMarker.isInfoWindowEnable = true
             mMarker.refreshInfoWindow()
         }
+    }
 
+    protected  fun updateViews(){
+        updateMyMarker()   // 更新marker
         // 更新好友位置
-        updateMarkers()
+        updateMarkers()    // 内部调用updateBottomView更新图标信息
+    }
+
+    // 请求权限的回调函数
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PermissionHelper.PERMISSION_REQUEST_CODE_LOCATION -> {
+                // 检查用户是否授予 ACTIVITY_RECOGNITION 权限
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    GlobalData.isLocationEnabled = true
+                    PermissionHelper.requestBackgroundPermission(this)
+                } else {
+                    // 用户拒绝了活动识别权限，需要处理相应逻辑
+                    GlobalData.isLocationEnabled = false
+                    UiHelper.showCenterMessage(this, "目前无法定位！请开始软件定位权限为一直允许，并在耗电选项设置为不限制")
+                }
+            }
+            PermissionHelper.PERMISSION_REQUEST_CODE_BACKGROUND ->{
+
+                GlobalData.isLocationBackgroudEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                startTencentLocaionService()
+            }
+            PermissionHelper.PERMISSION_REQUEST_CODE_BODY_SENSORS ->{
+                GlobalData.isBodySensorEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            }
+            PermissionHelper.PERMISSION_REQUEST_CODE_RECOGNITION ->{
+                GlobalData.isRecognitionEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            }
+            // 处理其他权限请求结果...
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
 
-
-
-    /* Register the permission launcher for requesting location 在onstart中使用  */
-    private val requestLocationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) {
-            // permission was granted - re-bind service
-            //this.unbindService(connection)
-            this.bindService(Intent(this, TrackerService::class.java),  connection,  Context.BIND_AUTO_CREATE)
-            //LogHelper.i(TAG, "Request result: Location permission has been granted.")
-            startTracking()
-        } else {
-            // permission denied - unbind service
-            this.unbindService(connection)
+    // 启动服务和HTTPworker
+    fun startTencentLocaionService(){
+        // 这里检查申请权限的结果
+        if (GlobalData.isLocationBackgroudEnabled){
+            TencentLocService.instance!!.startBackGround(this)
+        }else if (GlobalData.isLocationEnabled){
+            TencentLocService.instance!!.startBackGround(this)
+        }else{
+            UiHelper.showCenterMessage(this, "目前无法定位！请开始软件定位权限为一直允许，并在耗电选项设置为不限制")
         }
-        //layout.toggleLocationErrorBar(gpsProviderActive, networkProviderActive)
+
+        // 开启后台上传与更新
+        HttpWorker.get().startWorker()
+
+        // 界面刷新
+        startRefreshInfo()
+    }
+
+    // 启动轮训机制
+    fun startRefreshInfo(){
+        handler.postDelayed(periodicLocationRequestRunnable, 1000)
+    }
+
+    // 轮询的函数
+    private val periodicLocationRequestRunnable: Runnable = object : Runnable {
+        override fun run() {
+            // 更新好友信息，刷新
+            updateViews()
+            handler.postDelayed(this, GlobalData.intervalOfRefresh)
+        }
     }
 
     /**
@@ -518,16 +580,6 @@ class TencentMapActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         mapView!!.onStart()
-
-        // 请求位置权限，在requestLocationPermissionLauncher中启动了连接动作
-        if (ContextCompat.checkSelfPermission(this as Context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED) {
-            requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-        else{
-            // bind to TrackerService
-            this.bindService(Intent(this, TrackerService::class.java), connection, Context.BIND_AUTO_CREATE)
-        }
-
     }
 
     override fun onResume() {
@@ -586,58 +638,6 @@ class TencentMapActivity : AppCompatActivity() {
 
 
 
-    /* Register the permission launcher for starting the tracking service */
-    private val startTrackingPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        logPermissionRequestResult(isGranted)
-        // start service via intent so that it keeps running after unbind
-        if (bound == false){
-            startTrackerService()
-        }
-        if (trackerService != null){
-            trackerService!!.startTracking()
-        }
-
-    }
-
-    /* Register the permission launcher for resuming the tracking service */
-    private val resumeTrackingPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        logPermissionRequestResult(isGranted)
-        // start service via intent so that it keeps running after unbind
-        if (bound == false){
-            startTrackerService()
-        }
-        if (trackerService != null){
-            trackerService!!.resumeTracking()
-        }
-    }
-
-    /* Logs the request result of the Activity Recognition permission launcher */
-    private fun logPermissionRequestResult(isGranted: Boolean) {
-        if (isGranted) {
-            LogHelper.i(TAG, "Request result: Activity Recognition permission has been granted.")
-        } else {
-            LogHelper.i(TAG, "Request result: Activity Recognition permission has NOT been granted.")
-        }
-    }
-
-    /* 开始记录 */
-    private fun startTracking() {
-        // request activity recognition permission on Android Q+ if denied
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this as Context,
-//                Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_DENIED) {
-//            startTrackingPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
-//        } else {
-//            // start service via intent so that it keeps running after unbind
-//            startTrackerService()
-//            trackerService.startTracking()
-//        }
-
-       if (bound == false){
-           startTrackerService()
-       }
-
-    }
-
     /* 启动后台跟踪服务 */
     private fun startTrackerService() {
         val intent = Intent(this, TrackerService::class.java)
@@ -670,33 +670,5 @@ class TencentMapActivity : AppCompatActivity() {
 //            }
 //        }
 //    }
-
-    /*
-   * Runnable: Periodically requests location
-   */
-    private val periodicLocationRequestRunnable: Runnable = object : Runnable {
-        override fun run() {
-            // pull current state from service
-            if (trackerService != null){
-                //GlobalData.currentBestLocation = trackerService!!.currentBestLocation
-                //track = trackerService.track
-                gpsProviderActive = trackerService!!.gpsProviderActive
-                networkProviderActive = trackerService!!.networkProviderActive
-                trackingState = trackerService!!.trackingState
-                updateMarker()
-            }
-
-            // update location and track
-            //layout.markCurrentPosition(currentBestLocation, trackingState)
-            //layout.overlayCurrentTrack(track, trackingState)
-            //layout.updateLiveStatics(length = track.length, duration = track.duration, trackingState = trackingState)
-            // center map, if it had not been dragged/zoomed before
-            //if (!layout.userInteraction) { layout.centerMap(currentBestLocation, true)}
-            // show error snackbar if necessary
-            //layout.toggleLocationErrorBar(gpsProviderActive, networkProviderActive)
-            // use the handler to start runnable again after specified delay
-            handler.postDelayed(this, Keys.REQUEST_CURRENT_LOCATION_INTERVAL)
-        }
-    }
 
 }

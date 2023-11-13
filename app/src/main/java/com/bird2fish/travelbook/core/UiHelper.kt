@@ -12,7 +12,7 @@ import android.widget.Toast
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.ui.contact.Friend
 
-object UiHelper {
+public object UiHelper {
 
     fun showMessage(applicationContext: Context, str:CharSequence){
         var toast = Toast.makeText(

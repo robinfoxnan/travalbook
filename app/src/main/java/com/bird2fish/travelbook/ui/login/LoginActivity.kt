@@ -21,6 +21,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bird2fish.travelbook.MainActivity
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.TencentMapActivity
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.databinding.ActivityLoginBinding
 import com.bird2fish.travelbook.helper.PreferencesHelper
@@ -82,7 +83,8 @@ class LoginActivity : AppCompatActivity() {
                 // 成功
                 // 跳转到
                 var intent: Intent = Intent()
-                intent.setClass(this, MainActivity::class.java)
+                //intent.setClass(this, MainActivity::class.java)
+                intent.setClass(this, TencentMapActivity::class.java)
                 startActivity(intent)
                 updateUiWithUser(loginResult.success)
                 setResult(Activity.RESULT_OK)

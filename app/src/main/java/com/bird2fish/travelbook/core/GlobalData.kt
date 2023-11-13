@@ -2,11 +2,24 @@ package com.bird2fish.travelbook.core
 
 import android.location.Location
 import com.bird2fish.travelbook.ui.contact.Friend
+import com.tencent.map.geolocation.TencentLocation
 import java.util.LinkedList
 
 class GlobalData {
     companion object{
         var httpServer : HttpService = HttpService()
+        var isLocationEnabled = false          // 定位
+        var isLocationBackgroudEnabled = false // 后台和运行
+        var isBodySensorEnabled = false        // 步数
+        var isRecognitionEnabled = false       // 状态
+
+        var  intervalOfLocation: Long = 5000         // 采样间隔与上报是一样的获取好友数据
+        var  intervalOfRefresh:Long = 5000           // 刷新好友位置界面的刷新率
+
+        fun setCurrentLocation(pos :TencentLocation){
+            this.currentTLocation = pos
+            HttpWorker.get().pushGpx(pos);
+        }
 
         fun getHttpServ(): HttpService{
             return this.httpServer
@@ -22,8 +35,14 @@ class GlobalData {
         var friendListIndex :Int = 0
 
         // 自己当前最好的位置
-        var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
+        //var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
         var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
+//        var currentLat :Double = 0.0               // 这几个是给腾讯地图改的
+//        var currentLng :Double = 0.0
+//        var currentAlt:Double = 0.0
+//        var currentSpeed :Double = 0.0
+        var currentTLocation : TencentLocation? = null
+        var currentTm :Long = 0
 
         private var glock = Any()
         fun getFollowListSize(): Int{

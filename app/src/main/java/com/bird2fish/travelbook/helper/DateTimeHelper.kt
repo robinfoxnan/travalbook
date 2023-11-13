@@ -81,6 +81,10 @@ object DateTimeHelper {
         }
     }
 
+    fun getTimeStampString(): String {
+        val t = System.currentTimeMillis()
+        return convertTimestampToDateString(t, "HH:mm:ss")
+    }
 
     fun convertTimestampToDateString(timestamp: Long):String{
         return convertTimestampToDateString(timestamp, "yyyy-MM-dd HH:mm:ss")
