@@ -163,40 +163,60 @@ class HttpWorker {
         jsonObject.put("lat",location.latitude)
         jsonObject.put("lon",location.longitude)
         jsonObject.put("ele", location.altitude)
+        jsonObject.put("accuracy", location.accuracy)
+        jsonObject.put("src", location.sourceProvider)
+        jsonObject.put("direction", location.direction)
+
         if (location.city != null)  jsonObject.put("city", location.city)
         if (location.address != null)  jsonObject.put("addr", location.address)
         if (location.street != null)  jsonObject.put("street", location.street)
+        if (location.streetNo != null) jsonObject.put("streetNo", location.streetNo)
 
         if (location.speed < 0.1)
             jsonObject.put("speed", 0)
         else
             jsonObject.put("speed", location.speed)
         jsonObject.put("tm", location.time / 1000)
-        jsonObject.put("tmStr", SimpleDateFormat("YY-MM-DD-hh-mm-ss").format(location.time))
+        val tmStr = DateTimeHelper.convertTimestampToDateString(location.time)
+        //System.out.println(tmStr)
+        jsonObject.put("tmStr", tmStr)
         var jsonStr=jsonObject.toString()
+        //System.out.println(jsonStr)
 
         //调用请求
         val contentType = "application/json".toMediaType()
         var requestBody = jsonStr.toRequestBody(contentType)
 
         try {
-            val client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url)
                 .post(requestBody) //以post的形式添加requestBody
                 .build()
             var response = client.newCall(request).execute()
             val responseData = response.body?.string()
+//            System.out.println(
+//                "=================>" + responseData
+//            )
+
             if (responseData != null) {
                 val jsonObject = JSONObject(responseData)
-                val state = jsonObject.getString("state")
-                LogHelper.d(" upload date response $state")
+                if (jsonObject != null)
+                {
+                    val state = jsonObject.getString("state")
+                    LogHelper.d(" upload data response $state")
+                }else{
+                    LogHelper.d("reponse data = $responseData")
+                }
 
             }
         }
         catch (e: Exception) {
             LogHelper.e("Exception")
             LogHelper.e("$e.message")
+
+
+            System.out.println(e.printStackTrace())
         }
 
     }// end of upload
@@ -224,7 +244,7 @@ class HttpWorker {
         var url1 = "${schema}://${host}/v1/gpx/position?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()

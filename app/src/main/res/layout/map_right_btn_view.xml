@@ -32,7 +32,7 @@
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:layout_weight="1"
-        app:srcCompat="@android:drawable/ic_menu_edit" />
+        app:srcCompat="@drawable/ic_bar_record_24dp" />
 
     <ImageButton
         android:id="@+id/btn_share"
@@ -42,7 +42,7 @@
         app:srcCompat="@android:drawable/ic_menu_set_as" />
 
     <ImageButton
-        android:id="@+id/imageButton8"
+        android:id="@+id/btn_import_tract"
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:layout_weight="1"

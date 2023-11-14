@@ -10,7 +10,7 @@ import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.bird2fish.travelbook.core.*
 import java.util.*
-import kotlin.math.pow
+import kotlin.math.*
 
 
 /*
@@ -31,6 +31,22 @@ object LocationHelper {
         defaultLocation.altitude = Keys.DEFAULT_ALTITUDE
         defaultLocation.time = Keys.DEFAULT_DATE.time
         return defaultLocation
+    }
+
+    // 计算两个经纬度坐标之间的球面距离通常可以使用大圆距离（Great Circle Distance）公式，也称为Haversine公式。
+    fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371.0 // 地球半径（单位：千米）
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return R * c
     }
 
 

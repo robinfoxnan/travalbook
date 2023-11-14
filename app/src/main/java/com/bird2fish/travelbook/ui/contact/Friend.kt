@@ -31,4 +31,15 @@ data  class Friend (
         this.show = false
         this.isFriend = false
     }
+
+    fun setValue(f: Friend) {
+        this.lat = f.lat
+        this.lon = f.lon
+        this.ele = f.ele
+        this.speed = f.speed
+        this.msg = f.msg
+        this.isShare = f.isShare
+        this.show = f.show
+        this.tm = f.tm
+    }
 }

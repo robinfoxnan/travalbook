@@ -14,7 +14,15 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import java.lang.RuntimeException
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.LinkedList
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 
 class HttpService : Service() {
@@ -81,8 +89,36 @@ class HttpService : Service() {
 //        return generator.nextInt()
 //    }
 
+    val unsafeSslSocketFactory: SSLSocketFactory
+        get() = try {
+            val trustAllCerts = arrayOf<TrustManager>(
+                object : X509TrustManager {
+                    override fun checkClientTrusted(
+                        chain: Array<X509Certificate>,
+                        authType: String
+                    ) {
+                    }
+
+                    override fun checkServerTrusted(
+                        chain: Array<X509Certificate>,
+                        authType: String
+                    ) {
+                    }
+
+                    override fun getAcceptedIssuers(): Array<X509Certificate> {
+                        return arrayOf()
+                    }
+                }
+            )
+            val sslContext = SSLContext.getInstance("SSL")
+            sslContext.init(null, trustAllCerts, SecureRandom())
+            sslContext.socketFactory
+        } catch (e: java.lang.Exception) {
+            throw RuntimeException(e)
+        }
 
 
+    // https://blog.csdn.net/yzpbright/article/details/115333339
     // 注册
     // http://localhost:7817/v1/user/regist?type=1&pwd=111111&username=robin
     fun register(name:String, pwd:String) : LoggedInUser {
@@ -90,27 +126,11 @@ class HttpService : Service() {
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
         var url = "${schema}://${host}/v1/user/regist?type=1&pwd=${pwd}&username=${name}"
-        //构建Json字符串
- //       var jsonObject= JSONObject()
-//        jsonObject.put("uid", UserHelper.uid)
-//        //jsonObject.put("phone", userphone)
-//        jsonObject.put("lat",location.latitude)
-//        jsonObject.put("lon",location.longitude)
-//        jsonObject.put("ele", location.altitude)
-//        if (location.speed < 0.1)
-//            jsonObject.put("speed", 0)
-//        else
-//            jsonObject.put("speed", location.speed)
-//        jsonObject.put("tm", location.time / 1000)
-//        jsonObject.put("tmStr", SimpleDateFormat("YY-MM-DD-hh-mm-ss").format(location.time))
-//        var jsonStr=jsonObject.toString()
-
-        //调用请求
-        //val contentType = "application/json".toMediaType()
-        //var requestBody = jsonStr.toRequestBody(contentType)
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
+
+
             val request = Request.Builder()
                 .url(url)
                 .get() //以post的形式添加requestBody
@@ -147,7 +167,7 @@ class HttpService : Service() {
         //构建url地址
         var url = "${schema}://${host}/v1/user/login?type=0&uid=${uid}&sid=${sid}"
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url)
                 .get() //以post的形式添加requestBody
@@ -198,7 +218,7 @@ class HttpService : Service() {
             "${schema}://${host}/v1/user/login?type=1&pwd=${pwd}&uid=${uid}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)  // "http://www.baidu.com"
                 .get() //以post的形式添加requestBody
@@ -264,7 +284,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -350,7 +370,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/listfriends?type=1&&uid=${uid}&sid=${sid}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -419,7 +439,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=${str}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -448,7 +468,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=remove"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -487,7 +507,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/addfriendreq?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
 
         try {
-            var client = OkHttpClient()
+            var client = HttpsUtil.getClient()
             val request = Request.Builder()
                 .url(url1)
                 .get()

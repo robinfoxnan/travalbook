@@ -141,4 +141,12 @@ public object UiHelper {
         )
     }
 
+    fun formatSpeed(speed: Float): String {
+        if (speed < 5.0){
+            return String.format("%.1f 米/秒", speed)
+        }else{
+            return String.format("%.1f 千米/时", speed * 3.6 )
+        }
+    }
+
 }

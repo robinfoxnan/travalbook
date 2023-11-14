@@ -206,7 +206,7 @@ object PreferencesHelper {
     }
 
     fun getHostSchema():String{
-        var schema = sharedPreferences.getString("hostschema", "http")
+        var schema = sharedPreferences.getString("hostschema", "https")
         return schema!!
     }
 

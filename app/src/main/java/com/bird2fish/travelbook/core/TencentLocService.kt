@@ -3,18 +3,20 @@ package com.bird2fish.travelbook.core
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.location.Location
-import android.location.LocationManager
 import android.os.Build
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.helper.LogHelper
+import com.bird2fish.travelbook.helper.NotificationActionReceiver
 import com.tencent.map.geolocation.TencentLocation
 import com.tencent.map.geolocation.TencentLocationListener
 import com.tencent.map.geolocation.TencentLocationManager
 import com.tencent.map.geolocation.TencentLocationRequest
+
 
 class TencentLocService : TencentLocationListener {
     private var locationManager: TencentLocationManager? = null
@@ -53,10 +55,36 @@ class TencentLocService : TencentLocationListener {
             .setLargeIcon(
                 BitmapFactory.decodeResource(
                     context.resources,
-                    R.drawable.ic_notification_icon_small_24dp
+                     R.drawable.ic_bar_stop_24dp
                 )
             )
+//            .setSmallIcon(
+//                BitmapFactory.decodeResource(
+//                    context.resources,
+//                    R.drawable.ic_bar_stop_24dp
+//                )
+//            )
             .setWhen(System.currentTimeMillis())
+
+
+        // 添加一个按钮，广播
+        val buttonIntent = Intent(NotificationActionReceiver.ACTION_BUTTON_CLICK_STOP)
+        val buttonPendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            buttonIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or  PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val action: Notification.Action = Notification.Action.Builder(
+            com.bird2fish.travelbook.R.drawable.ic_bar_stop_24dp,
+            "停止",
+            buttonPendingIntent
+        ).build()
+
+        // 在通知构建器中添加按钮
+        builder.addAction(action)
+
         notification = if (Build.VERSION.SDK_INT >= 16) {
             builder.build()
         } else {
@@ -142,9 +170,9 @@ class TencentLocService : TencentLocationListener {
             // 获取经纬度信息
             val latitude = tencentLocation.latitude
             val longitude = tencentLocation.longitude
-            System.out.printf("%f, %f \n", latitude, longitude)
+            //System.out.printf("%f, %f \n", latitude, longitude)
 
-            GlobalData.currentTLocation = tencentLocation
+            GlobalData.setCurrentLocation(tencentLocation)
             // 处理获取到的经纬度
         } else {
             // 定位失败，处理失败信息

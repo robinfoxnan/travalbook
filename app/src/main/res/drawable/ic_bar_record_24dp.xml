@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="24dp"
+    android:viewportHeight="24.0"
+    android:viewportWidth="24.0"
+    android:width="24dp">
+    <path
+        android:fillColor="@color/default_neutral_lighter"
+        android:pathData="M12,12m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0M12,5a7,7 0,1 0,0 14a7,7 0,1 0,0 -14"
+        android:strokeWidth="2"
+        android:strokeColor="@color/gray"/>
+
+    <!-- 画两个小实心圆 -->
+    <path
+        android:fillColor="@color/gray"
+        android:pathData="M12,8a4,4 0,1 1,0 8a4,4 0,1 1,0 -8"/>
+
+
+</vector>

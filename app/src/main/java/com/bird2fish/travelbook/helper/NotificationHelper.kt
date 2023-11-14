@@ -17,7 +17,7 @@ import com.bird2fish.travelbook.core.TrackerService
 
 
 /*
- * NotificationHelper class
+ * 通知栏的辅助类
  */
 class NotificationHelper(private val trackerService: TrackerService) {
 

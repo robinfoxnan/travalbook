@@ -101,6 +101,14 @@
             android:enabled="true"
             android:exported="true" />
 
+        <receiver
+            android:name=".helper.NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.yourapp.ACTION_BUTTON_CLICK_STOP" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name="com.tencent.map.geolocation.s"
             android:foregroundServiceType="location"/>

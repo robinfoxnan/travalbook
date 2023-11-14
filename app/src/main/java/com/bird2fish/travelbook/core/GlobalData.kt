@@ -13,8 +13,12 @@ class GlobalData {
         var isBodySensorEnabled = false        // 步数
         var isRecognitionEnabled = false       // 状态
 
-        var  intervalOfLocation: Long = 5000         // 采样间隔与上报是一样的获取好友数据
-        var  intervalOfRefresh:Long = 5000           // 刷新好友位置界面的刷新率
+        var isRecordingTrack = false         // 是否在录制轨迹
+        var currentFriend :Friend? = null
+
+        var  intervalOfLocation: Long = 2000         // 采样间隔与上报是一样的获取好友数据
+        var  intervalOfRefresh:Long = 2000           // 刷新好友位置界面的刷新率
+        var  defaultZoomLevel = 13f
 
         fun setCurrentLocation(pos :TencentLocation){
             this.currentTLocation = pos

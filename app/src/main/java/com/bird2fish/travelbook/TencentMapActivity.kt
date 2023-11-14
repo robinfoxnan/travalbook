@@ -9,6 +9,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.*
 import android.view.*
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -76,6 +77,9 @@ class TencentMapActivity : AppCompatActivity() {
         //tencentMap!!.setMapType(TencentMap.MAP_TYPE_SATELLITE);
         //tencentMap.setMapType(TencentMap.MAP_TYPE_NORMAL);
 
+        // 先设置当前需要刷新的人物
+        GlobalData.currentFriend = Friend(uid = CurrentUser.getUser()!!.uid)
+        // 底部图标
         initBottomView()
 
         // 开始请求权限
@@ -88,6 +92,12 @@ class TencentMapActivity : AppCompatActivity() {
                 startTencentLocaionService()
             }
         }
+
+        // 自己的位置
+        initMyMarker()
+
+        // 地图右侧边栏
+        initSideToolbar()
     }
 
     // 初始化底部视图，将自己的图标加进去
@@ -122,47 +132,74 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
     // 显示提示
-    private fun showMsg(str:String){
-        val tvMsg = this.findViewById<TextView>(R.id.tv_friend_msg)
-        tvMsg.setText(str)
-        //UiHelper.showMessage(this, str)
-    }
+//    private fun showMsg(str:String){
+//        val tvMsg = this.findViewById<TextView>(R.id.tv_friend_msg)
+//        tvMsg.setText(str)
+//        //UiHelper.showMessage(this, str)
+//    }
 
     // 底部图标点击响应事件
+    // 设置了当前好友之后，一直刷新他的信息
     private fun onImageIconClick(f: Friend){
+        if (f == null){
+            GlobalData.currentFriend = Friend(uid = CurrentUser.getUser()!!.uid)
+        }else
+        {
+            GlobalData.currentFriend = f
+        }
+
+        // 设置显示层级
+        resetZIndex(f.uid)
+        moveCamera(f)
+        // 设置底部信息
+        updateFriendInfo()
+
+    }
+
+    // 根据当前选择的用户，更新底部状态窗口口
+    private fun updateFriendInfo(){
+        if (GlobalData.currentFriend == null)
+        {
+            GlobalData.currentFriend = Friend(uid = CurrentUser.getUser()!!.uid)
+        }
+        var f = GlobalData.currentFriend!!
+
         //UiHelper.showCenterMessage(this, "点击了 ${f.nick}")
         val tvName = this.findViewById<TextView>(R.id.tv_friend_name)
+        val tvInfo = this.findViewById<TextView>(R.id.tv_friend_info)
+        val tvdetail = this.findViewById<TextView>(R.id.tv_detail)
+
+        // 设置名字
         val name = "${f.nick}(${f.uid})"
         tvName.setText(name)
 
-        val tvInfo = this.findViewById<TextView>(R.id.tv_friend_info)
-        val tvdetail = this.findViewById<TextView>(R.id.tv_detail)
-        var info = "未能获取坐标，检查对方是否启动软件并关注您"
+        var info = ""
         var detail = ""
-        if (f.uid == CurrentUser.getUser()!!.uid){
+        if (f.uid == CurrentUser.getUser()!!.uid)
+        {
+                if (GlobalData.currentTLocation != null){
 
+                    var speedStr = UiHelper.formatSpeed(GlobalData.currentTLocation!!.speed)
 
-            if (GlobalData.currentTLocation != null){
-                info=  String.format("位置：(%.6f, %.6f) 高度：%.0f 速度：%.1f",
-                    GlobalData.currentTLocation!!.latitude,
-                    GlobalData.currentTLocation!!.longitude,
-                    GlobalData.currentTLocation!!.altitude,
-                    GlobalData.currentTLocation!!.speed)
-
-
-                val pos = LatLng(GlobalData.currentTLocation!!.latitude, GlobalData.currentTLocation!!.longitude)
-
-                mMarker.position = pos
-                mMarker.snippet = "${pos.latitude}, ${pos.longitude}"
-                mMarker.refreshInfoWindow()
-                moveCamera(null)
-                resetZIndex(f.uid)
+                    info=  String.format("位置：(%.6f, %.6f) 高度：%.0f米 速度：%s",
+                        GlobalData.currentTLocation!!.latitude,
+                        GlobalData.currentTLocation!!.longitude,
+                        GlobalData.currentTLocation!!.altitude,
+                        speedStr)
+                    if (GlobalData.currentTLocation!!.address != null &&  !GlobalData.currentTLocation!!.address.equals("Unknow"))
+                    {
+                        detail = GlobalData.currentTLocation!!.address
+                    }
 
             }else{
-                info = "请打开位置定位"
+                if (GlobalData.isLocationEnabled)
+                {
+                    info = "等待定位信号"
+                }else{
+                    info = "请打开定位权限"
+                }
+
             }
-
-
         }else
         {
             if (f.isShare){
@@ -172,12 +209,13 @@ class TencentMapActivity : AppCompatActivity() {
                 val tmStr = DateTimeHelper.convertTimestampToDateString(f.tm * 1000)
                 val span = DateTimeHelper.formatTimeDifference(f.tm * 1000);
                 detail = "上报时间：" + tmStr + span
-                moveCamera(f)
-                resetZIndex(f.uid)
-
+            }
+            else{
+                detail = f.msg
             }
 
         }
+
         tvInfo.setText(info)
         tvdetail.setText(detail)
 
@@ -186,7 +224,7 @@ class TencentMapActivity : AppCompatActivity() {
     // 更新好友图标
     private fun updateBottomView(friendList: Map<String, Friend>){
         val linearLayout = this.findViewById<LinearLayout>(R.id.linear_layout_icons)
-        // 先检查是否有不需要显示的, 不再朋友列表中，说明不需要显示了
+        // 先检查是否有不需要显示的, 不再朋友列表中，通信簿设置后说明不需要显示了
         for ((key, icon) in iconsMap){
             if (!friendList.containsKey(key))
             {
@@ -197,13 +235,15 @@ class TencentMapActivity : AppCompatActivity() {
         // 将好友列表中的所有东西都绘制一遍
         for ((key, f) in friendList){
             if (iconsMap.containsKey(key)){
+                val friend = iconsMap[key]!!.tag as Friend
+                friend.setValue(f)
                 continue
             }else{
                 val imageView = UiHelper.createImageViewForBottomView(this, f)
 
                 imageView.tag = f
                 imageView.setOnClickListener{
-                    onImageIconClick(f)
+                    onImageIconClick(imageView.tag!! as Friend)
                 }
                 // 添加图标到线性布局，同时放到映射中标记存在了
                 linearLayout.addView(imageView)
@@ -211,17 +251,6 @@ class TencentMapActivity : AppCompatActivity() {
             }
         }
 
-        // 首测获得位置，需要初始化我的信息栏，并移动镜头
-        if (!isInitedInfo && GlobalData.currentTLocation != null){
-
-            var friend = Friend()
-            friend.fromUser(CurrentUser.getUser()!!)
-            onImageIconClick(friend)
-
-            mMarker.isVisible = true
-            moveCamera(null)
-            isInitedInfo = true
-        }
     }// end of update icons
 
 
@@ -294,6 +323,49 @@ class TencentMapActivity : AppCompatActivity() {
         return false;
     }
 
+    // 将右侧的工具条设置
+    private fun initSideToolbar(){
+        var btnLayer = findViewById<ImageButton>(R.id.btn_layer)
+        btnLayer.setOnClickListener {
+            if (tencentMap!!.mapType == TencentMap.MAP_TYPE_SATELLITE)
+            {
+                tencentMap!!.setMapType(TencentMap.MAP_TYPE_NORMAL)
+            }else
+            {
+                tencentMap!!.setMapType(TencentMap.MAP_TYPE_SATELLITE)
+            }
+        }
+
+        findViewById<ImageButton>(R.id.btn_addmark)?.visibility = View.GONE
+        findViewById<ImageButton>(R.id.btn_del_track)?.visibility = View.GONE
+
+        var btnRecord = findViewById<ImageButton>(R.id.btn_record)
+        btnRecord.setOnClickListener {
+            if (GlobalData.isRecordingTrack)  // 正在录制，改为停止，显示录制按钮
+            {
+                GlobalData.isRecordingTrack = false
+                btnRecord.setImageResource(R.drawable.ic_bar_record_24dp)
+            }else
+            {
+                // 正在停止，改为录制中，显示停止按钮
+                GlobalData.isRecordingTrack = true
+                btnRecord.setImageResource(R.drawable.ic_bar_stop_24dp)
+            }
+        }
+
+
+        var btnShare = findViewById<ImageButton>(R.id.btn_share)
+        btnShare.setOnClickListener {
+            UiHelper.showCenterMessage(this, "分享")
+        }
+
+        var btnImport = findViewById<ImageButton>(R.id.btn_import_tract)
+        btnImport.setOnClickListener {
+            UiHelper.showCenterMessage(this, "导入")
+        }
+
+    }
+
 
     private fun initMapOutlook() {
         /**
@@ -330,28 +402,25 @@ class TencentMapActivity : AppCompatActivity() {
         mapUiSettings.isRotateGesturesEnabled = false
         //tencentMap!!.isMyLocationEnabled = true
 
-        initMyMarker()
+
         //addLine();
     }
 
-    protected fun updateMarkers(){
-        // 获取目前的好友位置列表
-        val mapFriend = HttpWorker.get().getLastPointMap()
-        // 更新底部状态条
-        updateBottomView(mapFriend)
+    protected fun updateAllMarkers( mapFriend :MutableMap<String, Friend>){
 
-        // 不需要显示的删除，没有获取到位置的删除，能获取到位置的更新位置
+        // 删除不需要显示的markers，
         for (key:String in markersMap.keys) {
-            //println("$key -> $value")
             if (!mapFriend.containsKey(key)){
                 markersMap.remove(key)
                 continue
             }
+            // 还需要显示的
             val f = mapFriend[key]
             if (!f!!.isShare)  // 未加好友，或者无数据
             {
                 val msg = "未能获取${f.uid} ${f.nick} 的位置,${f.msg}"
-                showMsg(msg)
+                //showMsg(msg)
+                f.msg = msg
                 markersMap.remove(key)
                 continue
             }
@@ -362,15 +431,18 @@ class TencentMapActivity : AppCompatActivity() {
             val position = LatLng(f.lat, f.lon)
             marker!!.position = position
 
-            // 删除，已经处理过了
-            mapFriend.remove(key)
         }
 
-        // 把剩下的新建一个标记
+        // 反向查找，找剩下的
         for ((k, f) in mapFriend) {
+            if (markersMap.containsKey(k)){
+                continue;
+            }
+
             if (!f.isShare){
                 val msg = "未能获取${f.uid} ${f.nick} 的位置,${f.msg}"
-                showMsg(msg)
+                //showMsg(msg)
+                f.msg = msg
                 continue
             }
             val marker = createMarker(f)
@@ -400,7 +472,7 @@ class TencentMapActivity : AppCompatActivity() {
 
         //开启信息窗口
         marker.isInfoWindowEnable = true
-        //marker.title = title
+        marker.title = title
         marker.position = position
         marker.showInfoWindow()
         return  marker
@@ -412,23 +484,60 @@ class TencentMapActivity : AppCompatActivity() {
         var lon = 116.397499
         var pos  = LatLng(lat, lon)
         if (friend != null){
-            lat = friend.lat
-            lon = friend.lon
-            pos = LatLng(lat, lon)
+            if (friend.uid == CurrentUser.getUser()!!.uid)
+            {
+                lat = GlobalData.currentTLocation!!.latitude
+                lon = GlobalData.currentTLocation!!.longitude
+            }else
+            {
+                lat = friend.lat
+                lon = friend.lon
+            }
         }
         else if (GlobalData.currentTLocation != null)
         {
             lat = GlobalData.currentTLocation!!.latitude
             lon = GlobalData.currentTLocation!!.longitude
-            pos = LatLng(lat, lon)
+
         }else{
+            // 未知自己位置信息
             return
+        }
+
+        pos = LatLng(lat, lon)
+
+        // 如果已经放大了，则不调整
+        var level = tencentMap!!.cameraPosition.zoom
+        if (level < GlobalData.defaultZoomLevel)
+        {
+            level = GlobalData.defaultZoomLevel
         }
 
         val cameraSigma = CameraUpdateFactory.newCameraPosition(
             CameraPosition(
                 pos,  //中心点坐标，地图目标经纬度
-                12f,  //目标缩放级别
+                level,  //目标缩放级别
+                0f,  //目标倾斜角[0.0 ~ 45.0] (垂直地图时为0)
+                0f
+            )
+        ) //目标旋转角 0~360° (正北方为0)
+        tencentMap!!.moveCamera(cameraSigma) //移动地图
+    }
+
+    fun moveCamera(lat:Double, lon:Double){
+        val pos = LatLng(lat, lon)
+
+        // 如果已经放大了，则不调整
+        var level = tencentMap!!.cameraPosition.zoom
+        if (level < GlobalData.defaultZoomLevel)
+        {
+            level = GlobalData.defaultZoomLevel
+        }
+
+        val cameraSigma = CameraUpdateFactory.newCameraPosition(
+            CameraPosition(
+                pos,  //中心点坐标，地图目标经纬度
+                level,  //目标缩放级别
                 0f,  //目标倾斜角[0.0 ~ 45.0] (垂直地图时为0)
                 0f
             )
@@ -449,10 +558,12 @@ class TencentMapActivity : AppCompatActivity() {
             title = "当前位置"
         }
 
-        val position = LatLng(lat, lon)
+        // 首次视野
+        moveCamera(lat, lon)
 
+        val position = LatLng(lat, lon)
         val options = MarkerOptions(position)
-        options.infoWindowEnable(false) //默认为true
+        options.infoWindowEnable(true) //默认为true
         options.title(title) //标注的InfoWindow的标题
         //options.snippet("地址: 北京市东城区东长安街") //标注的InfoWindow的内容
 
@@ -462,21 +573,7 @@ class TencentMapActivity : AppCompatActivity() {
 
         this.mMarker = tencentMap!!.addMarker(options)
         //开启信息窗口
-//        mMarker.isInfoWindowEnable = true
-//        mMarker.title = title
-
-        mMarker.position = position
-        val cameraSigma = CameraUpdateFactory.newCameraPosition(
-            CameraPosition(
-                position,  //中心点坐标，地图目标经纬度
-                12f,  //目标缩放级别
-                0f,  //目标倾斜角[0.0 ~ 45.0] (垂直地图时为0)
-                0f
-            )
-        ) //目标旋转角 0~360° (正北方为0)
-        tencentMap!!.moveCamera(cameraSigma) //移动地图
         mMarker.showInfoWindow()
-
     }
 
 
@@ -491,18 +588,37 @@ class TencentMapActivity : AppCompatActivity() {
 
             val pos = LatLng(lat, lon)
 
-            mMarker.title = "${pos.latitude}, ${pos.longitude}"
-            mMarker.snippet = GlobalData.currentTLocation!!.street
-            mMarker.showInfoWindow()
+            mMarker.position = pos
+            mMarker.title = title
+            mMarker.snippet = ""  //"${pos.latitude}, ${pos.longitude}"
             mMarker.isInfoWindowEnable = true
             mMarker.refreshInfoWindow()
+        }else{
+            if (GlobalData.isLocationEnabled)
+                mMarker.snippet = "等待定位信号"
+            else
+                mMarker.snippet= "请打开定位权限"
         }
     }
 
     protected  fun updateViews(){
-        updateMyMarker()   // 更新marker
-        // 更新好友位置
-        updateMarkers()    // 内部调用updateBottomView更新图标信息
+        updateMyMarker()   // 更新我自己的位置
+        // 先更新markers，在f中标记了部分内容，然后
+
+        // 获取目前的好友位置列表
+        val mapFriend = HttpWorker.get().getLastPointMap()
+        updateAllMarkers(mapFriend)    // 更新后，f.msg中含有错误消息
+        updateBottomView(mapFriend) // 更新底部状态条图标
+        updateFriendInfo()  // 当前用户的基本信息
+
+        // 首测获得自己的位置，需要初始化我的信息栏，并移动镜头
+        if (!isInitedInfo && GlobalData.currentTLocation != null){
+
+            var friend = Friend()
+            friend.fromUser(CurrentUser.getUser()!!)
+            onImageIconClick(friend)
+            isInitedInfo = true
+        }
     }
 
     // 请求权限的回调函数
