@@ -3,16 +3,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 <!-- 这里先隐藏一组，暂时用不这么多
+ -->
     <group android:id="@+id/nav_group_session">
+        <!--
         <item
             android:id="@+id/nav_newgroup"
             android:enabled="true"
             android:icon="@drawable/groups_create"
             android:title="@string/menu_newgroup"
             android:visible="true" />
+            -->
         <item
             android:id="@+id/nav_home"
-            android:icon="@drawable/msg_ask_question"
+            android:icon="@drawable/run"
             android:title="@string/menu_home" />
         <item
             android:id="@+id/nav_playground"
@@ -23,7 +26,7 @@
             android:icon="@drawable/emoji_tabs_faves"
             android:title="@string/menu_favourite" />
     </group>
-    -->
+
     <group android:id="@+id/nav_group_map">
         <item
             android:id="@+id/nav_map"

@@ -1,9 +1,7 @@
 package com.bird2fish.travelbook
 
 
-import android.Manifest
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
@@ -13,10 +11,9 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.LogHelper
@@ -254,12 +251,22 @@ class TencentMapActivity : AppCompatActivity() {
     }// end of update icons
 
 
+    // 左侧工具条
     private fun initToolBar() {
         val toolbar = findViewById<View>(R.id.toolbarMap) as Toolbar
         toolbar.title = "动态位置" //设置主标题名称
         //toolbar.subtitle = "" //设置副标题名称
         setSupportActionBar(toolbar)
-        toolbar.setNavigationIcon(R.drawable.msg_photo_settings);//是左边的图标样式
+        // R.drawable.msg_photo_settings
+        toolbar.setNavigationIcon(R.drawable.run24);//是左边的图标样式
+
+        // 设置标题栏颜色
+        if (this is FragmentActivity) {
+            supportActionBar?.setBackgroundDrawable(resources.getDrawable(R.color.gray_title))
+        } else {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            window.statusBarColor = resources.getColor(R.color.gray_title)
+        }
 
     }
 
@@ -305,22 +312,29 @@ class TencentMapActivity : AppCompatActivity() {
         return true
     }
 
+    private fun returnToDesktop() {
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        startActivity(intent)
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean
     {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            //backToMainActivity()
+            // 按下返回键时
+            returnToDesktop();
             return true;
         }
-        return false;
+        return super.onKeyDown(keyCode, event);
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean
     {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            backToMainActivity()
-            return true;
-        }
-        return false;
+//        if (keyCode == KeyEvent.KEYCODE_BACK) {
+//            //backToMainActivity()
+//            return true;
+//        }
+        return super.onKeyDown(keyCode, event);
     }
 
     // 将右侧的工具条设置

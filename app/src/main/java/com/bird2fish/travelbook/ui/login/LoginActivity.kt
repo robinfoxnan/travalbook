@@ -12,11 +12,13 @@ import android.os.StrictMode.VmPolicy
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bird2fish.travelbook.MainActivity
@@ -138,6 +140,14 @@ class LoginActivity : AppCompatActivity() {
             username.setText(olduser.uid)
             password.setText(olduser.pwd)
         }
+
+        // 设置标题栏颜色
+//        if (this is FragmentActivity) {
+//            supportActionBar?.setBackgroundDrawable(resources.getDrawable(R.color.toolbar_gray))
+//        } else {
+//            requestWindowFeature(Window.FEATURE_NO_TITLE)
+//            window.statusBarColor = resources.getColor(R.color.toolbar_gray)
+//        }
     }
 
     private fun updateUiWithUser(model: LoggedInUserView) {

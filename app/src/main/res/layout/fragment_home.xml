@@ -4,19 +4,115 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background1"
     tools:context=".ui.home.HomeFragment">
 
-    <TextView
-        android:id="@+id/text_home"
+
+    <HorizontalScrollView
+        android:id="@+id/hsvTop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/linear_layout_icons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- Add your icons here -->
+            <ImageView
+                android:id="@+id/btsport_hike"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_hike"
+                app:srcCompat="@drawable/hike" />
+
+            <ImageView
+                android:id="@+id/btsport_run"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_run"
+                app:srcCompat="@drawable/run" />
+
+
+            <ImageView
+                android:id="@+id/btsport_bike"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_bike"
+                app:srcCompat="@drawable/bike" />
+
+            <ImageView
+                android:id="@+id/btsport_motor"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_motor"
+                app:srcCompat="@drawable/motorbike" />
+
+            <ImageView
+                android:id="@+id/btsport_car"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_car"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/car" />
+
+            <ImageView
+                android:id="@+id/btsport_lasy"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/back_lasy"
+                app:srcCompat="@drawable/lasy" />
+
+
+            <!-- Add more ImageView elements for additional icons -->
+
+        </LinearLayout>
+
+
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/tvsport_all"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="75dp"
+        android:text="0.00"
+        android:textColor="#2ac582"
+        android:textSize="90sp"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hsvTop" />
+
+    <TextView
+        android:id="@+id/tvsport_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="运动总里程（千米）"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2ec98c"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvsport_all" />
+
+    <include
+        android:id="@+id/btn_start"
+        layout="@layout/custom_image_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="132dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

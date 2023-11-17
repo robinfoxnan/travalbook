@@ -6,6 +6,15 @@ import com.tencent.map.geolocation.TencentLocation
 import java.util.LinkedList
 
 class GlobalData {
+    enum class SportModeEnum(val intValue: Int) {
+        SPORT_MODE_HIKE(1),
+        SPORT_MODE_RUN(2),
+        SPORT_MODE_BIKE(3),
+        SPORT_MODE_MOTOR(4),
+        SPORT_MODE_CAR(5),
+        SPORT_MODE_LAZY(6)
+    }
+
     companion object{
         var httpServer : HttpService = HttpService()
         var isLocationEnabled = false          // 定位
@@ -41,12 +50,10 @@ class GlobalData {
         // 自己当前最好的位置
         //var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
         var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
-//        var currentLat :Double = 0.0               // 这几个是给腾讯地图改的
-//        var currentLng :Double = 0.0
-//        var currentAlt:Double = 0.0
-//        var currentSpeed :Double = 0.0
         var currentTLocation : TencentLocation? = null
         var currentTm :Long = 0
+
+        var sportMode : SportModeEnum = SportModeEnum.SPORT_MODE_HIKE
 
         private var glock = Any()
         fun getFollowListSize(): Int{

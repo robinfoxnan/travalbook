@@ -43,6 +43,7 @@
     <!-- DEFAULT COLORS -->
     <color name="default_neutral_white">#ffffffff</color> <!-- system_accent1_0 -->
     <color name="default_neutral_lighter">#ffe6e1e5</color> <!-- system_neutral1_100 -->
+    <color name="gray_title">#C0B6B8</color>
     <color name="default_neutral_medium_light">#ff7d7d7d</color> <!-- system_neutral1_300  todo check -->
     <color name="default_neutral_dark">#ff595959</color> <!-- system_neutral1_600 todo check-->
     <color name="gray">#a0a0a0</color>
@@ -56,5 +57,18 @@
     <color name="default_red_dark">#FFCA2D23</color>
     <color name="default_blue">#FF3C98DB</color>
     <color name="default_green">#FF4CAF50</color>
+
+    <!-- home page buttons -->
+    <color name="back_hike">#7ade60</color>
+    <color name="back_run">#f8c944</color>
+    <color name="back_bike">#20ca83</color>
+    <color name="back_motor">#a891fa</color>
+    <color name="back_car">#45a9ff</color>
+    <color name="back_lasy">#f99e57</color>
+    <color name="back_start">#39bc88</color>
+    <color name="back_stop">#39bc88</color>
+    <color name="back_suspend">#39bc88</color>
+    <color name="toolbar_gray">#b0b0b0</color>
+
 	
 </resources>

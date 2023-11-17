@@ -3,14 +3,19 @@ package com.bird2fish.travelbook.core
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.ui.contact.Friend
+
 
 public object UiHelper {
 
@@ -120,14 +125,14 @@ public object UiHelper {
         imageView.layoutParams = params
 
         // 设置图标资源
-        var id = R.drawable.icon1
+        var id = com.bird2fish.travelbook.R.drawable.icon1
         if (friend != null){
             id = getIconResId(friend.icon)
         }
         imageView.setImageResource(id)
 
         // 设置圆角背景
-        imageView.setBackgroundResource(R.drawable.rounded_border)
+        imageView.setBackgroundResource(com.bird2fish.travelbook.R.drawable.rounded_border)
 
         return imageView
     }
@@ -147,6 +152,41 @@ public object UiHelper {
         }else{
             return String.format("%.1f 千米/时", speed * 3.6 )
         }
+    }
+
+
+    //加载资源
+    fun idToDrawable(context:Context, id: Int): Drawable? {
+        return ContextCompat.getDrawable(context, id)
+    }
+
+    // 将imageview中图片的不透明的部分变为另一种颜色，用于按钮点击
+    fun replaceOpaqueWithColor(context: Context, resourceId: Int, replacementColorResId: Int, imageView: ImageView) {
+        // 原始图片
+        val originalBitmap = BitmapFactory.decodeResource(context.resources, resourceId)
+
+        // 创建一个新的Bitmap，用于修改颜色
+        val modifiedBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+
+        // 获取要替换的颜色
+        val replacementColor = ContextCompat.getColor(context, replacementColorResId)
+
+        // 遍历所有像素
+        for (x in 0 until modifiedBitmap.width) {
+            for (y in 0 until modifiedBitmap.height) {
+                // 获取像素颜色
+                val pixel = modifiedBitmap.getPixel(x, y)
+
+                // 判断是否为不透明的颜色
+                if (Color.alpha(pixel) == 255) {
+                    // 将不透明部分替换为指定颜色
+                    modifiedBitmap.setPixel(x, y, replacementColor)
+                }
+            }
+        }
+
+        // 将修改后的Bitmap显示在ImageView中
+        imageView.setImageBitmap(modifiedBitmap)
     }
 
 }

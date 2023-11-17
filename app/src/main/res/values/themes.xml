@@ -2,8 +2,8 @@
     <!-- Base application theme. -->
     <style name="Theme.TravelBook" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorPrimary">@color/gray_title</item>
+        <item name="colorPrimaryVariant">@color/default_neutral_lighter</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
@@ -17,6 +17,9 @@
     <style name="Theme.TravelBook.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/gray_title</item>
+        <item name="colorPrimaryVariant">@color/default_neutral_lighter</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.TravelBook.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

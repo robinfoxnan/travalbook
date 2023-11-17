@@ -11,6 +11,7 @@ import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.Window
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.get
+import androidx.fragment.app.FragmentActivity
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.TrackerService
@@ -65,11 +67,12 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.appBarMain.toolbar)
 
+        // 点击悬浮按钮
         binding.appBarMain.fab.setOnClickListener {
-            openDrawer();
-//                view ->
-//            Snackbar.make(view, "自定义快捷键", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null).show()
+            //openDrawer();
+            val intent = Intent(this, TencentMapActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            startActivity(intent)
 
         }
 
@@ -89,7 +92,8 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 // 这里先隐藏一组，暂时用不这么多
-                //R.id.nav_newgroup, R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
+                //R.id.nav_newgroup,
+                R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
                 R.id.nav_map, R.id.nav_track,
                 R.id.nav_contract, R.id.nav_setting
             ), drawerLayout
@@ -108,6 +112,14 @@ class MainActivity : AppCompatActivity() {
         setUserInfo()
         // 启动位置服务
         startLocationService()
+
+        // 设置标题栏颜色
+//        if (this is FragmentActivity) {
+//            supportActionBar?.setBackgroundDrawable(resources.getDrawable(R.color.toolbar_gray))
+//        } else {
+//            requestWindowFeature(Window.FEATURE_NO_TITLE)
+//            window.statusBarColor = resources.getColor(R.color.toolbar_gray)
+//        }
 
     }
 
