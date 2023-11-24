@@ -19,6 +19,7 @@ object Keys {
     const val ACTION_START: String = "com.bird2fish.travalbook.action.START"
     const val ACTION_STOP: String = "com.bird2fish.travalbook.action.STOP"
     const val ACTION_RESUME: String = "com.bird2fish.travalbook.action.RESUME"
+    const val ACTION_INIT: String = "com.bird2fish.travalbook.action.INIT"
 
     // args
     const val ARG_TRACK_TITLE: String = "ArgTrackTitle"

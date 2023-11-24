@@ -1,103 +1,81 @@
 package com.bird2fish.travelbook.core
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
+import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.os.Build
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.net.ConnectivityManager
+import android.os.*
+import androidx.core.content.ContextCompat.getSystemService
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.NotificationActionReceiver
+import com.bird2fish.travelbook.helper.NotificationHelper
 import com.tencent.map.geolocation.TencentLocation
 import com.tencent.map.geolocation.TencentLocationListener
 import com.tencent.map.geolocation.TencentLocationManager
 import com.tencent.map.geolocation.TencentLocationRequest
 
 
-class TencentLocService : TencentLocationListener {
-    private var locationManager: TencentLocationManager? = null
-    private var notificationManager: NotificationManager? = null
-    private var isCreateChannel = false
+class TencentLocService : TencentLocationListener, Service() , SensorEventListener {
+    private val TAG: String = LogHelper.makeLogTag(TencentLocService::class.java)
 
-    // 添加通知栏
-    private fun buildNotification(context: Context): Notification? {
-        var builder: Notification.Builder? = null
-        var notification: Notification? = null
-        if (Build.VERSION.SDK_INT >= 26) {
-            //Android O上对Notification进行了修改，如果设置的targetSDKVersion>=26建议使用此种方式创建通知栏
-            if (notificationManager == null) {
-                notificationManager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private var locationManager: TencentLocationManager? = null    // 腾讯给的定位的服务
+
+    private val networkChangeReceiver = NetworkChangeReceiver()   // 网络通信方式改变造成定位信号丢失
+
+
+    private lateinit var notificationManager: NotificationManager   // 系统的通知管理器
+    private lateinit var notificationHelper: NotificationHelper     // 辅助工具，不停的更新那个通知
+    private lateinit var sensorManager: SensorManager  // 步数传感器
+    private var stepCountOffset :Float = 0f   // 与传感器的偏差，首次需要设置
+    private var stepCount:Float =  0f         // 当前步数计算得来的
+
+    private var trackingState :Int  = Keys.STATE_TRACKING_NOT
+    private var trackLength:Float = 0f    // 距离长
+    private var trackDuration:Long = 0         // 时长
+
+    private val binder = LocalBinder()                 // 用于绑定，返回给客户端的绑定引用
+
+    private val handler: Handler = Handler(Looper.getMainLooper())  // 自己单次调用，而不是持续调用
+
+    // 单例模式
+    companion object {
+        var instance: TencentLocService? = null
+            get() {
+//                if (field == null) {
+//                    // 初始化权限，以及用户同意隐私协议
+//                    field = TencentLocService()
+//                }
+                return field
             }
-            val channelId = context.packageName
-            if (!isCreateChannel) {
-                val notificationChannel = NotificationChannel(
-                    channelId,
-                    NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
-                )
-                notificationChannel.enableLights(true) //是否在桌面icon右上角展示小圆点
-                notificationChannel.lightColor = Color.BLUE //小圆点颜色
-                notificationChannel.setShowBadge(true) //是否在久按桌面图标时显示此渠道的通知
-                notificationManager!!.createNotificationChannel(notificationChannel)
-                isCreateChannel = true
-            }
-            builder = Notification.Builder(context.applicationContext, channelId)
-        } else {
-            builder = Notification.Builder(context.applicationContext)
-        }
-        builder.setSmallIcon(R.drawable.ic_notification_icon_small_24dp)
-            .setContentTitle("知途")
-            .setContentText("正在后台运行")
-            .setLargeIcon(
-                BitmapFactory.decodeResource(
-                    context.resources,
-                     R.drawable.ic_bar_stop_24dp
-                )
-            )
-//            .setSmallIcon(
-//                BitmapFactory.decodeResource(
-//                    context.resources,
-//                    R.drawable.ic_bar_stop_24dp
-//                )
-//            )
-            .setWhen(System.currentTimeMillis())
-
-
-        // 添加一个按钮，广播
-        val buttonIntent = Intent(NotificationActionReceiver.ACTION_BUTTON_CLICK_STOP)
-        val buttonPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            buttonIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or  PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val action: Notification.Action = Notification.Action.Builder(
-            com.bird2fish.travelbook.R.drawable.ic_bar_stop_24dp,
-            "停止",
-            buttonPendingIntent
-        ).build()
-
-        // 在通知构建器中添加按钮
-        builder.addAction(action)
-
-        notification = if (Build.VERSION.SDK_INT >= 16) {
-            builder.build()
-        } else {
-            builder.notification
-        }
-        return notification
     }
 
-    // // 在你的 Activity 或 Fragment 中初始化定位服务
+    private fun buildNotification(): Notification{
+
+            val notification: Notification = notificationHelper.createNotification(
+                trackingState,
+                this.trackLength,
+                this.trackDuration,
+                false
+            )
+            //notificationManager.notify(Keys.TRACKER_SERVICE_NOTIFICATION_ID, notification)
+            return notification
+
+    }
+
+    // 在你的 Activity 或 Fragment 中初始化定位服务
     fun startBackGround(context: Context): Boolean {
-        val mContext = context.applicationContext
+        val mContext = this.applicationContext  // 使用服务的
+
         locationManager = TencentLocationManager.getInstance(mContext)
-        locationManager!!.enableForegroundLocation(LOC_NOTIFICATIONID, buildNotification(context))
+        locationManager!!.enableForegroundLocation(Keys.TRACKER_SERVICE_NOTIFICATION_ID, buildNotification())
         val locationRequest = createReq()
         val error =
             locationManager!!.requestLocationUpdates(locationRequest, this, context.mainLooper)
@@ -163,6 +141,44 @@ class TencentLocService : TencentLocationListener {
         }
     }
 
+    fun getOneTimeLoacation(context: Context): Boolean{
+        val mContext = context.applicationContext
+        locationManager = TencentLocationManager.getInstance(mContext)
+        val locationRequest = createReq()
+        val error = locationManager!!.requestSingleFreshLocation(locationRequest, this, Looper.getMainLooper());
+        return isOk(context, error)
+    }
+
+    // 启动一个循环，自己的定制任务
+    fun startLocationLoop(){
+        handler.postDelayed(periodicTrackUpdate, 0)
+    }
+
+    // TODO: 需要对长期不动的情况进行优化，降低采集频率
+    private val periodicTrackUpdate: Runnable = object : Runnable {
+        override fun run() {
+
+            getOneTimeLoacation(this@TencentLocService)
+            //buildNotification()
+            // 下一次定时
+            handler.postDelayed(this, GlobalData.intervalOfLocation)
+        }
+    }
+
+    // 启动腾讯的服务
+    // 这里做了一个优化，当定位频率小于3秒，使用持续定位，如果频率低，则使用单次定位降低电池消耗。
+    fun restartLocationService(){
+        stopBackGround()
+        if (GlobalData.intervalOfLocation <= 3000){
+            startBackGround(this)
+        }else{
+            startLocationLoop()
+        }
+
+        //startLocationService(this)
+
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////
     //
     override fun onLocationChanged(tencentLocation: TencentLocation, error: Int, s: String) {
@@ -205,18 +221,154 @@ class TencentLocService : TencentLocationListener {
 
     override fun onStatusUpdate(s: String, i: Int, s1: String) {}
 
-    companion object {
-        var instance: TencentLocService? = null
-            get() {
-                if (field == null) {
-                    // 初始化权限，以及用户同意隐私协议
-                    TencentLocationManager.setUserAgreePrivacy(true)
-                    field = TencentLocService()
-                }
-                return field
-            }
-            private set
-        private const val LOC_NOTIFICATIONID = 1 // 你自己定义的唯一标识符
-        private const val NOTIFICATION_CHANNEL_NAME = "启停跟踪"
+
+
+
+    ///////////////////////////////////////////////////////
+    // 服务部分继承得来的
+    inner class LocalBinder : Binder() {
+        val service: TencentLocService = this@TencentLocService
     }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        // 设置单例模式
+        TencentLocService.instance = this
+
+        TencentLocationManager.setUserAgreePrivacy(true)
+
+        // 注册广播接收器
+        //val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        //registerReceiver(networkChangeReceiver, filter)
+        // 注册广播接收者
+        registerReceiver(networkChangeReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationHelper = NotificationHelper(this)
+        sensorManager = this.getSystemService(Context.SENSOR_SERVICE) as SensorManager    // 计步器
+
+
+        startForeground(Keys.TRACKER_SERVICE_NOTIFICATION_ID, buildNotification());
+
+    }
+
+    override fun onDestroy() {
+        // 取消注册广播接收器，以避免内存泄漏
+        TencentLocService.instance = null
+        unregisterReceiver(networkChangeReceiver)
+        super.onDestroy()
+        System.out.println("服务退出了")
+        LogHelper.d("TencentLocService", "服务退出了")
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        // SERVICE RESTART (via START_STICKY)
+        // 可以通过检查 intent 是否为 null 来判断是否是重新启动的
+        if (intent == null)
+        {
+            restartLocationService()
+
+
+            if (trackingState == Keys.STATE_TRACKING_ACTIVE) {
+                LogHelper.w(TAG, "重启动服务.")
+
+            }
+        }
+        else if (Keys.ACTION_INIT == intent.action)
+        {
+            // 启动服务的时候，先启动服务，
+            restartLocationService()
+        }
+        else if (Keys.ACTION_STOP == intent.action)
+        {
+            stopTrack()
+        }
+        else if (Keys.ACTION_START == intent.action)
+        {
+            startTrack()
+
+        }
+        else if (Keys.ACTION_RESUME == intent.action)
+        {
+            resumeTrack()
+        }
+
+        //还可以其他的方式获取命令
+        //val command = intent!!.getStringExtra("command");
+
+
+
+        // 具体来说，START_STICKY 表示如果服务进程被异常终止（例如由于内存不足），
+        // 系统会尝试重新创建服务并调用 onStartCommand 方法，
+        // 但不会重新传递最后一次的 Intent。
+        // 服务会被重新启动，但 Intent 对象将为 null。
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent): IBinder? {
+        return binder
+    }
+    /* Overrides onRebind from Service */
+    override fun onRebind(intent: Intent?) {
+
+    }
+
+    /* Overrides onUnbind from Service */
+    override fun onUnbind(intent: Intent?): Boolean {
+        return true
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // 步数传感器部分
+    private fun startStepCounter() {
+        val stepCounterAvailable = sensorManager.registerListener(this,
+            sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER),
+            SensorManager.SENSOR_DELAY_UI)
+
+        if (!stepCounterAvailable) {
+            LogHelper.w(TAG, "Pedometer sensor not available.")
+            this.stepCount = -1f
+        }
+    }
+
+    // 计算传感器的消息函数1
+    override fun onSensorChanged(sensorEvent: SensorEvent?) {
+        var steps: Float = 0f
+        if (sensorEvent != null) {
+            if (stepCountOffset == 0f) {
+                // store steps previously recorded by the system
+                stepCountOffset = (sensorEvent.values[0] - 1) - this.stepCount // subtract any steps recorded during this session in case the app was killed
+            }
+            // calculate step count - subtract steps previously recorded
+            steps = sensorEvent.values[0] - stepCountOffset
+        }
+        // update step count in track
+        this.stepCount = steps
+    }
+
+    // 计算传感器的消息函数2
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        TODO("Not yet implemented")
+    }
+    /////////////////////////////////////////////////////////////////////
+    // 下面用来管理路程
+    fun startTrack(){
+        UiHelper.showMessage(this, "开始")
+    }
+
+    fun stopTrack(){
+        UiHelper.showMessage(this, "停止")
+    }
+
+    fun resumeTrack(){
+        UiHelper.showMessage(this, "继续")
+    }
+
+    // 通知
+    fun noticeNetworkChange(){
+        UiHelper.showMessage(this, "网络改变")
+    }
+
 }

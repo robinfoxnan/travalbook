@@ -9,40 +9,51 @@ import android.os.IBinder
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.StrictMode.VmPolicy
-import android.text.Editable
-import android.text.TextWatcher
+import android.text.*
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.View
 import android.view.Window
 import android.view.inputmethod.EditorInfo
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.bird2fish.travelbook.BottomWindow
 import com.bird2fish.travelbook.MainActivity
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.TencentMapActivity
 import com.bird2fish.travelbook.core.HttpService
+import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityLoginBinding
+import com.bird2fish.travelbook.helper.AgreementReader
+import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
+import java.io.File
 
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var loginViewModel: LoginViewModel
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var checkPrivacy: CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
 
         super.onCreate(savedInstanceState)
 
+        val fileEx: File? = this.getExternalFilesDir(null)
+        if (fileEx != null){
+            val dir = fileEx.absolutePath
+            LogHelper.setLogDir(dir)
+        }
+
         // 这里先这样初始化
         PreferencesHelper.init(this)
-
-
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -53,6 +64,8 @@ class LoginActivity : AppCompatActivity() {
         val loading = binding.loading
         var imageview = binding.imageViewTitle
         imageview!!.setImageResource(R.drawable.logo)
+
+        this.checkPrivacy = binding.checkBoxAgree!!
 
         loginViewModel = ViewModelProvider(this, LoginViewModelFactory())
             .get(LoginViewModel::class.java)
@@ -115,19 +128,38 @@ class LoginActivity : AppCompatActivity() {
             setOnEditorActionListener { _, actionId, _ ->
                 when (actionId) {
                     EditorInfo.IME_ACTION_DONE ->
-                        loginViewModel.login(
-                            username.text.toString(),
-                            password.text.toString(),
-                            service
-                        )
+                    {
+                        if (checkPrivacy.isChecked())
+                        {
+                            loginViewModel.login(
+                                username.text.toString(),
+                                password.text.toString(),
+                                service
+                            )
+                        }
+                        else{
+                            UiHelper.showMessage(this@LoginActivity, "请查看并同意相关协议")
+                        }
+
+                    }
+
                 }
                 false
             }
 
             login.setOnClickListener {
-                loading.visibility = View.VISIBLE
-                loginViewModel.login(username.text.toString(),
-                    password.text.toString(), service)
+                if (checkPrivacy.isChecked())
+                {
+                    loading.visibility = View.VISIBLE
+                    loginViewModel.login(
+                        username.text.toString(),
+                        password.text.toString(),
+                        service
+                    )
+                }
+                else{
+                    UiHelper.showMessage(this@LoginActivity, "请查看并同意相关协议")
+                }
             }
         }
 
@@ -148,6 +180,75 @@ class LoginActivity : AppCompatActivity() {
 //            requestWindowFeature(Window.FEATURE_NO_TITLE)
 //            window.statusBarColor = resources.getColor(R.color.toolbar_gray)
 //        }
+
+        val privacyPolicyTextView = findViewById<TextView>(R.id.tv_privacy_agree)
+        privacyPolicyTextView.text = getAgreementText()
+        privacyPolicyTextView.movementMethod = LinkMovementMethod.getInstance()
+    }
+
+    private fun getAgreementText(): SpannableString {
+        val agreementText = "注册登录视为同意《隐私协议》与《用户协议》"
+        val spannableString = SpannableString(agreementText)
+
+        // 创建 ClickableSpan
+        val privacyClickableSpan = object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                // 处理点击《隐私协议》的逻辑
+                showPrivacyPolicy()
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                super.updateDrawState(ds)
+                // 设置链接文字的样式，例如颜色、下划线等
+                //ds.isUnderlineText = true
+                ds.color = ContextCompat.getColor(this@LoginActivity, R.color.gray)
+            }
+        }
+
+        val userAgreementClickableSpan = object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                // 处理点击《用户协议》的逻辑
+                showUserAgreement()
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                super.updateDrawState(ds)
+                // 设置链接文字的样式，例如颜色、下划线等
+                //ds.isUnderlineText = true
+                ds.color = ContextCompat.getColor(this@LoginActivity, R.color.gray)
+            }
+        }
+
+        // 将 ClickableSpan 应用到指定范围的文字
+        val privacyStart = agreementText.indexOf("《隐私协议》")
+        val privacyEnd = privacyStart + "《隐私协议》".length
+        spannableString.setSpan(privacyClickableSpan, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        val userAgreementStart = agreementText.indexOf("《用户协议》")
+        val userAgreementEnd = userAgreementStart + "《用户协议》".length
+        spannableString.setSpan(userAgreementClickableSpan, userAgreementStart, userAgreementEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        return spannableString
+    }
+
+
+    private fun showPrivacyPolicy() {
+        // 启动一个新的界面或弹窗，显示隐私协议的内容
+        val agreementReader = AgreementReader(resources)
+        val privacyPolicyText = agreementReader.readPrivacyPolicy()
+        val popWindow = BottomWindow(this, R.layout.pop_privacy, privacyPolicyText)
+        popWindow.showPopupWindow()
+
+        //UiHelper.showMessage(this, privacyPolicyText)
+    }
+
+    private fun showUserAgreement() {
+        val agreementReader = AgreementReader(resources)
+        //UiHelper.showMessage(this, "同意")
+        val userAgreementText = agreementReader.readUserAgreement()
+
+        val popWindow = BottomWindow(this, R.layout.pop_privacy, userAgreementText)
+        popWindow.showPopupWindow()
     }
 
     private fun updateUiWithUser(model: LoggedInUserView) {

@@ -31,6 +31,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-feature android:name="android.hardware.location.network" /> <!-- NORMAL PERMISSIONS, automatically granted -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -40,6 +42,10 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- log-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -51,6 +57,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TravelBook"
         android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
 
         <activity
@@ -66,7 +73,8 @@
             <!--Theme.AppCompat.Light.NoActionBar -->
         <activity
             android:name=".TencentMapActivity"
-            android:exported="false"
+            android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.TravelBook.NoActionBar">
             <meta-data
                 android:name="android.app.lib_name"
@@ -98,11 +106,12 @@
             android:enabled="true"
             android:exported="true" />
 
-        <receiver
-            android:name=".helper.NotificationActionReceiver"
+        <!-- 网络状态改变的广播 -->
+        <receiver android:name=".core.NetworkChangeReceiver"
+            android:label="NetworkChangeReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.yourapp.ACTION_BUTTON_CLICK_STOP" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
 
@@ -111,13 +120,13 @@
             android:foregroundServiceType="location"/>
 
         <service
-            android:name=".core.TrackerService"
+            android:name=".core.TencentLocService"
             android:exported="false"
             android:foregroundServiceType="location">
             <intent-filter>
-                <action android:name="org.y20k.trackbook.action.START" />
-                <action android:name="org.y20k.trackbook.action.STOP" />
-                <action android:name="org.y20k.trackbook.action.DISMISS" />
+                <action android:name="com.bird2fish.travalbook.action.START" />
+                <action android:name="com.bird2fish.travalbook.action.STOP" />
+                <action android:name="com.bird2fish.travalbook.action.RESUME" />
             </intent-filter>
         </service> <!-- TRACKING TOGGLE SERVICE SYSTEM QUICK SETTINGS -->
         <meta-data

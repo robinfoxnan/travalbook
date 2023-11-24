@@ -1,7 +1,9 @@
 package com.bird2fish.travelbook.ui.home
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.*
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,8 +15,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.GlobalData
+import com.bird2fish.travelbook.core.Keys
+import com.bird2fish.travelbook.core.TencentLocService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.FragmentHomeBinding
+import com.bird2fish.travelbook.helper.PreferencesHelper
 
 class HomeFragment : Fragment() {
 
@@ -43,11 +48,6 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-//        val textView: TextView = binding.textHome
-//        homeViewModel.text.observe(viewLifecycleOwner) {
-//            textView.text = it
-//        }
-
         this.btnHike = binding.btsportHike
         this.btnRun = binding.btsportRun
         this.btnBike = binding.btsportBike
@@ -59,20 +59,13 @@ class HomeFragment : Fragment() {
         initTopbarEvent()
 
         // 根据当前状态来初始化
-        changeMode()
+        initSetMode()
         return root
     }
+    /////////////////////////////////////////////////////////////////////////////
 
     // 将所有的图片复位
     private fun initToolBarImageButton(){
-//        var btnHike = binding.btsportHike
-//        var btnRun = binding.btsportRun
-//        var btnBike = binding.btsportBike
-//
-//        var btnMotor = binding.btsportMotor
-//        var btnCar = binding.btsportCar
-//        var btnLasy = binding.btsportLasy
-
         btnHike.setImageResource(R.drawable.hike)
         btnHike.background = UiHelper.idToDrawable(requireActivity(), R.drawable.back_hike)
 
@@ -189,6 +182,7 @@ class HomeFragment : Fragment() {
     private fun initTopbarEvent(){
         btnHike.setOnClickListener{
             GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_HIKE
+
             changeMode()
         }
 
@@ -219,10 +213,17 @@ class HomeFragment : Fragment() {
 
     }
 
-    // 切换卫星信号采集频率
-    private fun changeMode(){
-        when (GlobalData.sportMode) {
+    // 初始化时候设置
+    private fun initSetMode()
+    {
+//        try {
+//            GlobalData.sportMode =  GlobalData.SportModeEnum.valueOf(PreferencesHelper.getSportMode())
+//        }catch (e: Exception){
+//            GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_HIKE
+//        }
 
+        // 仅仅设置图标
+        when (GlobalData.sportMode) {
             GlobalData.SportModeEnum.SPORT_MODE_HIKE->{
                 onClickHike()
             }
@@ -243,11 +244,68 @@ class HomeFragment : Fragment() {
             GlobalData.SportModeEnum.SPORT_MODE_LAZY->{
                 onClickLasy()
             }
-//            else -> {
-//
-//            }
+
         }
+
     }
+
+    // 切换卫星信号采集频率
+    private fun changeMode(){
+
+        // 运动模式
+        PreferencesHelper.setSportMode(GlobalData.sportMode.name)
+
+        when (GlobalData.sportMode) {
+
+            GlobalData.SportModeEnum.SPORT_MODE_HIKE->{
+                GlobalData.intervalOfLocation = PreferencesHelper.getModeHikePosInterval()
+                onClickHike()
+            }
+
+            GlobalData.SportModeEnum.SPORT_MODE_RUN->{
+                GlobalData.intervalOfLocation = PreferencesHelper.getModeRunPosInterval()
+                onClickRun()
+            }
+
+            GlobalData.SportModeEnum.SPORT_MODE_BIKE->{
+                GlobalData.intervalOfLocation= PreferencesHelper.getModeBikePosInterval()
+                onClickBike()
+            }
+            GlobalData.SportModeEnum.SPORT_MODE_MOTOR->{
+                GlobalData.intervalOfLocation = PreferencesHelper.getModeMotorPosInterval()
+                onClickMotor()
+            }
+            GlobalData.SportModeEnum.SPORT_MODE_CAR->{
+                GlobalData.intervalOfLocation = PreferencesHelper.getModeCarPosInterval()
+                onClickCar()
+            }
+            GlobalData.SportModeEnum.SPORT_MODE_LAZY->{
+                GlobalData.intervalOfLocation = PreferencesHelper.getModeLasyPosInterval()
+                onClickLasy()
+            }
+
+        }
+
+        PreferencesHelper.setCurrentPosInterval(GlobalData.intervalOfLocation)
+
+//        if (TencentLocService.instance != null){
+//            TencentLocService.instance!!.restartLocationService()
+//        }
+
+        val intent = Intent(requireActivity(), TencentLocService::class.java)
+        //intent.putExtra("command", "start"); // 通过Intent传递命令
+        intent.action = Keys.ACTION_INIT
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requireActivity().startForegroundService(intent);
+        } else {
+            requireActivity().startService(intent);
+        }
+        val detail = String.format("设置GPS采集间隔为 %d 秒", GlobalData.intervalOfLocation / 1000)
+        UiHelper.showCenterMessage(requireActivity(), detail)
+
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

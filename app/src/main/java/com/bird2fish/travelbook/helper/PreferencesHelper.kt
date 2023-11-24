@@ -218,4 +218,123 @@ object PreferencesHelper {
 
         editor.commit() //提交修改
     }
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    // 徒步30秒
+    fun getModeHikePosInterval() :Long {
+        var t = sharedPreferences.getLong("hikePosInterval", 30000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeHikePosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("hikePosInterval", t)
+        editor.commit() //提交修改
+    }
+
+    // 跑步10秒
+    fun getModeRunPosInterval() :Long {
+        var t = sharedPreferences.getLong("runPosInterval", 10000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeRunPosLongerval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("runPosInterval", t)
+        editor.commit() //提交修改
+    }
+
+
+    // 自行车7秒
+    fun getModeBikePosInterval() :Long {
+        var t = sharedPreferences.getLong("bikePosInterval", 7000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeBikePosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("bikePosInterval", t)
+        editor.commit() //提交修改
+    }
+
+    // 摩托车5秒
+    fun getModeMotorPosInterval() :Long {
+        var t = sharedPreferences.getLong("motorPosInterval", 5000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeMotorPosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("motorPosInterval", t)
+        editor.commit() //提交修改
+    }
+
+    // 汽车5秒
+    fun getModeCarPosInterval() :Long {
+        var t = sharedPreferences.getLong("carPosInterval", 5000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeCarPosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("carPosInterval", t)
+        editor.commit() //提交修改
+    }
+
+    // 节能模式
+    fun getModeLasyPosInterval() :Long {
+        var t = sharedPreferences.getLong("lasyPosInterval", 60000)
+        if (t < 1000){
+            return 1000
+        }
+        return t
+    }
+
+    fun setModeLasyPosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("lasyPosInterval", t)
+        editor.commit() //提交修改
+    }
+/////////////////////////////////////////////////////////////////////////////
+    // 运行模式
+    fun setSportMode(t :String) {
+        val editor = sharedPreferences.edit()
+        editor.putString("sportMode", t)
+        editor.commit() //提交修改
+    }
+
+    fun getSportMode(): String{
+        var t = sharedPreferences.getString("sportMode", "")
+
+        return t!!
+    }
+
+    fun setCurrentPosInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("currentModeInterval", t)
+        editor.commit() //提交修改
+    }
+
+    fun getCurrentPosInterval(): Long{
+        var t = sharedPreferences.getLong("currentModeInterval", 3000)
+        if (t < 1000){
+            t = 1000
+        }
+        return t
+    }
+
 }

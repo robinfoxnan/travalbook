@@ -1,6 +1,8 @@
 package com.bird2fish.travelbook.core
 
 import android.location.Location
+import com.bird2fish.travelbook.helper.DateTimeHelper
+import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.tencent.map.geolocation.TencentLocation
 import java.util.LinkedList
@@ -21,16 +23,30 @@ class GlobalData {
         var isLocationBackgroudEnabled = false // 后台和运行
         var isBodySensorEnabled = false        // 步数
         var isRecognitionEnabled = false       // 状态
+        var isFileReadWriteEnabaled = false    // 文件读写
 
         var isRecordingTrack = false         // 是否在录制轨迹
         var currentFriend :Friend? = null
 
         var  intervalOfLocation: Long = 2000         // 采样间隔与上报是一样的获取好友数据
-        var  intervalOfRefresh:Long = 2000           // 刷新好友位置界面的刷新率
+        var  intervalOfRefresh:Long = 2000           // 刷新好友位置,界面的刷新率与httpworker中一致，后台则不刷新
+        var  sportMode :SportModeEnum = SportModeEnum.SPORT_MODE_HIKE
+        var  shouldRefresh :Boolean = true          // 是否获取好友信息
         var  defaultZoomLevel = 13f
+
+        // 在第一个被加载的页面中使用
+        fun InitLoad(){
+            this.intervalOfLocation = PreferencesHelper.getCurrentPosInterval()
+            try {
+                GlobalData.sportMode =  GlobalData.SportModeEnum.valueOf(PreferencesHelper.getSportMode())
+            }catch (e: Exception){
+                GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_HIKE
+            }
+        }
 
         fun setCurrentLocation(pos :TencentLocation){
             this.currentTLocation = pos
+            currentTm = DateTimeHelper.getTimestamp()
             HttpWorker.get().pushGpx(pos);
         }
 
@@ -50,10 +66,11 @@ class GlobalData {
         // 自己当前最好的位置
         //var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
         var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
+
+        @Volatile
         var currentTLocation : TencentLocation? = null
         var currentTm :Long = 0
 
-        var sportMode : SportModeEnum = SportModeEnum.SPORT_MODE_HIKE
 
         private var glock = Any()
         fun getFollowListSize(): Int{

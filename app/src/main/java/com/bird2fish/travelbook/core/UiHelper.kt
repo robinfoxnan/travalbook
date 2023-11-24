@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.TypedValue
@@ -187,6 +188,37 @@ public object UiHelper {
 
         // 将修改后的Bitmap显示在ImageView中
         imageView.setImageBitmap(modifiedBitmap)
+    }
+
+    fun loadAndScaleImage(context: Context, resourceId: Int): Drawable? {
+        try {
+            // 从资源中加载原始图片
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeResource(context.resources, resourceId, options)
+
+            // 计算缩放比例
+            val targetWidth = 24
+            val targetHeight = 24
+            val scaleFactor = Math.min(
+                options.outWidth / targetWidth,
+                options.outHeight / targetHeight
+            )
+
+            // 设置缩放比例
+            options.inJustDecodeBounds = false
+            options.inSampleSize = scaleFactor
+
+            // 重新加载图片并缩放
+            val scaledBitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
+
+            // 创建 Drawable
+            return BitmapDrawable(context.resources, scaledBitmap)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return null
     }
 
 }

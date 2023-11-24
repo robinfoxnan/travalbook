@@ -43,12 +43,12 @@ class HttpWorker {
 
 
     public fun startWorker(){
+        if (bRunning)
+            return
 
         host = PreferencesHelper.getHostName()
         schema = PreferencesHelper.getHostSchema()
 
-        if (bRunning)
-            return
         bRunning = true
         Thread {
             doWork()
@@ -120,13 +120,16 @@ class HttpWorker {
                 gpxList1.clear()
             }
 
-            // 定期更新好友位置信息
-            val tm = DateTimeHelper.getTimeStamp()
-            if ((tm - lastUpdateTm) > GlobalData.intervalOfRefresh)
-            {
-                getLastPoint()
-                lastUpdateTm = tm
+            if (GlobalData.shouldRefresh){
+                // 定期更新好友位置信息
+                val tm = DateTimeHelper.getTimeStamp()
+                if ((tm - lastUpdateTm) > GlobalData.intervalOfRefresh)
+                {
+                    getLastPoint()
+                    lastUpdateTm = tm
+                }
             }
+
 
             // 长时间工作后需要检查是否需要退出
             if (!bRunning){
@@ -165,7 +168,8 @@ class HttpWorker {
         jsonObject.put("ele", location.altitude)
         jsonObject.put("accuracy", location.accuracy)
         jsonObject.put("src", location.sourceProvider)
-        jsonObject.put("direction", location.direction)
+        //System.out.printf("位置的方向：%f \n", location.direction)
+        //jsonObject.put("direction", location.direction)
 
         if (location.city != null)  jsonObject.put("city", location.city)
         if (location.address != null)  jsonObject.put("addr", location.address)
@@ -263,6 +267,7 @@ class HttpWorker {
                     friend.ele = pt.getDouble("ele")
                     friend.speed = pt.getDouble("speed")
                     friend.tm = pt.getLong("tm")
+                    friend.street = pt.getString("street")
                     return true
                 }
             }else{

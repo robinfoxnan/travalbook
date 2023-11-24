@@ -34,10 +34,10 @@
     <string name="setting_refresh_interval">获取好友位置信息周期</string>
 
     <!-- Notification -->
-    <string name="notification_title_trackbook_running">记录中</string>
-    <string name="notification_title_trackbook_not_running">未运行</string>
+    <string name="notification_title_trackbook_running">正在录制轨迹</string>
+    <string name="notification_title_trackbook_not_running">无在录轨迹</string>
     <string name="notification_pause">暂停</string>
-    <string name="notification_resume">继续</string>
+    <string name="notification_resume">开始/继续</string>
     <string name="notification_show">显示</string>
     <string name="notification_channel_recording_name">运动状态</string>
     <string name="notification_channel_recording_description">显示时长和距离</string>

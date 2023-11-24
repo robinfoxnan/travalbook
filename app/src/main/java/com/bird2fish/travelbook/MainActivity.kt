@@ -29,7 +29,6 @@ import androidx.core.view.get
 import androidx.fragment.app.FragmentActivity
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.HttpService
-import com.bird2fish.travelbook.core.TrackerService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityMainBinding
 import com.bird2fish.travelbook.helper.LogHelper
@@ -110,8 +109,6 @@ class MainActivity : AppCompatActivity() {
 
         // 边栏上侧用户信息部分
         setUserInfo()
-        // 启动位置服务
-        startLocationService()
 
         // 设置标题栏颜色
 //        if (this is FragmentActivity) {
@@ -162,59 +159,7 @@ class MainActivity : AppCompatActivity() {
 
 
     ///////////////////////////////////////////////////////////////////////
-    private var bound: Boolean = false
-    private  var trackerService: TrackerService? = null  // 为了保证随时上报信息
 
-    /*
-    * Defines callbacks for service binding, passed to bindService()
-    */
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            bound = true
-            // 获取一个引用
-            val binder = service as TrackerService.LocalBinder
-            trackerService = binder.service
-            trackerService!!.startTracking()
-
-        }
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            // 服务崩溃或者被系统杀掉之后
-            //handleServiceUnbind()
-            bound = false
-            trackerService = null
-        }
-    }
-
-    /* Register the permission launcher for requesting location 在onstart中使用  */
-    private val requestLocationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) {
-            // permission was granted - re-bind service
-            //this.unbindService(connection)
-            this.bindService(Intent(this, TrackerService::class.java),  connection,  Context.BIND_AUTO_CREATE)
-            LogHelper.i(TAG, "Request result: Location permission has been granted.")
-
-        } else {
-            // permission denied - unbind service
-            this.unbindService(connection)
-        }
-        //layout.toggleLocationErrorBar(gpsProviderActive, networkProviderActive)
-    }
-
-    // 启动服务的入口
-    private fun startLocationService() {
-
-        // 请求位置权限，在requestLocationPermissionLauncher中启动了连接动作
-        if (ContextCompat.checkSelfPermission(this as Context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED) {
-            requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-        else{
-            // bind to TrackerService
-            if (!bound){
-                this.bindService(Intent(this, TrackerService::class.java), connection, Context.BIND_AUTO_CREATE)
-            }
-        }
-    }
 
     //////////////////////////////////////////////////////////////////
     private fun bindHttp(){

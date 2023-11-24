@@ -20,6 +20,7 @@ data  class Friend (
     var level:String = "",
     var show: Boolean = false,
     var isFriend: Boolean = false,
+    var street :String = "",
     var tm: Long = DateTimeHelper.getTimestamp(),
     var msg:String = ""
 ){
@@ -41,5 +42,6 @@ data  class Friend (
         this.isShare = f.isShare
         this.show = f.show
         this.tm = f.tm
+        this.street = f.street
     }
 }

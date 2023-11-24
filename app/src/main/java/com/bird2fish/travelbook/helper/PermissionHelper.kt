@@ -16,6 +16,7 @@ object PermissionHelper {
     val PERMISSION_REQUEST_CODE_BACKGROUND = 2
     val PERMISSION_REQUEST_CODE_BODY_SENSORS = 3
     val PERMISSION_REQUEST_CODE_RECOGNITION = 4
+    val PERMISSION_REQUEST_CODE_STORAGE = 5
     // IN_VEHICLE：用户正在驾驶车辆。
     //ON_BICYCLE：用户正在骑自行车。
     //ON_FOOT：用户正在步行。
@@ -145,6 +146,32 @@ object PermissionHelper {
             )
             return false
         }
+    }
+
+    // 请求写外部文件系统
+    fun requestFile(activity: Activity):Boolean{
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // 检查写入外部存储的权限
+            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                // 如果权限没有被授予，请求权限
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    PERMISSION_REQUEST_CODE_STORAGE
+                )
+            } else {
+                // 权限已经被授予，可以执行写入文件的操作
+                return true
+            }
+        } else {
+            // 在 Android 6.0 以下版本，权限默认已经被授予
+            // 可以执行写入文件的操作
+            // ...
+            return true
+        }
+        return false
     }
 
 

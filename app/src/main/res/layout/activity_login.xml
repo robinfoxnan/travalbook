@@ -65,11 +65,9 @@
         app:layout_constraintVertical_bias="0.097" />
 
     <CheckBox
-        android:id="@+id/checkBox2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginBottom="4dp"
+        android:id="@+id/checkBoxAgree"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -88,19 +86,21 @@
         app:layout_constraintVertical_bias="0.3" />
 
     <EditText
-        android:id="@+id/editTextTextPersonName2"
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_privacy_agree"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
         android:layout_marginBottom="4dp"
         android:ems="10"
         android:focusable="false"
         android:inputType="none|text"
         android:singleLine="true"
         android:text="请先阅读并同意相关协议"
-        android:textAlignment="center"
+        android:textAlignment="viewStart"
+        android:textSize="14sp"
+        android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@id/checkBox2" />
+        app:layout_constraintLeft_toRightOf="@id/checkBoxAgree"
+        app:layout_constraintRight_toRightOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

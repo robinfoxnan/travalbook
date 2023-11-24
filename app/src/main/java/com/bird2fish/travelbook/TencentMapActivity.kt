@@ -2,6 +2,7 @@ package com.bird2fish.travelbook
 
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
@@ -11,6 +12,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.FragmentActivity
@@ -35,25 +37,36 @@ class TencentMapActivity : AppCompatActivity() {
     private var mapView: TextureMapView? = null
     protected var tencentMap: TencentMap? = null
 
-    private var bound: Boolean = false
+    //private var bound: Boolean = false
     private val handler: Handler = Handler(Looper.getMainLooper())
-    private var trackingState: Int = Keys.STATE_TRACKING_NOT
-    private var gpsProviderActive: Boolean = false
-    private var networkProviderActive: Boolean = false
+    //private var trackingState: Int = Keys.STATE_TRACKING_NOT
+    //private var gpsProviderActive: Boolean = false
+    //private var networkProviderActive: Boolean = false
     //private var currentBestLocation: Location?  = null
     //private lateinit var layout: MapFragmentLayoutHolder
-    private  var trackerService: TrackerService? = null
+    //private  var trackerService: TrackerService? = null
     private lateinit var  mMarker:com.tencent.tencentmap.mapsdk.maps.model.Marker   // 自己的位置
     private var markersMap =  mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()
     private var iconsMap = mutableMapOf<String, ImageView>()
 
     private var isInitedInfo = false
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        // 处理新的 Intent
+        if (intent != null) {
+            // 在这里处理传入的 Intent，可能是通知的 Intent
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         TencentMapInitializer.setAgreePrivacy(true)
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tencent_map)
+
+        // 加载
+        GlobalData.InitLoad()
 
         // 取得LinearLayout 物件
         val ll = findViewById<View>(R.id.layout_mapll) as LinearLayout
@@ -73,6 +86,8 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap!!.isTrafficEnabled = true;
         //tencentMap!!.setMapType(TencentMap.MAP_TYPE_SATELLITE);
         //tencentMap.setMapType(TencentMap.MAP_TYPE_NORMAL);
+
+
 
         // 先设置当前需要刷新的人物
         GlobalData.currentFriend = Friend(uid = CurrentUser.getUser()!!.uid)
@@ -95,6 +110,9 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 地图右侧边栏
         initSideToolbar()
+
+        // 请求文件权限
+        startRequestForWriteLog()
     }
 
     // 初始化底部视图，将自己的图标加进去
@@ -147,6 +165,7 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 设置显示层级
         resetZIndex(f.uid)
+        // 移动相机
         moveCamera(f)
         // 设置底部信息
         updateFriendInfo()
@@ -178,7 +197,7 @@ class TencentMapActivity : AppCompatActivity() {
 
                     var speedStr = UiHelper.formatSpeed(GlobalData.currentTLocation!!.speed)
 
-                    info=  String.format("位置：(%.6f, %.6f) 高度：%.0f米 速度：%s",
+                    info=  String.format("位置：(%.6f, %.6f) 海拔：%.0f米 速度：%s",
                         GlobalData.currentTLocation!!.latitude,
                         GlobalData.currentTLocation!!.longitude,
                         GlobalData.currentTLocation!!.altitude,
@@ -187,6 +206,12 @@ class TencentMapActivity : AppCompatActivity() {
                     {
                         detail = GlobalData.currentTLocation!!.address
                     }
+                    // 检查是否中断了
+                    var tm = DateTimeHelper.getTimestamp()
+                    var delta = (tm - GlobalData.currentTm ) / 1000
+                    // if (delta > GlobalData.intervalOfRefresh * 3){
+                    detail += ", 获取定位时间："  + DateTimeHelper.formatTimeDifference(GlobalData.currentTm)
+                    // }
 
             }else{
                 if (GlobalData.isLocationEnabled)
@@ -200,7 +225,7 @@ class TencentMapActivity : AppCompatActivity() {
         }else
         {
             if (f.isShare){
-                info = String.format("位置：(%.6f, %.6f) 高度：%.0f 速度：%.1f", f.lat, f.lon,
+                info = String.format("位置：(%.6f, %.6f) 海拔：%.0f 速度：%.1f", f.lat, f.lon,
                     f.ele, f.speed)
 
                 val tmStr = DateTimeHelper.convertTimestampToDateString(f.tm * 1000)
@@ -213,6 +238,8 @@ class TencentMapActivity : AppCompatActivity() {
 
         }
 
+
+
         tvInfo.setText(info)
         tvdetail.setText(detail)
 
@@ -222,10 +249,11 @@ class TencentMapActivity : AppCompatActivity() {
     private fun updateBottomView(friendList: Map<String, Friend>){
         val linearLayout = this.findViewById<LinearLayout>(R.id.linear_layout_icons)
         // 先检查是否有不需要显示的, 不再朋友列表中，通信簿设置后说明不需要显示了
-        for ((key, icon) in iconsMap){
+        for (key in iconsMap.keys){
             if (!friendList.containsKey(key))
             {
-                linearLayout.removeView(icon)
+                linearLayout.removeView(iconsMap[key])
+                iconsMap.remove(key)
             }
         }
 
@@ -251,6 +279,14 @@ class TencentMapActivity : AppCompatActivity() {
     }// end of update icons
 
 
+    val iconIds = intArrayOf(
+        R.drawable.hike,
+        R.drawable.run,
+        R.drawable.bike,
+        R.drawable.motorbike,
+        R.drawable.car,
+        R.drawable.lasy
+    )
     // 左侧工具条
     private fun initToolBar() {
         val toolbar = findViewById<View>(R.id.toolbarMap) as Toolbar
@@ -258,7 +294,16 @@ class TencentMapActivity : AppCompatActivity() {
         //toolbar.subtitle = "" //设置副标题名称
         setSupportActionBar(toolbar)
         // R.drawable.msg_photo_settings
-        toolbar.setNavigationIcon(R.drawable.run24);//是左边的图标样式
+
+        var id = GlobalData.sportMode.intValue;
+        if (id< 1){
+            id = 1
+        }else if (id > 6){
+            id = 6
+        }
+        val icon = UiHelper.loadAndScaleImage(this, iconIds[id-1])
+
+        toolbar.setNavigationIcon(icon);//是左边的图标样式
 
         // 设置标题栏颜色
         if (this is FragmentActivity) {
@@ -413,18 +458,20 @@ class TencentMapActivity : AppCompatActivity() {
         /**
          * 旋转手势
          */
-        mapUiSettings.isRotateGesturesEnabled = false
+        mapUiSettings.isRotateGesturesEnabled = true
         //tencentMap!!.isMyLocationEnabled = true
 
 
         //addLine();
     }
 
+    // 更新所有的
     protected fun updateAllMarkers( mapFriend :MutableMap<String, Friend>){
 
         // 删除不需要显示的markers，
         for (key:String in markersMap.keys) {
             if (!mapFriend.containsKey(key)){
+                markersMap[key]!!.remove()  // 地图上移除marker
                 markersMap.remove(key)
                 continue
             }
@@ -435,6 +482,7 @@ class TencentMapActivity : AppCompatActivity() {
                 val msg = "未能获取${f.uid} ${f.nick} 的位置,${f.msg}"
                 //showMsg(msg)
                 f.msg = msg
+                markersMap[key]!!.remove()
                 markersMap.remove(key)
                 continue
             }
@@ -442,6 +490,7 @@ class TencentMapActivity : AppCompatActivity() {
             val marker = markersMap[key]
             marker!!.isInfoWindowEnable = true
             marker!!.title = "${f.nick}"
+            marker!!.snippet = "${f.street}"
             val position = LatLng(f.lat, f.lon)
             marker!!.position = position
 
@@ -502,6 +551,7 @@ class TencentMapActivity : AppCompatActivity() {
             {
                 lat = GlobalData.currentTLocation!!.latitude
                 lon = GlobalData.currentTLocation!!.longitude
+                mMarker.position = LatLng(lat, lon)
             }else
             {
                 lat = friend.lat
@@ -615,11 +665,12 @@ class TencentMapActivity : AppCompatActivity() {
         }
     }
 
+    // 更新的入口函数
     protected  fun updateViews(){
         updateMyMarker()   // 更新我自己的位置
         // 先更新markers，在f中标记了部分内容，然后
 
-        // 获取目前的好友位置列表
+        // 拷贝一份目前的好友位置列表
         val mapFriend = HttpWorker.get().getLastPointMap()
         updateAllMarkers(mapFriend)    // 更新后，f.msg中含有错误消息
         updateBottomView(mapFriend) // 更新底部状态条图标
@@ -665,20 +716,31 @@ class TencentMapActivity : AppCompatActivity() {
             PermissionHelper.PERMISSION_REQUEST_CODE_RECOGNITION ->{
                 GlobalData.isRecognitionEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
             }
+            PermissionHelper.PERMISSION_REQUEST_CODE_STORAGE ->{
+                GlobalData.isFileReadWriteEnabaled  = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            }
             // 处理其他权限请求结果...
         }
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    // 请求文件读写权限
+    fun startRequestForWriteLog(){
+        PermissionHelper.requestFile(this)
+    }
 
-    // 启动服务和HTTPworker
+    // 启动位置服务和HTTPworker
     fun startTencentLocaionService(){
         // 这里检查申请权限的结果
         if (GlobalData.isLocationBackgroudEnabled){
-            TencentLocService.instance!!.startBackGround(this)
+            //TencentLocService.instance!!.startBackGround(this)
+            //bindLocation()
+            startLocation()
         }else if (GlobalData.isLocationEnabled){
-            TencentLocService.instance!!.startBackGround(this)
+            //TencentLocService.instance!!.startBackGround(this)
+            //bindLocation()
+            startLocation()
         }else{
             UiHelper.showCenterMessage(this, "目前无法定位！请开始软件定位权限为一直允许，并在耗电选项设置为不限制")
         }
@@ -692,7 +754,13 @@ class TencentMapActivity : AppCompatActivity() {
 
     // 启动轮训机制
     fun startRefreshInfo(){
-        handler.postDelayed(periodicLocationRequestRunnable, 1000)
+        GlobalData.shouldRefresh = true
+        handler.postDelayed(periodicLocationRequestRunnable, 10)
+    }
+
+    fun stopRefreshInfo() {
+        GlobalData.shouldRefresh = false
+        handler.removeCallbacks(periodicLocationRequestRunnable)
     }
 
     // 轮询的函数
@@ -712,14 +780,22 @@ class TencentMapActivity : AppCompatActivity() {
         mapView!!.onStart()
     }
 
+    // Activity 完全可见并处于前台时，系统会调用 onResume() 方法
     override fun onResume() {
         super.onResume()
+        initToolBar()
         mapView!!.onResume()
+
+        // 在恢复时重新启动任务
+        startRefreshInfo()
     }
 
+    // 当一个 Activity 即将失去焦点并进入后台时，系统会调用 onPause() 方法。
     override fun onPause() {
         super.onPause()
         mapView!!.onPause()
+        // 在暂停时停止任务
+        stopRefreshInfo()
     }
 
     override fun onStop() {
@@ -738,46 +814,68 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
 
-    /*
-    * Defines callbacks for service binding, passed to bindService()
-    */
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            bound = true
-            // 获取一个引用
-            val binder = service as TrackerService.LocalBinder
-            trackerService = binder.service
-            trackerService!!.startTracking()
-            // get state of tracking and update button if necessary
-            trackingState = trackerService!!.trackingState
-            //layout.updateMainButton(trackingState)
-            // 注册配置改变的监听器
-            //PreferencesHelper.registerPreferenceChangeListener(sharedPreferenceChangeListener)
-            // 位置更新的监听器
-            handler.removeCallbacks(periodicLocationRequestRunnable)
-            handler.postDelayed(periodicLocationRequestRunnable, 1000)
-        }
+///////////////////////////////////////////////////////////////////////////////
+    private fun startLocation(){
+        if (TencentLocService.instance == null)
+        {
+            val intent = Intent(this, TencentLocService::class.java)
+            //intent.putExtra("command", "start"); // 通过Intent传递命令
+            intent.action = Keys.ACTION_INIT
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            // 服务崩溃或者被系统杀掉之后
-            //handleServiceUnbind()
-            bound = false
-            trackerService = null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                this.startForegroundService(intent);
+            } else {
+                this.startService(intent);
+            }
         }
     }
 
+    // 如果没有数据了，重启一下服务
+    private fun checkLocationService(){
+        UiHelper.showMessage(this, "没有数据，尝试重启服务")
 
+        val intent = Intent(this, TencentLocService::class.java)
+        //intent.putExtra("command", "start"); // 通过Intent传递命令
+        intent.action = Keys.ACTION_INIT
 
-    /* 启动后台跟踪服务 */
-    private fun startTrackerService() {
-        val intent = Intent(this, TrackerService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // ... start service in foreground to prevent it being killed on Oreo
-            this.startForegroundService(intent)
+            this.startForegroundService(intent);
         } else {
-            this.startService(intent)
+            this.startService(intent);
         }
+
     }
+
+//    private var isBoundLocation: Boolean = false
+//    private  var trackerService: TencentLocService? = null  // 为了保证随时上报信息
+
+
+//    private val connection = object : ServiceConnection {
+//        override fun onServiceConnected(className: ComponentName, serviceBinder: IBinder) {
+//            isBoundLocation = true
+//            // 获取一个引用
+//            val binder = serviceBinder as TencentLocService.LocalBinder
+//            trackerService = binder.service
+//            trackerService!!.startBackGround(this@TencentMapActivity)
+//
+//        }
+//        override fun onServiceDisconnected(arg0: ComponentName) {
+//            // 服务崩溃或者被系统杀掉之后
+//            //handleServiceUnbind()
+//            isBoundLocation = false
+//            trackerService = null
+//        }
+//    }
+//
+//    // 连接方式启动
+//    private fun bindLocation(){
+//        val intent = Intent(this, TencentLocService::class.java)
+//        bindService(intent, connection, AppCompatActivity.BIND_AUTO_CREATE);
+//    }
+
+    // 注意需要在manifest中注册，否则无法启动
+
+
 
     /* Overrides onYesNoDialog from YesNoDialogListener */
 //    override fun onYesNoDialog(type: Int, dialogResult: Boolean, payload: Int, payloadString: String) {
