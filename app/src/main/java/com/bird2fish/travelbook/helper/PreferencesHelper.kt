@@ -210,7 +210,7 @@ object PreferencesHelper {
         return schema!!
     }
 
-    fun setHost(host:String, schema:String){
+    fun setHost(schema:String, host:String){
         val editor = sharedPreferences.edit()
         //得到Editor后，写入需要保存的数据
         editor.putString("hostname", host)
@@ -333,6 +333,20 @@ object PreferencesHelper {
         var t = sharedPreferences.getLong("currentModeInterval", 3000)
         if (t < 1000){
             t = 1000
+        }
+        return t
+    }
+
+    fun setRefreshInterval(t :Long){
+        val editor = sharedPreferences.edit()
+        editor.putLong("refreshInterval", t)
+        editor.commit() //提交修改
+    }
+
+    fun getRefreshInterval(): Long{
+        var t = sharedPreferences.getLong("refreshInterval", 3000)
+        if (t < 2000){
+            t = 2000
         }
         return t
     }

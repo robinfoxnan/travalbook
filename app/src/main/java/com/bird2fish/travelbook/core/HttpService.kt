@@ -5,13 +5,16 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
+import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.bird2fish.travelbook.ui.data.model.LoggedInUser
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.RuntimeException
@@ -281,7 +284,7 @@ class HttpService : Service() {
     fun getUserInfo(uid: String, sid:String, fid:String) : LoggedInUser{
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
-        var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}"
+        var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}&uid=${uid}"
 
         try {
             var client = HttpsUtil.getClient()
@@ -302,6 +305,14 @@ class HttpService : Service() {
                     fakeUser.nickName = user.getString("nick")
                     fakeUser.userId = user.getString("name")
                     fakeUser.icon = user.getString("icon")
+
+                    if (user.getInt("age") != null){
+                        fakeUser.age =user.getInt("age").toString()
+                    }else
+                    {
+                        fakeUser.age = "0"
+                    }
+
 
                     fakeUser.phone = user.getString("phone")
                     fakeUser.email = user.getString("email")
@@ -530,24 +541,104 @@ class HttpService : Service() {
     }
 
     // 查询好友信息
-    // http://localhost:7817/v1/gpx/position?
-    //    {
-    //        "uid":"1005",
-    //        "sid":"6812630841045951575",
-    //        "fid":"1004"
-    //    }
-    //    {
-    //        "state": "OK",
-    //        "pt": {
-    //        "uid": "1004",
-    //        "lat": 40,
-    //        "lon": 116,
-    //        "ele": 100,
-    //        "speed": 0,
-    //        "tm": 1007
-    //        }
-    //    }
-    fun getUserLocation(friend: Friend) : Boolean {
-        return true
+    /*
+    {
+        "id": 1005,
+        "phone": "",
+        "icon": "sys:icon/2.jpg",
+        "name": "robin",
+        "nick": "飞鸟",
+        "email": "",
+        "pwd": "123456",
+        "temppwd": "",
+        "region": "unknow",
+        "ipv4": "0.0.0.0",
+        "wxid": "0",
+        "age": 42,
+        "gender": 1,
+        "tm": "2023/09/20 16:04:18",
+        "sid": 6812630841045951575
+    }
+     */
+
+    fun updateInfo(user : LoggedInUser) : Boolean {
+
+        var jsonObject= JSONObject()
+
+        try {
+            val intNumber = user.uid.toInt()
+            jsonObject.put("id", intNumber)
+
+        }catch (e: NumberFormatException) {
+            return false
+        }
+
+        try {
+            val intNumber = user.sid.toLong()
+            jsonObject.put("sid", intNumber)
+
+        }catch (e: NumberFormatException) {
+            return false
+        }
+
+
+
+        jsonObject.put("pwd", user.pwd)
+        jsonObject.put("icon", user.icon)
+        jsonObject.put("nick", user.nickName)
+        jsonObject.put("name", user.userId)
+
+
+        try {
+            val intNumber = user.age.toInt()
+            println("转换后的整数: $intNumber")
+            jsonObject.put("age", intNumber)
+        } catch (e: NumberFormatException) {
+            println("无法将字符串转换为整数: $e")
+            jsonObject.put("age", 0)
+        }
+
+        if (user.gender == "男"){
+            jsonObject.put("gender", 1)
+        }else{
+            jsonObject.put("gender", 0)
+        }
+
+        jsonObject.put("phone", user.phone)
+        jsonObject.put("email", user.email)
+
+        //System.out.println(tmStr)
+        //jsonObject.put("tmStr", tmStr)
+        var jsonStr=jsonObject.toString()
+        //System.out.println(jsonStr)
+
+        //调用请求
+        val contentType = "application/json".toMediaType()
+        var requestBody = jsonStr.toRequestBody(contentType)
+
+        //构建url地址
+        var url1 = "${schema}://${host}/v1/user/setbaseinfo"
+
+        try {
+            var client = HttpsUtil.getClient()
+            val request = Request.Builder()
+                .url(url1)
+                .post(requestBody)
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+
+                return true
+            }
+        }catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
     }
 }

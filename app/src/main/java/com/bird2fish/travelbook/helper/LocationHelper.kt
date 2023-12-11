@@ -137,14 +137,14 @@ object LocationHelper {
 
 
 
-    /* Checks if given location is new */
+    /* 一分钟之内的点 */
     fun isRecentEnough(location: Location): Boolean {
         val locationAge: Long = SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos
         return locationAge < Keys.DEFAULT_THRESHOLD_LOCATION_AGE
     }
 
 
-    /* Checks if given location is accurate */
+    /* 检查精度是否达标， */
     fun isAccurateEnough(location: Location, locationAccuracyThreshold: Int): Boolean {
         val isAccurate: Boolean
         when (location.provider) {

@@ -34,8 +34,7 @@ data class WayPoint(@Expose val provider: String,
         location.altitude,
         location.accuracy,
         location.time,
-        distanceToStartingPoint,
-        LocationHelper.getNumberOfSatellites(location))
+        distanceToStartingPoint)
 
     /* Converts WayPoint into Location */
     fun toLocation(): Location {

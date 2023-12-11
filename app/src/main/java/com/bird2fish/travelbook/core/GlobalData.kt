@@ -42,6 +42,12 @@ class GlobalData {
             }catch (e: Exception){
                 GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_HIKE
             }
+            GlobalData.intervalOfRefresh =  PreferencesHelper.getRefreshInterval()
+            if (GlobalData.intervalOfRefresh < 2000){
+                GlobalData.intervalOfRefresh = 2000
+            }else if (GlobalData.intervalOfRefresh > 60000){
+                GlobalData.intervalOfRefresh = 60000
+            }
         }
 
         fun setCurrentLocation(pos :TencentLocation){

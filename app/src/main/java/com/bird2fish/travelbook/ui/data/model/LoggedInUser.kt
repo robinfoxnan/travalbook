@@ -16,7 +16,8 @@ data class LoggedInUser(
     var age : String = "",
     var ip : String = "",
     var region : String = "",
-    var mask : Int = 0
+    var mask : Int = 0,
+    var isChanged: Boolean = false
 )
 
 class CurrentUser {

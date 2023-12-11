@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.ui.contact.Friend
+import com.google.android.material.internal.ViewUtils.dpToPx
 
 
 public object UiHelper {
@@ -77,6 +78,20 @@ public object UiHelper {
         R.drawable.icon32,
         R.drawable.icon33
     )
+
+    fun getIconResIndex(name :String) :Int{
+        if (name.startsWith("sys:")) {
+            val idStr = name.substring(4)
+            val index = idStr.toIntOrNull()
+            if (index != null) {
+                if (index > iconIds.size || index <1)
+                    return 0
+                return index -1
+            }
+        }
+        return 0
+    }
+
     fun getIconResId(name :String) :Int{
         if (name.startsWith("sys:")){
             val idStr = name.substring(4)

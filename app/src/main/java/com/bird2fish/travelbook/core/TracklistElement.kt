@@ -8,7 +8,7 @@ import java.util.*
 
 
 /*
- * 用于录制或者提某一段路径的轨迹
+ * 用于某一段路径的轨迹的描述信息
  */
 @Keep
 @Parcelize

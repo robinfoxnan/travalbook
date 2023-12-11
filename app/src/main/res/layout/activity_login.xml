@@ -90,6 +90,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
+        android:background="@android:color/transparent"
         android:ems="10"
         android:focusable="false"
         android:inputType="none|text"
@@ -97,7 +98,6 @@
         android:text="请先阅读并同意相关协议"
         android:textAlignment="viewStart"
         android:textSize="14sp"
-        android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/checkBoxAgree"
         app:layout_constraintRight_toRightOf="parent" />

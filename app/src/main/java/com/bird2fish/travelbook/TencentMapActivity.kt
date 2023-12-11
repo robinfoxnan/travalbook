@@ -46,6 +46,7 @@ class TencentMapActivity : AppCompatActivity() {
     //private lateinit var layout: MapFragmentLayoutHolder
     //private  var trackerService: TrackerService? = null
     private lateinit var  mMarker:com.tencent.tencentmap.mapsdk.maps.model.Marker   // 自己的位置
+    private lateinit var  mImageView:ImageView
     private var markersMap =  mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()
     private var iconsMap = mutableMapOf<String, ImageView>()
 
@@ -128,6 +129,7 @@ class TencentMapActivity : AppCompatActivity() {
             onImageIconClick(me)
         }
         linearLayout.addView(imageView)
+        this.mImageView = imageView
     }
 
     // 对点击的marker设置为顶层
@@ -772,6 +774,29 @@ class TencentMapActivity : AppCompatActivity() {
         }
     }
 
+    // 如果个人信息部分编辑了头像，这里需要更改
+    private fun updateAvarta(){
+        val user = CurrentUser.getUser()
+        if (user!!.isChanged){
+            val bitmapIcon = UiHelper.getSmallIconBitmap(CurrentUser.getUser()!!.icon, this)
+            val custom = BitmapDescriptorFactory.fromBitmap(bitmapIcon)
+            this.mMarker.setIcon(custom)
+
+            // 获取底部列表
+            val linearLayout = this.findViewById<LinearLayout>(R.id.linear_layout_icons)
+            // 先检查是否有不需要显示的, 不再朋友列表中，通信簿设置后说明不需要显示了
+
+            if (this.mImageView != null){
+                val icon = CurrentUser.getUser()!!.icon
+                val id = UiHelper.getIconResId(icon)
+                this.mImageView.setImageResource(id)
+            }
+
+
+            user!!.isChanged = false
+        }
+    }
+
     /**
      * mapview的生命周期管理
      */
@@ -788,6 +813,9 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 在恢复时重新启动任务
         startRefreshInfo()
+
+        // 查看头像是否更改
+        updateAvarta()
     }
 
     // 当一个 Activity 即将失去焦点并进入后台时，系统会调用 onPause() 方法。

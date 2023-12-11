@@ -15,7 +15,7 @@ import com.bird2fish.travelbook.core.*
 
 
 /*
- * TrackHelper object
+ * 辅助工具
  */
 object TrackHelper {
 
@@ -32,6 +32,11 @@ object TrackHelper {
 
 
     /* Adds given locatiom as waypoint to track */
+    /* 用法：
+     val result: Pair<Boolean, Track> = TrackHelper.addWayPointToTrack(track, currentBestLocation, accuracyMultiplier, resumed)
+     val successfullyAdded: Boolean = result.first
+     track = result.second
+     */
     fun addWayPointToTrack(track: Track, location: Location, accuracyMultiplier: Int, resumed: Boolean): Pair<Boolean, Track> {
         // Step 1: Get previous location
         val previousLocation: Location?
@@ -41,7 +46,7 @@ object TrackHelper {
         if (numberOfWayPoints == 0) {
             previousLocation = null
         }
-        // CASE: Second location - check if first location was plausible & remove implausible location
+        // 检查数据点是否发生了瞬间跳跃，这里使用腾讯地图应该不会有
         else if (numberOfWayPoints == 1 && !LocationHelper.isFirstLocationPlausible(location, track)) {
             previousLocation = null
             numberOfWayPoints = 0
@@ -58,7 +63,7 @@ object TrackHelper {
         track.duration = track.duration + difference
         track.recordingStop = now
 
-        // Step 3: Add waypoint, ifrecent and accurate and different enough
+        // Step 3: 一分钟之内的，不能太近，按照精度来计算一下是否晃动了
         val shouldBeAdded: Boolean = (LocationHelper.isRecentEnough(location) &&
                 LocationHelper.isAccurateEnough(location, Keys.DEFAULT_THRESHOLD_LOCATION_ACCURACY) &&
                 LocationHelper.isDifferentEnough(previousLocation, location, accuracyMultiplier))
@@ -80,7 +85,7 @@ object TrackHelper {
                 }
             }
             // Step 3.3: Toggle stop over status, if necessary
-            if (track.wayPoints.size < 0) {
+            if (track.wayPoints.size > 0) {
                 track.wayPoints[track.wayPoints.size - 1].isStopOver = LocationHelper.isStopOver(previousLocation, location)
             }
 

@@ -1,20 +1,14 @@
 package com.bird2fish.travelbook
 
-import android.Manifest
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
-import android.view.Window
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -23,16 +17,11 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.get
-import androidx.fragment.app.FragmentActivity
-import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityMainBinding
 import com.bird2fish.travelbook.helper.LogHelper
-import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 
 class MainActivity : AppCompatActivity() {
@@ -50,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     public fun openDrawer(){
+
         binding.drawerLayout.openDrawer(GravityCompat.START);
     }
 
@@ -94,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                 //R.id.nav_newgroup,
                 R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
                 R.id.nav_map, R.id.nav_track,
-                R.id.nav_contract, R.id.nav_setting
+                R.id.nav_me, R.id.nav_contract, R.id.settingFragment
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -118,6 +108,31 @@ class MainActivity : AppCompatActivity() {
 //            window.statusBarColor = resources.getColor(R.color.toolbar_gray)
 //        }
 
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+                // 当侧边栏滑动时调用
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+                // 当侧边栏打开时调用
+                // 这里可以处理在侧边栏打开时需要执行的逻辑
+                val user = CurrentUser.getUser()
+                if (user != null){
+                    setUserInfo()
+                }
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                // 当侧边栏关闭时调用
+                // 这里可以处理在侧边栏关闭时需要执行的逻辑
+            }
+
+            override fun onDrawerStateChanged(newState: Int) {
+                // 当侧边栏状态发生变化时调用
+            }
+        })
+
     }
 
     private fun setUserInfo(){
@@ -126,7 +141,7 @@ class MainActivity : AppCompatActivity() {
         var navigationView = this.findViewById<NavigationView>(R.id.nav_view);
         // 侧边栏的头部栏的信息设置
         var headerLayout = navigationView.getHeaderView(0);
-        var userNameview = headerLayout.findViewById<TextView>(R.id.textNick);
+        var userNameview = headerLayout.findViewById<TextView>(R.id.tvName);
         var userInfoview = headerLayout.findViewById<TextView>(R.id.textInfo);
         var userIcon = headerLayout.findViewById<ImageView>(R.id.imageViewIcon)
 

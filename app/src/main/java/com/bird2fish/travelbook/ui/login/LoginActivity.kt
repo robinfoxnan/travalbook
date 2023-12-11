@@ -6,25 +6,22 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
-import android.os.StrictMode.VmPolicy
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
-import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bird2fish.travelbook.BottomWindow
-import com.bird2fish.travelbook.MainActivity
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.ServerSettingView
 import com.bird2fish.travelbook.TencentMapActivity
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
@@ -231,6 +228,25 @@ class LoginActivity : AppCompatActivity() {
         return spannableString
     }
 
+    // 加载工具条菜单
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.login_menu, menu)
+        return true
+    }
+
+    // 点击了按钮
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id: Int = item.getItemId()
+        if (id == R.id.server_settings) {
+            // 打开设置服务器IP的对话框或者新活动
+            //UiHelper.showMessage(this, "ceshi   d d ")
+            val popView = ServerSettingView(this)
+            popView.showPopupWindow()
+
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
 
     private fun showPrivacyPolicy() {
         // 启动一个新的界面或弹窗，显示隐私协议的内容

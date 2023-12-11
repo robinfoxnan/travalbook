@@ -5,9 +5,20 @@
         <item name="android:windowExitAnimation">@anim/pop_exit_animation</item>
     </style>
 
+    <style name="SpinnerDropdownStyle" parent="Widget.AppCompat.Spinner.DropDown">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:layout_width">wrap_content</item>
+    </style>
+
     <style name="AppThemeGrey" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- 添加以下两行 -->
         <item name="colorPrimary">@color/gray</item>
         <item name="colorPrimaryDark">@color/gray</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropdownStyle</item>
     </style>
+
+    <!-- res/values/spinner_dropdown_style.xml -->
+
+
+
 </resources>
