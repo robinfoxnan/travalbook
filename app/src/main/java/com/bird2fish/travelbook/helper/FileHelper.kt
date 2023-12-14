@@ -28,6 +28,28 @@ object FileHelper {
     /* Define log tag */
     private val TAG: String = LogHelper.makeLogTag(FileHelper::class.java)
 
+    fun createDir(dir:String, sub:String) :Boolean {
+        val curDir = File(dir, sub)
+        // 创建日志目录
+        try {
+            if (!curDir.exists()) {
+                val ret = curDir.mkdirs()
+                System.out.println("创建目录${curDir} : ${ret}")
+                if (ret){
+                    return true
+                }
+            }
+            else{
+                return true
+            }
+        }
+        catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        return false
+    }
+
 
     /* Return an InputStream for given Uri */
     fun getTextFileStream(context: Context, uri: Uri): InputStream? {
@@ -172,6 +194,13 @@ object FileHelper {
         }
     }
 
+    fun addTrackAndSave(context: Context, tracklist :Tracklist, track: Track){
+        tracklist.tracklistElements.add(track.toTracklistElement(context))
+        tracklist.totalDistanceAll += track.length
+
+        saveTracklist(context, tracklist, track.recordingStop)
+    }
+
 
     /* Suspend function: Wrapper for renameTrack */
     suspend fun renameTrackSuspended(context: Context, track: Track, newName: String) {
@@ -244,17 +273,19 @@ object FileHelper {
 
 
     /* Save Track as JSON to storage */
-    private fun saveTrack(track: Track, saveGpxToo: Boolean) {
+    fun saveTrack(track: Track, saveGpxToo: Boolean) {
         val jsonString: String = getTrackJsonString(track)
         if (jsonString.isNotBlank()) {
             // write track file
-            writeTextFile(jsonString, track.trackUriString.toUri())
+            val file = File(track.trackUriString)
+            writeTextFile(jsonString, file.toUri())
         }
         if (saveGpxToo) {
             val gpxString: String = TrackHelper.createGpxString(track)
             if (gpxString.isNotBlank()) {
                 // write GPX file
-                writeTextFile(gpxString, track.gpxUriString.toUri())
+                val file = File(track.gpxUriString)
+                writeTextFile(gpxString, file.toUri())
             }
         }
     }
@@ -290,6 +321,10 @@ object FileHelper {
     /* Creates Uri for tracklist file */
     private fun getTracklistFileUri(context: Context): Uri {
         return File(context.getExternalFilesDir(""), Keys.TRACKLIST_FILE).toUri()
+    }
+
+    fun getTracklistFileUri(dir:String): Uri {
+        return File(dir, Keys.TRACKLIST_FILE).toUri()
     }
 
 

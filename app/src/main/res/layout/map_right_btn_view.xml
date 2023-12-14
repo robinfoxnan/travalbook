@@ -18,7 +18,7 @@
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:layout_weight="1"
-        app:srcCompat="@android:drawable/ic_menu_compass" />
+        app:srcCompat="@android:drawable/ic_menu_add" />
 
     <ImageButton
         android:id="@+id/btn_del_track"

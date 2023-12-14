@@ -5,9 +5,8 @@
     android:layout_height="match_parent"
     tools:context=".ui.fav.favFragment">
 
-    <TextView
+    <com.bird2fish.travelbook.ui.SlideRecyclerView
+        android:id="@+id/fav_list_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
-
+        android:layout_height="match_parent" />
 </FrameLayout>

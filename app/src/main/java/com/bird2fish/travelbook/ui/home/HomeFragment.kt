@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.*
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +32,9 @@ class HomeFragment : Fragment() {
     lateinit var  btnMotor : ImageView
     lateinit var  btnCar : ImageView
     lateinit var  btnLasy : ImageView
+    private var modeString :String = ""
+    private var modeImage: Int = R.drawable.hike
+    private val handler: Handler = Handler(Looper.getMainLooper())
 
 
 
@@ -96,10 +101,13 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_hike,
             imageView = btnHike
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.hike)
-        binding.btnStart.btnText.setText(R.string.start_to_hike)
 
+        this.modeString = getString(R.string.start_to_hike)
+        this.modeImage = R.drawable.hike
+        updateButtonInfo()
     }
+
+
 
     private fun onClickRun(){
         initToolBarImageButton()
@@ -111,8 +119,10 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_run,
             imageView = btnRun
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.run)
-        binding.btnStart.btnText.setText(R.string.start_to_run)
+
+        this.modeString = getString(R.string.start_to_run)
+        this.modeImage = R.drawable.run
+        updateButtonInfo()
 
     }
 
@@ -127,8 +137,9 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_bike,
             imageView = btnBike
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.bike)
-        binding.btnStart.btnText.setText(R.string.start_to_bike)
+        this.modeString = getString(R.string.start_to_bike)
+        this.modeImage = R.drawable.bike
+        updateButtonInfo()
 
     }
 
@@ -142,8 +153,9 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_motor,
             imageView = btnMotor
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.motorbike)
-        binding.btnStart.btnText.setText(R.string.start_to_motor)
+        this.modeString = getString(R.string.start_to_motor)
+        this.modeImage = R.drawable.motorbike
+        updateButtonInfo()
 
     }
 
@@ -157,8 +169,9 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_car,
             imageView = btnCar
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.car)
-        binding.btnStart.btnText.setText(R.string.start_to_car)
+        this.modeString = getString(R.string.start_to_car)
+        this.modeImage = R.drawable.car
+        updateButtonInfo()
 
 
     }
@@ -173,9 +186,26 @@ class HomeFragment : Fragment() {
             replacementColorResId = R.color.back_lasy,
             imageView = btnLasy
         )
-        binding.btnStart.btnImage.setImageResource(R.drawable.lasy)
-        binding.btnStart.btnText.setText(R.string.start_to_lasy)
+        this.modeString = getString(R.string.start_to_lasy)
+        this.modeImage = R.drawable.lasy
+        updateButtonInfo()
 
+    }
+
+    // 更新下部按钮的图标与文字
+    private fun updateButtonInfo(){
+        if (GlobalData.isRecording)
+        {
+            // android.R.drawable.ic_media_pause
+            binding.btnStart.btnImage.setImageResource(android.R.drawable.ic_media_pause)
+            binding.btnStart.btnText.setText("停止记录")
+        }
+        else{
+            binding.btnStart.btnImage.setImageResource(this.modeImage)
+            binding.btnStart.btnText.setText(modeString)
+        }
+
+        updateSteps()
     }
 
     // 初始化顶部工具条
@@ -209,6 +239,15 @@ class HomeFragment : Fragment() {
         btnLasy.setOnClickListener{
             GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_LAZY
             changeMode()
+        }
+
+        // 开始结束按钮
+        binding.btnStart.btnImage.setOnClickListener{
+            if (GlobalData.isRecording){
+                stopRecord()
+            }else{
+                startRecord()
+            }
         }
 
     }
@@ -307,8 +346,58 @@ class HomeFragment : Fragment() {
     }
 
 
+    fun startRecord(){
+        GlobalData.startTrack(requireActivity())
+        binding.tvsportAll.setText("0.00")
+        updateButtonInfo()
+        handler.postDelayed(periodicLocationRequestRunnable, 1000)
+        UiHelper.showCenterMessage(this.requireActivity(), "开始新轨迹记录")
+    }
+
+    fun stopRecord(){
+        GlobalData.stopTrack(requireActivity())
+        updateButtonInfo()
+        UiHelper.showCenterMessage(this.requireActivity(), "停止轨迹记录")
+    }
+
+
+
+    // 轮询的函数
+    private val periodicLocationRequestRunnable: Runnable = object : Runnable {
+        override fun run() {
+            // 更新好友信息，刷新
+            updateSteps()
+            if (GlobalData.shouldRefreshDistance && GlobalData.isRecording)
+                handler.postDelayed(this, GlobalData.intervalOfLocation)
+        }
+    }
+
+    private fun updateSteps(){
+        val dis = GlobalData.getDistance()
+        binding.tvsportAll.setText(dis)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+
+    override fun onResume() {
+        super.onResume()
+        GlobalData.shouldRefreshDistance = true
+        updateButtonInfo()
+
+        if (GlobalData.isRecording){
+            handler.postDelayed(periodicLocationRequestRunnable, 1000)
+        }
+
+    }
+
+    override fun onPause(){
+        super.onPause()
+        GlobalData.shouldRefreshDistance = false
+        handler.removeCallbacks(periodicLocationRequestRunnable)
+    }
+
+
 }

@@ -139,8 +139,9 @@ object LocationHelper {
 
     /* 一分钟之内的点 */
     fun isRecentEnough(location: Location): Boolean {
-        val locationAge: Long = SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos
-        return locationAge < Keys.DEFAULT_THRESHOLD_LOCATION_AGE
+        //val locationAge: Long = SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos
+        val locationAge = System.currentTimeMillis() - location.time
+        return locationAge < 60000  // 1分钟
     }
 
 

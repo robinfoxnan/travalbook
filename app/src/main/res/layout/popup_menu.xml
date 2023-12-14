@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/popup_menu.xml -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rounded_background"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/tv_mark_info"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/back_car"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="3dp"
+        android:text="设置信息"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_delete_mark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/back_bike"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="3dp"
+        android:text="删除标记"
+        android:textColor="@android:color/black"
+        android:textSize="16sp" />
+
+    <!-- 这里可以添加其他菜单项 -->
+
+</LinearLayout>

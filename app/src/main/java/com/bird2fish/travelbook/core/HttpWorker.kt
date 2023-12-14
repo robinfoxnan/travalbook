@@ -289,7 +289,8 @@ class HttpWorker {
 
     // 按照列表更新位置信息
     private fun getLastPoint(){
-        if (!GlobalData.shouldViewFriendLocation) {return }
+        // 地图不显示就不需要刷新
+        if (!GlobalData.shouldRefresh) {return }
 
         if (GlobalData.followList == null || GlobalData.followList.isEmpty()){
             val lst = GlobalData.getHttpServ().getFollowList()

@@ -23,11 +23,13 @@ import com.bird2fish.travelbook.BottomWindow
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.ServerSettingView
 import com.bird2fish.travelbook.TencentMapActivity
+import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityLoginBinding
 import com.bird2fish.travelbook.helper.AgreementReader
 import com.bird2fish.travelbook.helper.LogHelper
+import com.bird2fish.travelbook.helper.PermissionHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import java.io.File
 
@@ -38,15 +40,25 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var checkPrivacy: CheckBox
 
+    // 请求文件读写权限
+    fun startRequestForWriteLog(){
+        PermissionHelper.requestFile(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
 
         super.onCreate(savedInstanceState)
 
+        // 初始化目录
         val fileEx: File? = this.getExternalFilesDir(null)
         if (fileEx != null){
             val dir = fileEx.absolutePath
             LogHelper.setLogDir(dir)
+//            val ret = GlobalData.setRootDir(dir)
+//            if (!ret){
+//                UiHelper.showCenterMessage(this, "轨迹存储路径${dir}无法访问，请检查读写权限")
+//            }
         }
 
         // 这里先这样初始化
@@ -160,15 +172,9 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // 绑定
-        bindHttp()
 
-        // 加载之前的用户
-        val olduser = PreferencesHelper.getUserInfo()
-        if (olduser != null && olduser.sid != ""){
-            username.setText(olduser.uid)
-            password.setText(olduser.pwd)
-        }
+
+
 
         // 设置标题栏颜色
 //        if (this is FragmentActivity) {
@@ -181,6 +187,28 @@ class LoginActivity : AppCompatActivity() {
         val privacyPolicyTextView = findViewById<TextView>(R.id.tv_privacy_agree)
         privacyPolicyTextView.text = getAgreementText()
         privacyPolicyTextView.movementMethod = LinkMovementMethod.getInstance()
+
+        // 加载之前的用户
+        val olduser = PreferencesHelper.getUserInfo()
+        if (olduser != null && olduser.sid != ""){
+            username.setText(olduser.uid)
+            password.setText(olduser.pwd)
+        }
+
+        // 绑定
+        bindHttp()
+    }
+
+    // 尝试自动登录，
+    private fun tryAutoLogin(){
+        val olduser = PreferencesHelper.getUserInfo()
+        if (olduser != null && olduser.sid != ""){
+            loginViewModel.login(
+                binding.username.text.toString(),
+                binding.password.text.toString(),
+                service
+            )
+        }
     }
 
     private fun getAgreementText(): SpannableString {
@@ -297,6 +325,7 @@ class LoginActivity : AppCompatActivity() {
             val httpBinder = binder as HttpService.HttpBinder
             service = httpBinder.getService()
             //Log.i("DemoLog", "ActivityA onServiceConnected")
+            tryAutoLogin()
 
         }
 

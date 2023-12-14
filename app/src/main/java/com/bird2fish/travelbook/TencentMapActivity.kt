@@ -1,32 +1,25 @@
 package com.bird2fish.travelbook
 
 
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.*
 import android.view.*
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.FragmentActivity
 import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.helper.DateTimeHelper
+import com.bird2fish.travelbook.helper.LocationHelper
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PermissionHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.tencent.tencentmap.mapsdk.maps.*
-import com.tencent.tencentmap.mapsdk.maps.model.BitmapDescriptorFactory
-import com.tencent.tencentmap.mapsdk.maps.model.CameraPosition
-import com.tencent.tencentmap.mapsdk.maps.model.LatLng
-import com.tencent.tencentmap.mapsdk.maps.model.MarkerOptions
+import com.tencent.tencentmap.mapsdk.maps.TencentMap.OnMarkerDragListener
+import com.tencent.tencentmap.mapsdk.maps.model.*
+import java.io.File
 
 
 class TencentMapActivity : AppCompatActivity() {
@@ -51,6 +44,13 @@ class TencentMapActivity : AppCompatActivity() {
     private var iconsMap = mutableMapOf<String, ImageView>()
 
     private var isInitedInfo = false
+
+    private var favMarkers = mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()  // 收藏点
+
+    // 当前轨迹
+    var wayLine: com.tencent.tencentmap.mapsdk.maps.model.Polyline? = null
+    val latLngs: MutableList<LatLng> = ArrayList()  // 轨迹点
+    var trackId :String = ""
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -112,8 +112,155 @@ class TencentMapActivity : AppCompatActivity() {
         // 地图右侧边栏
         initSideToolbar()
 
+        // 日志与轨迹文件的访问权限
+        tryInitFiles()
+
+        // 地图点击添加标记，移动标记，在标记上弹出右键菜单
+        initMapEvent()
+
+    }
+
+    private fun initMapEvent(){
+        // 设置标记的拖动监听器
+        tencentMap!!.setOnMarkerDragListener(object : OnMarkerDragListener {
+            override fun onMarkerDragStart(marker: Marker) {
+                // 标记开始拖动时的处理
+            }
+
+            override fun onMarkerDrag(marker: Marker) {
+                // 标记拖动过程中的处理
+            }
+
+            override fun onMarkerDragEnd(marker: Marker) {
+                // 标记拖动结束时的处理
+                val latLng = marker.position
+                // newPosition 就是标记的新位置坐标
+                //Log.d("Marker", "New Position: " + newPosition.toString());
+                val buffer = StringBuffer()
+                buffer.append(latLng.latitude)
+                buffer.append(",")
+                buffer.append(latLng.longitude)
+                UiHelper.showCenterMessage(this@TencentMapActivity, buffer.toString())
+            }
+        })
+
+        // 设置长按时候添加标签
+        tencentMap!!.setOnMapLongClickListener { latLng->
+            addFavMarker(latLng)
+        }
+
+//        tencentMap!!.setOnMapClickListener { latLng->
+//            addFavMarker(latLng)
+//        }
+
+        // 设置标记的点击监听器
+        tencentMap!!.setOnMarkerClickListener { clickedMarker ->
+            // 点击了我们添加的标记
+            // 在这里执行选中标记后的操作，例如显示信息窗口
+            if (clickedMarker.tag == null){
+                false
+            }
+
+            val str = clickedMarker.tag as String
+            if (str == "fav"){
+                //clickedMarker.snippet = "选中"
+                clickedMarker.showInfoWindow()
+                showPopupMenu(clickedMarker)
+                true // 返回 true 表示消费了点击事件
+            }
+            false
+        }
+    }
+
+    // 显示marker的 PopupWindow 的方法
+    private fun showPopupMenu(marker: Marker) {
+        // 创建布局
+        val popupView: View = layoutInflater.inflate(R.layout.popup_menu, null)
+
+        // 创建 PopupWindow
+        val popupWindow = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+
+        // 设置菜单项点击事件
+        val deleteTextView = popupView.findViewById<TextView>(R.id.tv_delete_mark)
+        deleteTextView.setOnClickListener {
+            popupWindow.dismiss() // 关闭 PopupWindow
+            // 在这里执行删除标记的操作
+            marker.remove()
+
+        }
+
+        val editTextView = popupView.findViewById<TextView>(R.id.tv_mark_info)
+        editTextView.setOnClickListener {
+            popupWindow.dismiss() // 关闭 PopupWindow
+
+            //showEditMarkerInfo()
+
+        }
+
+        // 显示 PopupWindow
+        // 显示 PopupWindow 在标记位置上方
+        val markerLatLng = marker.position
+
+// 将地理坐标转换为屏幕坐标
+        val screenLocation = tencentMap!!.projection.toScreenLocation(markerLatLng)
+
+// 现在，screenLocation 包含了 Marker 在屏幕上的坐标
+        val screenX = screenLocation.x
+        val screenY = screenLocation.y
+        val offsetX = 50
+        val offsetY = 50
+        //popupWindow.showAtLocation(mapView, Gravity.NO_GRAVITY, (int) position.x + offsetX, (int) position.y - offsetY);
+        //popupWindow.showAsDropDown(marker.getMarkerView());
+        popupWindow.showAtLocation(
+            mapView,
+            Gravity.NO_GRAVITY,
+            screenX + offsetX,
+            screenY + offsetY
+        )
+    }
+
+    // 编辑自定义收藏点的信息
+    fun showEditMarkerInfo(){
+
+    }
+
+    // 如果有了权限则直接初始化，否则，需要在异步处理返回的地方处理
+    private fun tryInitFiles(){
+
         // 请求文件权限
-        startRequestForWriteLog()
+        val ret = PermissionHelper.requestFile(this)
+        if (ret){
+            initFiles()
+        }
+
+    }
+
+    // 加载
+    private fun initFiles(){
+        if (GlobalData.isFileInited()){
+            return
+        }
+        // 初始化目录
+        val fileEx: File? = this.getExternalFilesDir(null)
+        if (fileEx != null){
+            val dir = fileEx.absolutePath
+            LogHelper.setLogDir(dir)
+            val ret = GlobalData.setRootDir(dir)
+            if (!ret){
+                UiHelper.showCenterMessage(this, "轨迹存储路径${dir}无法访问，请检查读写权限")
+                return
+            }
+            // 异步
+            GlobalData.loadTrackList(this)
+
+        }else{
+            UiHelper.showCenterMessage(this, "获取存储位置出错！")
+        }
     }
 
     // 初始化底部视图，将自己的图标加进去
@@ -227,12 +374,20 @@ class TencentMapActivity : AppCompatActivity() {
         }else
         {
             if (f.isShare){
+
                 info = String.format("位置：(%.6f, %.6f) 海拔：%.0f 速度：%.1f", f.lat, f.lon,
                     f.ele, f.speed)
 
                 val tmStr = DateTimeHelper.convertTimestampToDateString(f.tm * 1000)
                 val span = DateTimeHelper.formatTimeDifference(f.tm * 1000);
                 detail = "上报时间：" + tmStr + span
+                if (GlobalData.currentTLocation != null){
+                    val distance = LocationHelper.haversine(f.lat, f.lon,
+                        GlobalData.currentTLocation!!.latitude, GlobalData.currentTLocation!!.longitude)
+
+                    detail += f.street
+                    detail += " 距离 %.2f km".format(distance)
+                }
             }
             else{
                 detail = f.msg
@@ -384,7 +539,7 @@ class TencentMapActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event);
     }
 
-    // 将右侧的工具条设置
+    // 将右侧工具条设置按钮
     private fun initSideToolbar(){
         var btnLayer = findViewById<ImageButton>(R.id.btn_layer)
         btnLayer.setOnClickListener {
@@ -402,29 +557,50 @@ class TencentMapActivity : AppCompatActivity() {
 
         var btnRecord = findViewById<ImageButton>(R.id.btn_record)
         btnRecord.setOnClickListener {
-            if (GlobalData.isRecordingTrack)  // 正在录制，改为停止，显示录制按钮
+            if (GlobalData.isRecording)  // 正在录制，改为停止，显示录制按钮
             {
-                GlobalData.isRecordingTrack = false
-                btnRecord.setImageResource(R.drawable.ic_bar_record_24dp)
-            }else
-            {
-                // 正在停止，改为录制中，显示停止按钮
-                GlobalData.isRecordingTrack = true
-                btnRecord.setImageResource(R.drawable.ic_bar_stop_24dp)
+                GlobalData.stopTrack(this)
+                UiHelper.showCenterMessage(this, "停止当前轨迹记录")
+
+            }else{
+                GlobalData.startTrack(this)
+                updateWayPoint()
+                UiHelper.showCenterMessage(this, "开始新轨迹记录")
+
             }
+            updateRecordButton()
         }
 
+        updateRecordButton()
 
+
+        // 测试
         var btnShare = findViewById<ImageButton>(R.id.btn_share)
         btnShare.setOnClickListener {
-            UiHelper.showCenterMessage(this, "分享")
+            //UiHelper.showCenterMessage(this, "分享")
+            val info = "共${latLngs.size}个点"
+            UiHelper.showCenterMessage(this, info)
         }
 
         var btnImport = findViewById<ImageButton>(R.id.btn_import_tract)
         btnImport.setOnClickListener {
             UiHelper.showCenterMessage(this, "导入")
+            test_addLine()
         }
 
+    }
+
+    // 记录的按钮
+    private fun updateRecordButton(){
+
+        var btnRecord = findViewById<ImageButton>(R.id.btn_record)
+        if (!GlobalData.isRecording){
+            btnRecord.setImageResource(R.drawable.ic_bar_record_24dp)
+        }
+        else
+        {
+            btnRecord.setImageResource(R.drawable.ic_bar_stop_24dp)
+        }
     }
 
 
@@ -534,6 +710,7 @@ class TencentMapActivity : AppCompatActivity() {
         options.icon(custom)
 
         val marker = tencentMap!!.addMarker(options)
+        marker.tag = friend.uid
 
         //开启信息窗口
         marker.isInfoWindowEnable = true
@@ -541,6 +718,36 @@ class TencentMapActivity : AppCompatActivity() {
         marker.position = position
         marker.showInfoWindow()
         return  marker
+    }
+
+    // 手动长按添加的标签
+    protected fun addFavMarker(latLng: LatLng){
+
+        val buffer = StringBuffer()
+        buffer.append(latLng.latitude)
+        buffer.append(",")
+        buffer.append(latLng.longitude)
+        // UiHelper.showCenterMessage(this@TencentMapActivity, buffer.toString())
+
+        val options = MarkerOptions(latLng)
+        options.infoWindowEnable(false) //默认为true
+        options.title(buffer.toString()) //标注的InfoWindow的标题
+        //options.snippet("当前速度${friend.speed},高度${friend.ele}") //标注的InfoWindow的内容
+
+        val bitmapIcon = UiHelper.getSmallIconBitmap(R.drawable.flag, this)
+        val custom = BitmapDescriptorFactory.fromBitmap(bitmapIcon)
+        options.icon(custom)
+
+        val marker = tencentMap!!.addMarker(options)
+        marker.tag = "fav"
+        favMarkers.put(buffer.toString(), marker)
+
+        //开启信息窗口
+        marker.isInfoWindowEnable = true
+        marker.isDraggable = true
+        //marker.title = ""
+        //marker.position = latLng
+        //marker.showInfoWindow()
     }
 
     // 移动镜头
@@ -638,6 +845,7 @@ class TencentMapActivity : AppCompatActivity() {
         options.icon(custom)
 
         this.mMarker = tencentMap!!.addMarker(options)
+        mMarker.tag = "me"
         //开启信息窗口
         mMarker.showInfoWindow()
     }
@@ -672,6 +880,9 @@ class TencentMapActivity : AppCompatActivity() {
         updateMyMarker()   // 更新我自己的位置
         // 先更新markers，在f中标记了部分内容，然后
 
+        // 记录轨迹时候显示
+        updateWayPoint()
+
         // 拷贝一份目前的好友位置列表
         val mapFriend = HttpWorker.get().getLastPointMap()
         updateAllMarkers(mapFriend)    // 更新后，f.msg中含有错误消息
@@ -686,6 +897,7 @@ class TencentMapActivity : AppCompatActivity() {
             onImageIconClick(friend)
             isInitedInfo = true
         }
+        return
     }
 
     // 请求权限的回调函数
@@ -720,6 +932,12 @@ class TencentMapActivity : AppCompatActivity() {
             }
             PermissionHelper.PERMISSION_REQUEST_CODE_STORAGE ->{
                 GlobalData.isFileReadWriteEnabaled  = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+
+                if (GlobalData.isFileReadWriteEnabaled){
+                    initFiles()
+                }else{
+                    UiHelper.showCenterMessage(this, "未授权文件读写则无法记录轨迹数据")
+                }
             }
             // 处理其他权限请求结果...
         }
@@ -727,10 +945,6 @@ class TencentMapActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    // 请求文件读写权限
-    fun startRequestForWriteLog(){
-        PermissionHelper.requestFile(this)
-    }
 
     // 启动位置服务和HTTPworker
     fun startTencentLocaionService(){
@@ -797,6 +1011,8 @@ class TencentMapActivity : AppCompatActivity() {
         }
     }
 
+
+
     /**
      * mapview的生命周期管理
      */
@@ -816,6 +1032,9 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 查看头像是否更改
         updateAvarta()
+
+        // 更新录制按钮
+        updateRecordButton()
     }
 
     // 当一个 Activity 即将失去焦点并进入后台时，系统会调用 onPause() 方法。
@@ -872,6 +1091,99 @@ class TencentMapActivity : AppCompatActivity() {
             this.startService(intent);
         }
 
+    }
+
+    // 更新当前的轨迹线
+    private fun updateWayPoint(){
+        if (!GlobalData.isRecording ){
+            return
+        }
+
+        // 先检查是否是同一线路，如果不是需要清空
+        val id = GlobalData.curTrack.getTrackId().toString()
+        // 开始了一个新的轨迹
+        if (id != this.trackId){
+                this.trackId = id
+                if (this.wayLine!= null)
+                {
+                    this.wayLine!!.remove()
+                }
+
+                this.wayLine = null
+                this.latLngs.clear()
+        }
+
+
+        GlobalData.copyWaypoints(latLngs)
+
+        // 新绘制折线，或者添加一个点
+        if (this.wayLine == null){
+
+            if (latLngs.size > 1)
+            {
+                val polylineOptions = PolylineOptions()
+                    .addAll(latLngs) // 折线设置圆形线头
+                    .lineCap(true) //.lineType(PolylineOptions.LineType.LINE_TYPE_DOTTEDLINE)
+                    // 纹理颜色
+                    .color(PolylineOptions.Colors.GRAYBLUE)
+                    .width(20f)
+                this.wayLine = tencentMap!!.addPolyline(polylineOptions)
+            }
+
+        } else
+        {
+            val index = this.wayLine!!.points.size
+            for (i in index until latLngs.size){
+                this.wayLine!!.appendPoint(latLngs[i])
+            }
+
+        }
+        return
+    }
+
+    fun test_addLine() {
+        // 构造折线点串
+        val latLngs: MutableList<LatLng> = ArrayList()
+        latLngs.add(LatLng(39.984864, 116.305756))
+        latLngs.add(LatLng(39.983618, 116.305848))
+        latLngs.add(LatLng(39.982347, 116.305966))
+        latLngs.add(LatLng(39.982412, 116.308111))
+        latLngs.add(LatLng(39.984122, 116.308224))
+        latLngs.add(LatLng(39.984955, 116.308099))
+
+        // 构造 PolylineOpitons
+//        PolylineOptions polylineOptions = new PolylineOptions()
+//                .addAll(latLngs)
+//                // 折线设置圆形线头
+//                .lineCap(true)
+//                // 折线的颜色为绿色
+//                .color(0xff00ff00)
+//                // 折线宽度为25像素
+//                .width(15)
+//                // 还可以添加描边颜色
+//                //.borderColor(0xffff0000)
+//                // 描边颜色的宽度，线宽还是 25 像素，不过填充的部分宽度为 `width` - 2 * `borderWidth`
+//                .borderWidth(5);
+
+        // 构造 PolylineOpitons
+        val polylineOptions = PolylineOptions()
+            .addAll(latLngs) // 折线设置圆形线头
+            .lineCap(true) //.lineType(PolylineOptions.LineType.LINE_TYPE_DOTTEDLINE)
+            // 纹理颜色
+            .color(PolylineOptions.Colors.GRAYBLUE)
+            .width(25f)
+
+// 绘制折线
+        val polyline = tencentMap!!.addPolyline(polylineOptions)
+
+// 将地图视野移动到折线所在区域(指定西南坐标和东北坐标)，设置四周填充的像素
+        tencentMap!!.moveCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                LatLngBounds.Builder()
+                    .include(latLngs).build(),
+                100
+            )
+        )
     }
 
 //    private var isBoundLocation: Boolean = false

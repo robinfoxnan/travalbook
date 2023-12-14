@@ -1,11 +1,20 @@
 package com.bird2fish.travelbook.core
 
+import android.content.Context
 import android.location.Location
+import androidx.core.net.toUri
 import com.bird2fish.travelbook.helper.DateTimeHelper
+import com.bird2fish.travelbook.helper.FileHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
+import com.bird2fish.travelbook.helper.TrackHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.tencent.map.geolocation.TencentLocation
-import java.util.LinkedList
+import com.tencent.tencentmap.mapsdk.maps.model.LatLng
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.time.LocalDateTime
+import java.util.*
 
 class GlobalData {
     enum class SportModeEnum(val intValue: Int) {
@@ -19,29 +28,127 @@ class GlobalData {
 
     companion object{
         var httpServer : HttpService = HttpService()
+        @Volatile
         var isLocationEnabled = false          // 定位
+
+        @Volatile
         var isLocationBackgroudEnabled = false // 后台和运行
+
+        @Volatile
         var isBodySensorEnabled = false        // 步数
+
+        @Volatile
         var isRecognitionEnabled = false       // 状态
+
+        @Volatile
         var isFileReadWriteEnabaled = false    // 文件读写
 
-        var isRecordingTrack = false         // 是否在录制轨迹
         var currentFriend :Friend? = null
 
+        @Volatile
         var  intervalOfLocation: Long = 2000         // 采样间隔与上报是一样的获取好友数据
+
+        @Volatile
         var  intervalOfRefresh:Long = 2000           // 刷新好友位置,界面的刷新率与httpworker中一致，后台则不刷新
+
+        @Volatile
         var  sportMode :SportModeEnum = SportModeEnum.SPORT_MODE_HIKE
+
+        @Volatile
         var  shouldRefresh :Boolean = true          // 是否获取好友信息
         var  defaultZoomLevel = 13f
 
+        @Volatile
+        var shouldRefreshDistance:Boolean = true
+
+        @Volatile
+        var  isRecording:Boolean = false
+        var curTrack :Track = Track()     // 当前的轨迹
+        private var tracklock = Any()
+
+        var trackList: Tracklist? = null
+        private var trackListPath:String = ""
+        private var rootDir :String = ""
+        private var trackListlock = Any()
+        // /storage/emulated/0/Android/data/com.bird2fish.travelbook/files/tracks
+
+
+        fun isFileInited():Boolean{
+            if (rootDir == ""){
+                return false
+            }
+            return true
+        }
+        fun setRootDir(dir :String):Boolean{
+            this.rootDir = dir
+            val ret = FileHelper.createDir(this.rootDir, "tracks")
+            return ret
+        }
+
+        fun loadTrackList(context: Context){
+            if (rootDir == "")
+                return
+
+            // 协程中运行，也许会比较大
+            GlobalScope.launch{
+                val list = FileHelper.readTracklistSuspended(context)
+                synchronized(trackListlock){
+                    GlobalData.trackList = list
+                }
+            }
+
+        }
+
+        fun saveTrackList(context: Context){
+            if (rootDir == "")
+                return
+
+            if (GlobalData.trackList == null){
+                return
+            }
+            // 协程中运行，也许会比较大
+            GlobalScope.launch{
+                FileHelper.saveTracklistSuspended(context, GlobalData.trackList!!, Date())
+            }
+        }
+
+
         // 在第一个被加载的页面中使用
         fun InitLoad(){
-            this.intervalOfLocation = PreferencesHelper.getCurrentPosInterval()
+            // 这句得来的比较小，默认是
+            GlobalData.intervalOfLocation = PreferencesHelper.getCurrentPosInterval()
             try {
                 GlobalData.sportMode =  GlobalData.SportModeEnum.valueOf(PreferencesHelper.getSportMode())
             }catch (e: Exception){
                 GlobalData.sportMode = GlobalData.SportModeEnum.SPORT_MODE_HIKE
             }
+
+            // 根据类型加载
+            when (GlobalData.sportMode) {
+
+                GlobalData.SportModeEnum.SPORT_MODE_HIKE->{
+                    GlobalData.intervalOfLocation = PreferencesHelper.getModeHikePosInterval()
+                }
+
+                GlobalData.SportModeEnum.SPORT_MODE_RUN->{
+                    GlobalData.intervalOfLocation = PreferencesHelper.getModeRunPosInterval()
+                }
+
+                GlobalData.SportModeEnum.SPORT_MODE_BIKE->{
+                    GlobalData.intervalOfLocation= PreferencesHelper.getModeBikePosInterval()
+                }
+                GlobalData.SportModeEnum.SPORT_MODE_MOTOR->{
+                    GlobalData.intervalOfLocation = PreferencesHelper.getModeMotorPosInterval()
+                }
+                GlobalData.SportModeEnum.SPORT_MODE_CAR->{
+                    GlobalData.intervalOfLocation = PreferencesHelper.getModeCarPosInterval()
+                }
+                GlobalData.SportModeEnum.SPORT_MODE_LAZY->{
+                    GlobalData.intervalOfLocation = PreferencesHelper.getModeLasyPosInterval()
+                }
+            }
+
+            // 地图刷新频率
             GlobalData.intervalOfRefresh =  PreferencesHelper.getRefreshInterval()
             if (GlobalData.intervalOfRefresh < 2000){
                 GlobalData.intervalOfRefresh = 2000
@@ -54,6 +161,25 @@ class GlobalData {
             this.currentTLocation = pos
             currentTm = DateTimeHelper.getTimestamp()
             HttpWorker.get().pushGpx(pos);
+
+            // 添加到轨迹列表
+            synchronized(tracklock){
+                if(isRecording){
+                    val loc = TLocation2Location(pos)
+                    TrackHelper.addWayPointToTrack(curTrack, loc, 1, false)
+                }
+            }
+        }
+
+        // 返回当前的轨迹的
+        fun getDistance(): String {
+            synchronized(tracklock){
+                val len = curTrack.length / 1000.0
+                val dis =  "%.3f".format(len)
+                //val count = curTrack.wayPoints.size.toString()
+                //val info = "${dis} 点${count}个"
+                return dis
+            }
         }
 
         fun getHttpServ(): HttpService{
@@ -71,10 +197,13 @@ class GlobalData {
 
         // 自己当前最好的位置
         //var currentBestLocation: Location?  = null  // createLocation(0.0, 0.0)
-        var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
+//        @Volatile
+//        var shouldViewFriendLocation :Boolean = true   // 标记是否需要更新，不显示地图，则不需要更新，省电
 
         @Volatile
         var currentTLocation : TencentLocation? = null
+
+        @Volatile
         var currentTm :Long = 0
 
 
@@ -83,6 +212,24 @@ class GlobalData {
             synchronized(glock) {
                 return followList!!.size
             }
+        }
+
+        // 类型转换
+        private fun TLocation2Location(pos :TencentLocation): Location {
+            var provider = pos.provider
+            if (provider == null){
+                provider = "manual_provider"
+            }
+            val loc = Location(provider)
+            loc.latitude = pos.latitude
+            loc.longitude = pos.longitude
+            loc.altitude = pos.altitude
+            loc.accuracy = pos.accuracy
+            loc.speed = pos.speed
+            loc.time = pos.time
+            loc.elapsedRealtimeNanos = pos.elapsedRealtime
+
+            return loc
         }
 
         fun createLocation(latitude: Double, longitude: Double): Location {
@@ -196,6 +343,58 @@ class GlobalData {
 
             }
             return false
+        }
+
+        // 开始记录
+        fun startTrack(context: Context){
+            this.isRecording = true
+            synchronized(tracklock){
+                curTrack = Track()
+                if (currentTLocation != null){
+                    val loc = TLocation2Location(currentTLocation!!)
+                    TrackHelper.addWayPointToTrack(curTrack, loc, 1, false)
+                }
+            }
+
+        }
+
+        fun stopTrack(context: Context){
+            this.isRecording = false
+            if (trackList == null){
+                return
+            }
+
+            synchronized(tracklock){
+                val name = curTrack.generateName()
+
+                val ret = FileHelper.createDir(this.rootDir, "tracks")
+                if (ret == false){
+                    return
+                }
+
+                val dir = File(rootDir, "tracks")
+                val file = File(dir, name + ".json")
+                curTrack.trackUriString = file.toString()
+                curTrack.gpxUriString = File(dir, name + ".gpx").toString()
+                //UiHelper.showCenterMessage(context, curTrack.trackUriString)
+                FileHelper.saveTrack(curTrack, false)
+            }
+
+            synchronized(trackListlock){
+                FileHelper.addTrackAndSave(context, trackList!!, curTrack)
+            }
+        }
+
+        // 拷贝当前新添加的点
+        fun copyWaypoints(latLngs: MutableList<LatLng>){
+            synchronized(tracklock){
+                for (index in latLngs.size until curTrack.wayPoints.size){
+                    val p = curTrack.wayPoints[index]
+                    latLngs.add(LatLng(p.latitude, p.longitude))
+                }
+
+            }// end syn
+            return
         }
 
     }// end object

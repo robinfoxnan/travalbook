@@ -50,11 +50,11 @@
     <fragment
         android:id="@+id/nav_me"
         android:name="com.bird2fish.travelbook.ui.PersonalInfo"
-        android:label="fragment_personal_info"
+        android:label="@string/menu_setting_person"
         tools:layout="@layout/fragment_personal_info" />
     <fragment
         android:id="@+id/settingFragment"
         android:name="com.bird2fish.travelbook.ui.settingFragment"
-        android:label="fragment_setting"
+        android:label="@string/menu_setting"
         tools:layout="@layout/fragment_setting" />
 </navigation>

@@ -169,7 +169,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
     // 这里做了一个优化，当定位频率小于3秒，使用持续定位，如果频率低，则使用单次定位降低电池消耗。
     fun restartLocationService(){
         stopBackGround()
-        if (GlobalData.intervalOfLocation <= 3000){
+        if (GlobalData.intervalOfLocation <= 5000){
             startBackGround(this)
         }else{
             startLocationLoop()

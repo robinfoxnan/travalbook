@@ -7,6 +7,7 @@ import com.google.gson.annotations.Expose
 import kotlinx.parcelize.Parcelize
 import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.helper.DateTimeHelper
+import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -49,6 +50,17 @@ data class Track (@Expose var trackFormatVersion: Int = Keys.CURRENT_TRACK_FORMA
             gpxUriString = gpxUriString,
             starred = false
         )
+    }
+
+    fun generateName():String{
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+
+        val start = dateFormat.format(recordingStart)
+        //val end = dateFormat.format(recordingStop)
+        this.name = "${start}"
+
+
+        return this.name
     }
 
 

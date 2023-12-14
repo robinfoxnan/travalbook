@@ -7,14 +7,16 @@
     <string name="nav_header_subtitle">登录邮箱@android.com</string>
     <string name="nav_header_desc">导航栏</string>
     <string name="action_settings">设置</string>
+    <string name="action_logout">退出</string>
 
     <string name="menu_newgroup">新建群组</string>
     <string name="menu_home">运动</string>
     <string name="menu_playgrourd">周边</string>
-    <string name="menu_favourite">收藏</string>
+    <string name="menu_favourite">地点</string>
 
     <string name="menu_contract">通信簿</string>
     <string name="menu_setting">设置</string>
+    <string name="menu_setting_person">个人信息</string>
 
     <string name="menu_map">地图</string>
     <string name="menu_track">轨迹</string>

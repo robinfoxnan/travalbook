@@ -330,7 +330,7 @@ object PreferencesHelper {
     }
 
     fun getCurrentPosInterval(): Long{
-        var t = sharedPreferences.getLong("currentModeInterval", 3000)
+        var t = sharedPreferences.getLong("currentModeInterval", 30000)
         if (t < 1000){
             t = 1000
         }

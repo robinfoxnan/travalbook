@@ -88,7 +88,7 @@
         android:layout_marginTop="75dp"
         android:text="0.00"
         android:textColor="#2ac582"
-        android:textSize="90sp"
+        android:textSize="60sp"
         android:textStyle="bold"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

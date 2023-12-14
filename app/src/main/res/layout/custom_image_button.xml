@@ -19,7 +19,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/hike" />
+            app:srcCompat="@android:drawable/ic_media_pause" />
 
         <TextView
             android:id="@+id/btn_text"

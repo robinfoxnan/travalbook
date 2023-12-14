@@ -115,6 +115,12 @@ public object UiHelper {
         return bitmapIcon
     }
 
+    fun getSmallIconBitmap(id: Int, ctx: Context) :Bitmap{
+        val bitmapOld = BitmapFactory.decodeResource(ctx.resources, id)
+        val bitmapIcon = Bitmap.createScaledBitmap(bitmapOld, 120, 120, false)
+        return bitmapIcon
+    }
+
     fun resizeImage(bitmap: Bitmap, width: Int, height: Int): Bitmap {
         val bmpWidth = bitmap.width
         val bmpHeight = bitmap.height

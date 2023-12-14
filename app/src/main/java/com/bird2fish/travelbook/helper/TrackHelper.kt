@@ -64,9 +64,11 @@ object TrackHelper {
         track.recordingStop = now
 
         // Step 3: 一分钟之内的，不能太近，按照精度来计算一下是否晃动了
-        val shouldBeAdded: Boolean = (LocationHelper.isRecentEnough(location) &&
-                LocationHelper.isAccurateEnough(location, Keys.DEFAULT_THRESHOLD_LOCATION_ACCURACY) &&
-                LocationHelper.isDifferentEnough(previousLocation, location, accuracyMultiplier))
+        var b1: Boolean = LocationHelper.isRecentEnough(location)
+        val b2 =  LocationHelper.isAccurateEnough(location, Keys.DEFAULT_THRESHOLD_LOCATION_ACCURACY)
+        val b3 =  LocationHelper.isDifferentEnough(previousLocation, location, accuracyMultiplier)
+
+        val shouldBeAdded =  b1 && b2 && b3
         if (shouldBeAdded) {
             // Step 3.1: Update distance (do not update if resumed -> we do not want to add values calculated during a recording pause)
             if (!resumed) {
