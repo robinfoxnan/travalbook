@@ -182,6 +182,13 @@ public object UiHelper {
         return ContextCompat.getDrawable(context, id)
     }
 
+    fun computeHeight(img :Drawable, width: Int):Int{
+        val scaleFactor = width * 1.0 / img.intrinsicWidth
+        val height = scaleFactor * img.intrinsicHeight
+
+        return height.toInt()
+    }
+
     // 将imageview中图片的不透明的部分变为另一种颜色，用于按钮点击
     fun replaceOpaqueWithColor(context: Context, resourceId: Int, replacementColorResId: Int, imageView: ImageView) {
         // 原始图片
@@ -225,6 +232,37 @@ public object UiHelper {
                 options.outWidth / targetWidth,
                 options.outHeight / targetHeight
             )
+
+            // 设置缩放比例
+            options.inJustDecodeBounds = false
+            options.inSampleSize = scaleFactor
+
+            // 重新加载图片并缩放
+            val scaledBitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
+
+            // 创建 Drawable
+            return BitmapDrawable(context.resources, scaledBitmap)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return null
+    }
+
+    fun loadAndScaleImage(context: Context, resourceId: Int, width:Int): Drawable? {
+        try {
+            // 从资源中加载原始图片
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeResource(context.resources, resourceId, options)
+
+            // 计算缩放比例
+            val targetWidth = width
+
+            val scaleFactor = options.outWidth / width
+            var targetHeight = options.outHeight * scaleFactor
+
+
 
             // 设置缩放比例
             options.inJustDecodeBounds = false

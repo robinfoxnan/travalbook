@@ -135,6 +135,20 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 获取传递的 Intent
+        val intent = intent
+        // 提取自定义参数
+        val action = intent.getStringExtra("action")
+        // 根据参数执行相应的操作
+        if (action == "openDrawer") {
+            // 打开抽屉或执行其他操作
+            openDrawer()
+            intent.removeExtra("action")
+        }
+    }
+
     private fun setUserInfo(){
 
         // 侧边栏

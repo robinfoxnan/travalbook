@@ -50,8 +50,8 @@ class favFragment : Fragment() {
     var data :LinkedList<FavLocation> = LinkedList<FavLocation>()
     private fun initData(){
 
-        data += FavLocation(1, "1001", "飞鸟", "sys:1", 39f, 116f, 12f, System.currentTimeMillis(), "2023-12-12", "颐和园", "发现一颗好看的树, 在下雪的日子里，显得格外的好看，")
-        data += FavLocation(1, "1001", "小鱼儿", "sys:2", 39f, 116f, 12f, System.currentTimeMillis(), "2023-12-12", "故宫", "落日")
+        data += FavLocation(1, "1001", "飞鸟", "sys:1", 39.0, 116.0, 12.0, System.currentTimeMillis(), "2023-12-12", "颐和园", "发现一颗好看的树, 在下雪的日子里，显得格外的好看，")
+        data += FavLocation(1, "1001", "小鱼儿", "sys:2", 39.0, 116.0, 12.0, System.currentTimeMillis(), "2023-12-12", "故宫", "落日")
 
 
         this.favAdapter = FavItemAdapter(data)

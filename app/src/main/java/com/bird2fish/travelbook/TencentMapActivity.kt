@@ -1,10 +1,13 @@
 package com.bird2fish.travelbook
 
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.os.*
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -20,6 +23,7 @@ import com.tencent.tencentmap.mapsdk.maps.*
 import com.tencent.tencentmap.mapsdk.maps.TencentMap.OnMarkerDragListener
 import com.tencent.tencentmap.mapsdk.maps.model.*
 import java.io.File
+import java.util.LinkedList
 
 
 class TencentMapActivity : AppCompatActivity() {
@@ -45,12 +49,13 @@ class TencentMapActivity : AppCompatActivity() {
 
     private var isInitedInfo = false
 
-    private var favMarkers = mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()  // 收藏点
-
+    private var favMarkers = mutableMapOf<com.tencent.tencentmap.mapsdk.maps.model.Marker, FavLocation>()  // 收藏点
+    private var isFavOn :Boolean = false
     // 当前轨迹
     var wayLine: com.tencent.tencentmap.mapsdk.maps.model.Polyline? = null
     val latLngs: MutableList<LatLng> = ArrayList()  // 轨迹点
     var trackId :String = ""
+
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -118,6 +123,26 @@ class TencentMapActivity : AppCompatActivity() {
         // 地图点击添加标记，移动标记，在标记上弹出右键菜单
         initMapEvent()
 
+        // 监听输入法显示和隐藏事件
+        val rootView = findViewById<View>(android.R.id.content)
+        rootView.viewTreeObserver.addOnPreDrawListener {
+            val rect = Rect()
+            rootView.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+
+            if (keypadHeight > screenHeight * 0.15) {
+                // 输入法显示
+                //movePopupWindowUp(keypadHeight)
+                //UiHelper.showCenterMessage(this, "up move")
+            } else {
+                // 输入法隐藏
+                //movePopupWindowDown()
+            }
+
+            true
+        }
+
     }
 
     private fun initMapEvent(){
@@ -125,6 +150,7 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap!!.setOnMarkerDragListener(object : OnMarkerDragListener {
             override fun onMarkerDragStart(marker: Marker) {
                 // 标记开始拖动时的处理
+
             }
 
             override fun onMarkerDrag(marker: Marker) {
@@ -140,6 +166,11 @@ class TencentMapActivity : AppCompatActivity() {
                 buffer.append(latLng.latitude)
                 buffer.append(",")
                 buffer.append(latLng.longitude)
+                val loc = favMarkers[marker]
+                if (loc != null){
+                    loc.lat = latLng.latitude
+                    loc.lon = latLng.longitude
+                }
                 UiHelper.showCenterMessage(this@TencentMapActivity, buffer.toString())
             }
         })
@@ -188,7 +219,7 @@ class TencentMapActivity : AppCompatActivity() {
         // 设置菜单项点击事件
         val deleteTextView = popupView.findViewById<TextView>(R.id.tv_delete_mark)
         deleteTextView.setOnClickListener {
-            popupWindow.dismiss() // 关闭 PopupWindow
+            popupWindow.dismiss() // 关闭 菜单
             // 在这里执行删除标记的操作
             marker.remove()
 
@@ -196,9 +227,9 @@ class TencentMapActivity : AppCompatActivity() {
 
         val editTextView = popupView.findViewById<TextView>(R.id.tv_mark_info)
         editTextView.setOnClickListener {
-            popupWindow.dismiss() // 关闭 PopupWindow
+            popupWindow.dismiss() // 关闭 菜单
 
-            //showEditMarkerInfo()
+            showEditMarkerInfo(marker)
 
         }
 
@@ -225,9 +256,35 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
     // 编辑自定义收藏点的信息
-    fun showEditMarkerInfo(){
+    fun showEditMarkerInfo(marker: Marker){
+        val window = FavEditWindow(this, R.layout.fav_edit_info, "")
+
+        val loc = favMarkers[marker]
+        if (loc == null){
+            UiHelper.showCenterMessage(this, "图标没有对应的信息，奇怪")
+            return
+        }
+        window.setLocation(loc!!, marker)
+
+        // 显示输入法
+        //val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        //inputMethodManager.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+        window.showPopupWindow()
+
 
     }
+
+//    private fun movePopupWindowUp(keypadHeight: Int) {
+//        val layoutParams = popupWindow.contentView.layoutParams as ViewGroup.MarginLayoutParams
+//        layoutParams.bottomMargin = keypadHeight
+//        popupWindow.contentView.layoutParams = layoutParams
+//    }
+//
+//    private fun movePopupWindowDown() {
+//        val layoutParams = popupWindow.contentView.layoutParams as ViewGroup.MarginLayoutParams
+//        layoutParams.bottomMargin = 0
+//        popupWindow.contentView.layoutParams = layoutParams
+//    }
 
     // 如果有了权限则直接初始化，否则，需要在异步处理返回的地方处理
     private fun tryInitFiles(){
@@ -312,12 +369,14 @@ class TencentMapActivity : AppCompatActivity() {
             GlobalData.currentFriend = f
         }
 
+        // 设置底部信息
+        updateFriendInfo()
+
         // 设置显示层级
         resetZIndex(f.uid)
         // 移动相机
         moveCamera(f)
-        // 设置底部信息
-        updateFriendInfo()
+
 
     }
 
@@ -406,7 +465,10 @@ class TencentMapActivity : AppCompatActivity() {
     private fun updateBottomView(friendList: Map<String, Friend>){
         val linearLayout = this.findViewById<LinearLayout>(R.id.linear_layout_icons)
         // 先检查是否有不需要显示的, 不再朋友列表中，通信簿设置后说明不需要显示了
-        for (key in iconsMap.keys){
+        var keys = LinkedList<String>()
+        keys.addAll(iconsMap.keys)  // 防止遍历时候删除造成失效
+
+        for (key in keys){
             if (!friendList.containsKey(key))
             {
                 linearLayout.removeView(iconsMap[key])
@@ -474,14 +536,16 @@ class TencentMapActivity : AppCompatActivity() {
 
     // 手动返回主页，主要是需要关闭那个导航抽屉
     fun backToMainActivity(){
-        //finish()
         var intent: Intent = Intent()
         intent.setClass(this, MainActivity::class.java)
+        // 设置自定义参数
+        intent.putExtra("action", "openDrawer");
         startActivity(intent)
-        if (MainActivity.topActivity != null)
-        {
-            MainActivity.topActivity!!.closeDrawer()
-        }
+//        if (MainActivity.topActivity != null)
+//        {
+//            //MainActivity.topActivity!!.closeDrawer()
+//            MainActivity.topActivity!!.openDrawer()
+//        }
 
     }
 
@@ -552,7 +616,29 @@ class TencentMapActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<ImageButton>(R.id.btn_addmark)?.visibility = View.GONE
+        // 点击才进入
+        var btnMark = findViewById<ImageButton>(R.id.btn_addmark)
+        //btnMark.visibility = View.GONE
+        btnMark.setOnClickListener {
+            isFavOn =  !isFavOn
+            if (isFavOn){
+                btnMark.setImageResource(android.R.drawable.ic_menu_compass)
+                UiHelper.showCenterMessage(this, "开启收藏点编辑模式")
+
+                for ((m, loc) in favMarkers){
+                    m.isDraggable = true
+                }
+            }else{
+                btnMark.setImageResource(android.R.drawable.ic_menu_add)
+                UiHelper.showCenterMessage(this, "退出编辑收藏点模式")
+                for ((m, loc) in favMarkers){
+                    m.isDraggable = false
+                }
+            }
+        }
+
+
+
         findViewById<ImageButton>(R.id.btn_del_track)?.visibility = View.GONE
 
         var btnRecord = findViewById<ImageButton>(R.id.btn_record)
@@ -647,7 +733,10 @@ class TencentMapActivity : AppCompatActivity() {
     protected fun updateAllMarkers( mapFriend :MutableMap<String, Friend>){
 
         // 删除不需要显示的markers，
-        for (key:String in markersMap.keys) {
+        val keys = LinkedList<String>()
+        keys.addAll(markersMap.keys)   // 重建一个是防止在遍历时候出错
+
+        for (key:String in keys) {
             if (!mapFriend.containsKey(key)){
                 markersMap[key]!!.remove()  // 地图上移除marker
                 markersMap.remove(key)
@@ -722,6 +811,9 @@ class TencentMapActivity : AppCompatActivity() {
 
     // 手动长按添加的标签
     protected fun addFavMarker(latLng: LatLng){
+        if (!isFavOn){
+            return
+        }
 
         val buffer = StringBuffer()
         buffer.append(latLng.latitude)
@@ -740,7 +832,13 @@ class TencentMapActivity : AppCompatActivity() {
 
         val marker = tencentMap!!.addMarker(options)
         marker.tag = "fav"
-        favMarkers.put(buffer.toString(), marker)
+        var loc = FavLocation(0, "", "", "", latLng.latitude, latLng.latitude, 0.0,
+            DateTimeHelper.getTimestamp(),
+            DateTimeHelper.getTimeStampString(),
+            "",
+            ""
+        )
+        favMarkers.put(marker, loc)
 
         //开启信息窗口
         marker.isInfoWindowEnable = true
@@ -763,6 +861,9 @@ class TencentMapActivity : AppCompatActivity() {
                 mMarker.position = LatLng(lat, lon)
             }else
             {
+                if (!friend.isShare ){
+                    return // 没有位置信息的，不应该切换镜头
+                }
                 lat = friend.lat
                 lon = friend.lon
             }
