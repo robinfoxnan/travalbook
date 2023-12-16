@@ -58,21 +58,25 @@ class maptrack : Fragment() {
 
     private fun testData(){
         data += TracklistElement(
-            "test1",
+            "test2",
             Date(DateTimeHelper.getTimestamp()),
             "2023-12-12",
+            "",
             "23min",
             5.6f,
+            3,
             "",
             "",
-            false
+            true
         )
         data += TracklistElement(
             "test2",
             Date(DateTimeHelper.getTimestamp()),
             "2023-12-12",
+            "",
             "23min",
             5.6f,
+            3,
             "",
             "",
             true
@@ -82,8 +86,10 @@ class maptrack : Fragment() {
             "test3",
             Date(DateTimeHelper.getTimestamp()),
             "2023-12-12",
+            "",
             "23min",
             5.6f,
+            3,
             "",
             "",
             true
@@ -93,8 +99,10 @@ class maptrack : Fragment() {
             "test4",
             Date(DateTimeHelper.getTimestamp()),
             "2023-12-12",
+            "",
             "23min",
             5.6f,
+            3,
             "",
             "",
             true
@@ -139,7 +147,7 @@ class maptrack : Fragment() {
 
         this.recyclerView.closeMenu()
         if (GlobalData.trackList!= null){
-            //this.data.removeAt(pos)
+            GlobalData.removeTrack(this.requireActivity(), pos);
         }
 
         trackAdapter.notifyDataSetChanged()

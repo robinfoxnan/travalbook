@@ -33,15 +33,8 @@ class TencentMapActivity : AppCompatActivity() {
 
     private var mapView: TextureMapView? = null
     protected var tencentMap: TencentMap? = null
-
-    //private var bound: Boolean = false
     private val handler: Handler = Handler(Looper.getMainLooper())
-    //private var trackingState: Int = Keys.STATE_TRACKING_NOT
-    //private var gpsProviderActive: Boolean = false
-    //private var networkProviderActive: Boolean = false
-    //private var currentBestLocation: Location?  = null
-    //private lateinit var layout: MapFragmentLayoutHolder
-    //private  var trackerService: TrackerService? = null
+
     private lateinit var  mMarker:com.tencent.tencentmap.mapsdk.maps.model.Marker   // 自己的位置
     private lateinit var  mImageView:ImageView
     private var markersMap =  mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Marker>()
@@ -140,7 +133,7 @@ class TencentMapActivity : AppCompatActivity() {
                 //movePopupWindowDown()
             }
 
-            true
+            return@addOnPreDrawListener true
         }
 
     }
@@ -188,23 +181,30 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap!!.setOnMarkerClickListener { clickedMarker ->
             // 点击了我们添加的标记
             // 在这里执行选中标记后的操作，例如显示信息窗口
-            if (clickedMarker.tag == null){
-                false
+
+            if (clickedMarker.tag == null) {
+                return@setOnMarkerClickListener false
             }
 
-            val str = clickedMarker.tag as String
-            if (str == "fav"){
+            if (!isFavOn) {
+                return@setOnMarkerClickListener false
+            }
+
+            val str = clickedMarker.tag as? String
+            if (str == "fav") {
                 //clickedMarker.snippet = "选中"
                 clickedMarker.showInfoWindow()
-                showPopupMenu(clickedMarker)
-                true // 返回 true 表示消费了点击事件
+                showMarkerPopupMenu(clickedMarker)
+                return@setOnMarkerClickListener true // 返回 true 表示消费了点击事件
             }
-            false
+
+            return@setOnMarkerClickListener false
         }
+
     }
 
     // 显示marker的 PopupWindow 的方法
-    private fun showPopupMenu(marker: Marker) {
+    private fun showMarkerPopupMenu(marker: Marker) {
         // 创建布局
         val popupView: View = layoutInflater.inflate(R.layout.popup_menu, null)
 
@@ -221,15 +221,18 @@ class TencentMapActivity : AppCompatActivity() {
         deleteTextView.setOnClickListener {
             popupWindow.dismiss() // 关闭 菜单
             // 在这里执行删除标记的操作
+            val loc = favMarkers[marker]
             marker.remove()
+            if (loc != null){
+                GlobalData.removeFavLocation(this, loc!!)
+            }
 
         }
 
         val editTextView = popupView.findViewById<TextView>(R.id.tv_mark_info)
         editTextView.setOnClickListener {
             popupWindow.dismiss() // 关闭 菜单
-
-            showEditMarkerInfo(marker)
+            showEditMarkerInfo(marker)  // 开始编辑信息
 
         }
 
@@ -314,6 +317,11 @@ class TencentMapActivity : AppCompatActivity() {
             }
             // 异步
             GlobalData.loadTrackList(this)
+
+            // 同步加载收藏点
+            GlobalData.loadFavLocations(this)
+            // 界面上添加收藏的标签
+            updateFavMarkers()
 
         }else{
             UiHelper.showCenterMessage(this, "获取存储位置出错！")
@@ -809,6 +817,24 @@ class TencentMapActivity : AppCompatActivity() {
         return  marker
     }
 
+    // 初始化时候添加或者移除收藏的点，为了同步方便，在点界面不再提供删除功能，只是显示
+    private fun updateFavMarkers(){
+        for (loc in GlobalData.getLocations()){
+            val latLng = LatLng(loc.lat, loc.lon)
+
+            val options = MarkerOptions(latLng)
+            options.infoWindowEnable(true) //默认为true
+            options.title(loc.title)
+
+            val bitmapIcon = UiHelper.getSmallIconBitmap(R.drawable.flag, this)
+            val custom = BitmapDescriptorFactory.fromBitmap(bitmapIcon)
+            options.icon(custom)
+
+            val marker = tencentMap!!.addMarker(options)
+            marker.tag = "fav"
+            favMarkers.put(marker, loc)
+        }
+    }
     // 手动长按添加的标签
     protected fun addFavMarker(latLng: LatLng){
         if (!isFavOn){
@@ -832,13 +858,17 @@ class TencentMapActivity : AppCompatActivity() {
 
         val marker = tencentMap!!.addMarker(options)
         marker.tag = "fav"
-        var loc = FavLocation(0, "", "", "", latLng.latitude, latLng.latitude, 0.0,
+        val user = CurrentUser.getUser()
+        var loc = FavLocation(DateTimeHelper.getTimestamp(),
+            user!!.uid, user!!.nickName, user!!.icon, latLng.latitude,
+            latLng.longitude, 0.0,
             DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
+            DateTimeHelper.getTimeStampLongString(),
             "",
             ""
         )
         favMarkers.put(marker, loc)
+        GlobalData.addFavLocation(this, loc)
 
         //开启信息窗口
         marker.isInfoWindowEnable = true

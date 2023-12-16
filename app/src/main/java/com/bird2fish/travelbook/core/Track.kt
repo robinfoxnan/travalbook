@@ -40,11 +40,14 @@ data class Track (@Expose var trackFormatVersion: Int = Keys.CURRENT_TRACK_FORMA
     fun toTracklistElement(context: Context): TracklistElement {
         val readableDateString: String = DateTimeHelper.convertToReadableDate(recordingStart)
         val readableDurationString: String = DateTimeHelper.convertToReadableTime(context, duration)
+        var endStr:String  = DateTimeHelper.convertToReadableDateAndTime(recordingStop)
         return TracklistElement(
             name = name,
             date = recordingStart,
             dateString = readableDateString,
+            endTimeString = endStr,
             length = length,
+            points = wayPoints.size,
             durationString = readableDurationString,
             trackUriString = trackUriString,
             gpxUriString = gpxUriString,

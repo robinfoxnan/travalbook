@@ -13,10 +13,12 @@ import java.util.*
 @Keep
 @Parcelize
 data class TracklistElement(@Expose var name: String,
-                            @Expose val date: Date,
-                            @Expose val dateString: String,
-                            @Expose val durationString: String,
-                            @Expose val length: Float,
+                            @Expose var date: Date,
+                            @Expose var dateString: String,
+                            @Expose var endTimeString:String,
+                            @Expose var durationString: String,
+                            @Expose var length: Float = 0.0f,
+                            @Expose var points:Int = 0,
                             @Expose val trackUriString: String,
                             @Expose val gpxUriString: String,
                             @Expose var starred: Boolean = false): Parcelable {

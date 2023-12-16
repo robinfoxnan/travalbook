@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -22,7 +23,9 @@ import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityMainBinding
 import com.bird2fish.travelbook.helper.LogHelper
+import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.bird2fish.travelbook.ui.login.LoginActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -180,6 +183,26 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
+
+    // 处理菜单的退出事件
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // 处理菜单项的选择事件
+        when (item.itemId) {
+            R.id.action_logout -> {
+
+                PreferencesHelper.saveAutologin(false)
+                finish()
+                finishAffinity()
+//                val intent = Intent(this, LoginActivity::class.java)
+//                intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+//                startActivity(intent)
+                return true
+            }
+            // 添加更多菜单项的处理逻辑...
+            else -> return super.onOptionsItemSelected(item)
+        }
+    }
+
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)

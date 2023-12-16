@@ -17,6 +17,7 @@ import android.widget.PopupWindow
 import android.widget.ScrollView
 import android.widget.TextView
 import com.bird2fish.travelbook.core.FavLocation
+import com.bird2fish.travelbook.core.GlobalData
 
 // 这个类是用于一个弹出消息的底部窗口
 class FavEditWindow(private val context: Context, id: Int, txt : String) {
@@ -24,8 +25,10 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
     private var popupWindow: PopupWindow
     private var titleInfo:TextView? = null
     private var desInfo :TextView?= null
+    private var view:Context? = null
 
     init {
+        view = context
         // 填充布局 R.layout.pop_location
         val popupView = LayoutInflater.from(context).inflate(id, null)
 
@@ -70,6 +73,8 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
                 marker!!.title = titleInfo!!.text.toString()
                 marker!!.showInfoWindow()
             }
+
+            GlobalData.saveFavLocations(view!!)
             this.dismissPopupWindow()
         }
 

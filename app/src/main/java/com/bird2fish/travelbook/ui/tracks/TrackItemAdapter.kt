@@ -29,6 +29,10 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         val starImg:ImageView =  itemView.findViewById(R.id.img_star)
         //val itemContainer: RelativeLayout = itemView.findViewById(R.id.itemContainer)
         val btnDelete: TextView = itemView.findViewById(R.id.tv_delete)
+        var btnShare :TextView = itemView.findViewById(R.id.tv_track_item_share)
+
+        var tvPts :TextView = itemView.findViewById(R.id.tv_track_item_pts)
+        var tvEndTime :TextView = itemView.findViewById(R.id.tv_track_item_endtime)
 
     }
 
@@ -44,9 +48,22 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         val trackItem = trackList[position]
         holder.tvName.text = trackItem.name
         holder.tvDate.text = "日期：" + trackItem.dateString
+        holder.tvEndTime.setText("结束：" + trackItem?.endTimeString)
 
         holder.tvDur.setText("时长：" + trackItem?.durationString)
-        holder.tvlength.setText("路程：" + "%.2f".format(trackItem?.length))
+        holder.tvPts.setText("%d 个采样".format(trackItem?.points))
+
+
+        var lenStr = ""
+        if (trackItem!!.length > 1000.0){
+
+            lenStr = "路程：" + "%.0f 千米".format(trackItem.length / 1000.0)
+        }else
+        {
+            lenStr = "路程：" + "%.0f 米".format(trackItem.length / 1000.0)
+        }
+
+        holder.tvlength.setText(lenStr)
         if (trackItem != null && trackItem!!.starred){
             holder.starImg.setImageResource(android.R.drawable.btn_star_big_on)
         }else{
@@ -66,6 +83,12 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         holder.btnDelete.setOnClickListener{
             if (fragment != null){
                 fragment!!.onClickItemDelete(holder.btnDelete.tag as Int)
+            }
+        }
+
+        holder.btnShare.setOnClickListener{
+            if (fragment != null){
+
             }
         }
     }

@@ -72,6 +72,45 @@ class GlobalData {
         private var trackListlock = Any()
         // /storage/emulated/0/Android/data/com.bird2fish.travelbook/files/tracks
 
+        // 收藏点的列表
+        private var favLocations : FavLocationList = FavLocationList()
+
+        fun loadFavLocations(context: Context){
+            favLocations = FileHelper.readFavLocationlist(context)
+        }
+
+        fun addFavLocation(context: Context, loc: FavLocation): Boolean{
+            // 先查重
+            for (item in this.favLocations.locations){
+                if (loc.favId == item.favId){
+                    return false
+                }
+            }
+            favLocations.locations.add(loc)
+            saveFavLocations(context)
+            return true
+        }
+
+        fun removeFavLocation(context: Context, loc: FavLocation): Boolean{
+            for (index in  0 until this.favLocations.locations.size){
+                if (loc.favId == this.favLocations.locations[index].favId){
+                    favLocations.locations.removeAt(index)
+                    saveFavLocations(context)
+                    return true
+                }
+            }
+
+            return true
+        }
+
+        fun saveFavLocations(context: Context){
+            FileHelper.writeFavLocationlist(context, this.favLocations)
+        }
+
+        fun getLocations(): LinkedList<FavLocation>{
+            return this.favLocations.locations
+        }
+
 
         fun isFileInited():Boolean{
             if (rootDir == ""){
@@ -107,6 +146,17 @@ class GlobalData {
                 return
             }
             // 协程中运行，也许会比较大
+            GlobalScope.launch{
+                FileHelper.saveTracklistSuspended(context, GlobalData.trackList!!, Date())
+            }
+        }
+
+        fun removeTrack(context: Context, pos: Int){
+            if (GlobalData.trackList == null){
+                return
+            }
+
+            GlobalData.trackList!!.tracklistElements.removeAt(pos)
             GlobalScope.launch{
                 FileHelper.saveTracklistSuspended(context, GlobalData.trackList!!, Date())
             }

@@ -1,6 +1,5 @@
 package com.bird2fish.travelbook.ui.fav
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,46 +8,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.FavLocation
-import com.bird2fish.travelbook.core.TracklistElement
-import com.bird2fish.travelbook.core.UiHelper
-import com.bird2fish.travelbook.ui.contact.CommonViewHolder
-import com.bird2fish.travelbook.ui.contact.ListViewAdapter
-import com.bird2fish.travelbook.ui.tracks.maptrack
-
-//class FavItemAdapter (context: Context?, datas: List<FavLocation?>?) :
-//    ListViewAdapter<FavLocation?>(context!!, datas!!, R.layout.fav_list_item) {
-//
-//    private var fragment : favFragment? = null
-//
-//
-//    fun setView(view : favFragment?){
-//        this.fragment = view
-//    }
-//
-//    override fun convert(holder: CommonViewHolder?, item: FavLocation?) {
-//
-//        if (item == null)
-//            return
-//        val imgIcon = (holder!!.getView(R.id.img_fav_icon) as ImageView)
-//        val tvUid =  (holder!!.getView(R.id.tv_fav_uid) as TextView)
-//        val tvNick = (holder!!.getView(R.id.tv_nick) as TextView)
-//        val tvDate = (holder!!.getView(R.id.tv_fav_date) as TextView)
-//        val tvTitle = (holder!!.getView(R.id.tv_fav_title) as TextView)
-//        val tvDes = (holder!!.getView(R.id.tv_fav_des) as TextView)
-//
-//        val id = UiHelper.getIconResId(item!!.uIcon)
-//        imgIcon.setImageResource(id)
-//
-//        tvUid.setText(item!!.uId)
-//        tvUid.visibility = View.INVISIBLE
-//        tvNick.setText(item!!.uNick)
-//        tvDate.setText(item!!.tmStr)
-//        tvTitle.setText(item!!.title)
-//        tvDes.setText(item!!.des)
-//
-//    }
-//
-//}
 
 class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Adapter<FavItemAdapter.FavViewHolder>() {
 
@@ -68,7 +27,7 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
         val tvDate : TextView = itemView.findViewById(R.id.tv_fav_date)
         val tvTitle : TextView = itemView.findViewById(R.id.tv_fav_title)
         val tvDes : TextView = itemView.findViewById(R.id.tv_fav_des)
-        val tvDelete :TextView = itemView.findViewById(R.id.tv_fav_delete)
+        val tvDelete :TextView = itemView.findViewById(R.id.tv_fav_share)
 
     }
 
@@ -95,7 +54,7 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
         // 可以添加其他逻辑...
         holder.tvDelete.setOnClickListener{
             if (fragment != null){
-                fragment!!.onClickItemDelete(holder.tvDelete.tag as Int)
+                fragment!!.onClickItemShare(holder.tvDelete.tag as Int)
             }
         }
     }

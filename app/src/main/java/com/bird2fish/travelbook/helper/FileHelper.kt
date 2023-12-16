@@ -488,4 +488,46 @@ object FileHelper {
         }
     }
 
+    // 读取收藏点列表
+    fun readFavLocationlist(context: Context): FavLocationList {
+        // get JSON from text file
+        val uri = File(context.getExternalFilesDir(null), "favLoc.json").toUri()
+        val json: String = readTextFile(context, uri)
+        var locationList: FavLocationList = FavLocationList()
+        when (json.isNotBlank()) {
+            // convert JSON and return as tracklist
+            true -> try {
+                locationList = getCustomGson().fromJson(json, FavLocationList::class.java)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            else -> {}
+        }
+        return locationList
+    }
+
+    private fun getLocationListJsonString(locationList: FavLocationList): String {
+        //val gson: Gson = getCustomGson()
+        val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+        var json: String = String()
+        try {
+            json = gson.toJson(locationList)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return json
+    }
+
+    fun writeFavLocationlist(context: Context, locationList: FavLocationList):Boolean{
+        val jsonStr = getLocationListJsonString(locationList)
+        if (jsonStr == ""){
+            return false
+        }
+
+        val uri = File(context.getExternalFilesDir(null), "favLoc.json").toUri()
+        writeTextFile(jsonStr, uri)
+
+        return true
+    }
+
 }

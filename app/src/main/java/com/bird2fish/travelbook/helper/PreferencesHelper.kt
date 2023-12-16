@@ -351,4 +351,15 @@ object PreferencesHelper {
         return t
     }
 
+    fun saveAutologin(b: Boolean){
+        val editor = sharedPreferences.edit()
+        editor.putBoolean("autologin", b)
+        editor.commit() //提交修改
+    }
+
+    fun getAutologin():Boolean{
+        var b = sharedPreferences.getBoolean("autologin", true)
+        return b
+    }
+
 }
