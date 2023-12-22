@@ -51,13 +51,13 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         holder.tvEndTime.setText("结束：" + trackItem?.endTimeString)
 
         holder.tvDur.setText("时长：" + trackItem?.durationString)
-        holder.tvPts.setText("%d 个采样".format(trackItem?.points))
+        holder.tvPts.setText("%d 个轨迹点".format(trackItem?.points))
 
 
         var lenStr = ""
         if (trackItem!!.length > 1000.0){
 
-            lenStr = "路程：" + "%.0f 千米".format(trackItem.length / 1000.0)
+            lenStr = "路程：" + "%.2f 千米".format(trackItem.length / 1000.0)
         }else
         {
             lenStr = "路程：" + "%.0f 米".format(trackItem.length / 1000.0)

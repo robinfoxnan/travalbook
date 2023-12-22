@@ -232,6 +232,12 @@ class GlobalData {
             }
         }
 
+        fun getDuration(context:Context):String{
+            synchronized(tracklock) {
+                return DateTimeHelper.convertToReadableTime(context, curTrack.duration, false)
+            }
+        }
+
         fun getHttpServ(): HttpService{
             return this.httpServer
         }
@@ -428,8 +434,9 @@ class GlobalData {
                 curTrack.gpxUriString = File(dir, name + ".gpx").toString()
                 //UiHelper.showCenterMessage(context, curTrack.trackUriString)
                 FileHelper.saveTrack(curTrack, false)
-            }
 
+            }
+            // 更新列表
             synchronized(trackListlock){
                 FileHelper.addTrackAndSave(context, trackList!!, curTrack)
             }

@@ -201,6 +201,10 @@ class LoginActivity : AppCompatActivity() {
 
     // 尝试自动登录，
     private fun tryAutoLogin(){
+        val bAuto = PreferencesHelper.getAutologin()
+        if (bAuto == false)
+            return
+
         val olduser = PreferencesHelper.getUserInfo()
         if (olduser != null && olduser.sid != ""){
             loginViewModel.login(

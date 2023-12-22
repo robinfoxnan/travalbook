@@ -39,7 +39,7 @@ data class Track (@Expose var trackFormatVersion: Int = Keys.CURRENT_TRACK_FORMA
     /* Creates a TracklistElement */
     fun toTracklistElement(context: Context): TracklistElement {
         val readableDateString: String = DateTimeHelper.convertToReadableDate(recordingStart)
-        val readableDurationString: String = DateTimeHelper.convertToReadableTime(context, duration)
+        val readableDurationString: String = DateTimeHelper.convertToReadableTime(context, duration, true)
         var endStr:String  = DateTimeHelper.convertToReadableDateAndTime(recordingStop)
         return TracklistElement(
             name = name,
@@ -51,12 +51,12 @@ data class Track (@Expose var trackFormatVersion: Int = Keys.CURRENT_TRACK_FORMA
             durationString = readableDurationString,
             trackUriString = trackUriString,
             gpxUriString = gpxUriString,
-            starred = false
+            starred = true
         )
     }
 
     fun generateName():String{
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH_mm")
 
         val start = dateFormat.format(recordingStart)
         //val end = dateFormat.format(recordingStop)

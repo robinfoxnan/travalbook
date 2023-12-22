@@ -42,6 +42,7 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!--休眠通知-->
 
     <!-- log-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -114,6 +115,11 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".core.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <service
             android:name="com.tencent.map.geolocation.s"

@@ -137,6 +137,7 @@ class maptrack : Fragment() {
         if (GlobalData.trackList!= null){
             val item = GlobalData.trackList!!.tracklistElements[pos]
             item.starred = !item.starred
+            GlobalData.saveTrackList(this.requireActivity())
             trackAdapter.notifyDataSetChanged()
         }
     }

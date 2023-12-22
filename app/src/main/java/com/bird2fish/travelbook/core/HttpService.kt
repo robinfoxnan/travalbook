@@ -284,7 +284,7 @@ class HttpService : Service() {
     fun getUserInfo(uid: String, sid:String, fid:String) : LoggedInUser{
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
-        var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}&uid=${uid}"
+        var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}&uid=${uid}&sid=${sid}"
 
         try {
             var client = HttpsUtil.getClient()

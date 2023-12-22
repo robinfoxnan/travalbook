@@ -1,22 +1,18 @@
 package com.bird2fish.travelbook
 
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.os.*
 import android.view.*
-import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.FragmentActivity
 import com.bird2fish.travelbook.core.*
-import com.bird2fish.travelbook.helper.DateTimeHelper
-import com.bird2fish.travelbook.helper.LocationHelper
-import com.bird2fish.travelbook.helper.LogHelper
-import com.bird2fish.travelbook.helper.PermissionHelper
+import com.bird2fish.travelbook.helper.*
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.tencent.tencentmap.mapsdk.maps.*
@@ -44,10 +40,14 @@ class TencentMapActivity : AppCompatActivity() {
 
     private var favMarkers = mutableMapOf<com.tencent.tencentmap.mapsdk.maps.model.Marker, FavLocation>()  // 收藏点
     private var isFavOn :Boolean = false
+    private var isFollowing :Boolean = false
     // 当前轨迹
     var wayLine: com.tencent.tencentmap.mapsdk.maps.model.Polyline? = null
     val latLngs: MutableList<LatLng> = ArrayList()  // 轨迹点
     var trackId :String = ""
+
+    // 点星星的轨迹
+    private var linesMap= mutableMapOf<String, com.tencent.tencentmap.mapsdk.maps.model.Polyline>()
 
 
     override fun onNewIntent(intent: Intent?) {
@@ -82,7 +82,7 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap = mapView!!.map
         initToolBar()
         initMapOutlook()
-        tencentMap!!.isTrafficEnabled = true;
+        tencentMap!!.isTrafficEnabled = false;
         //tencentMap!!.setMapType(TencentMap.MAP_TYPE_SATELLITE);
         //tencentMap.setMapType(TencentMap.MAP_TYPE_NORMAL);
 
@@ -388,6 +388,21 @@ class TencentMapActivity : AppCompatActivity() {
 
     }
 
+    // 这是一个补救，如果后台服务由于某种原因，长时间无数据，则应该尝试重启
+    private fun restartService(){
+        val intent = Intent(this, TencentLocService::class.java)
+        //intent.putExtra("command", "start"); // 通过Intent传递命令
+        intent.action = Keys.ACTION_INIT
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.startForegroundService(intent);
+        } else {
+            this.startService(intent);
+        }
+        val detail = String.format("设置GPS采集间隔为 %d 秒", GlobalData.intervalOfLocation / 1000)
+        UiHelper.showCenterMessage(this, detail)
+    }
+
     // 根据当前选择的用户，更新底部状态窗口口
     private fun updateFriendInfo(){
         if (GlobalData.currentFriend == null)
@@ -422,12 +437,9 @@ class TencentMapActivity : AppCompatActivity() {
                     {
                         detail = GlobalData.currentTLocation!!.address
                     }
-                    // 检查是否中断了
-                    var tm = DateTimeHelper.getTimestamp()
-                    var delta = (tm - GlobalData.currentTm ) / 1000
-                    // if (delta > GlobalData.intervalOfRefresh * 3){
+
                     detail += ", 获取定位时间："  + DateTimeHelper.formatTimeDifference(GlobalData.currentTm)
-                    // }
+
 
             }else{
                 if (GlobalData.isLocationEnabled)
@@ -647,14 +659,24 @@ class TencentMapActivity : AppCompatActivity() {
 
 
 
-        findViewById<ImageButton>(R.id.btn_del_track)?.visibility = View.GONE
+
 
         var btnRecord = findViewById<ImageButton>(R.id.btn_record)
         btnRecord.setOnClickListener {
             if (GlobalData.isRecording)  // 正在录制，改为停止，显示录制按钮
             {
                 GlobalData.stopTrack(this)
+
+                // 移动到合适的位置并切换
+                moveCamera(this.latLngs)
+                screenSnapShot()
+
+                this.latLngs.clear()
+                this.wayLine!!.remove()
+                this.wayLine = null
+
                 UiHelper.showCenterMessage(this, "停止当前轨迹记录")
+                updateAllStartedTracks()
 
             }else{
                 GlobalData.startTrack(this)
@@ -669,20 +691,100 @@ class TencentMapActivity : AppCompatActivity() {
 
 
         // 测试
-        var btnShare = findViewById<ImageButton>(R.id.btn_share)
-        btnShare.setOnClickListener {
+        var btnTrafic = findViewById<ImageButton>(R.id.btn_trafic)
+        btnTrafic.setOnClickListener {
             //UiHelper.showCenterMessage(this, "分享")
-            val info = "共${latLngs.size}个点"
-            UiHelper.showCenterMessage(this, info)
+            //val info = "共${latLngs.size}个点"
+            tencentMap!!.isTrafficEnabled = !tencentMap!!.isTrafficEnabled
+            if (tencentMap!!.isTrafficEnabled){
+                btnTrafic.setImageResource(R.drawable.trafic1)
+                //UiHelper.showCenterMessage(this, "将显示路况")
+            }else{
+                //UiHelper.showCenterMessage(this, "停止显示路况")
+                btnTrafic.setImageResource(R.drawable.trafics)
+            }
+
         }
 
-        var btnImport = findViewById<ImageButton>(R.id.btn_import_tract)
-        btnImport.setOnClickListener {
-            UiHelper.showCenterMessage(this, "导入")
-            test_addLine()
+        var btnShot = findViewById<ImageButton>(R.id.btn_screen_shot)
+        btnShot.setOnClickListener {
+            //UiHelper.showCenterMessage(this, "导入")
+            //test_addLine()
+            screenSnapShot()
+        }
+
+        // 跟随模式
+        var btnFollow = findViewById<ImageButton>(R.id.btn_follow_friend)
+        btnFollow.setOnClickListener {
+            isFollowing = !isFollowing
+            if (isFollowing){
+                btnFollow.setImageResource(android.R.drawable.ic_menu_view)
+                UiHelper.showCenterMessage(this, "镜头将自动跟随您的位置")
+            }else{
+                btnFollow.setImageResource(android.R.drawable.ic_menu_mapmode)
+                UiHelper.showCenterMessage(this, "退出镜头自动跟随模式")
+            }
         }
 
     }
+
+    // 保存当前截图
+    private fun screenSnapShot(){
+        tencentMap!!.snapshot(object : TencentMap.SnapshotReadyCallback {
+            // 截图准备完成
+            override fun onSnapshotReady(bitmap: Bitmap) {
+                //imgView.setImageBitmap(bitmap)
+                FileHelper.saveImageInDCIM(this@TencentMapActivity, bitmap);
+            }
+        }, Bitmap.Config.ARGB_8888)
+    }
+
+    // 显示所有的点星星的轨迹线
+    private fun updateAllStartedTracks(){
+        if (GlobalData.trackList == null)
+            return
+        for (t in GlobalData.trackList!!.tracklistElements){
+            if (t.starred && !linesMap.containsKey(t.name)){
+                addTrackLine(t)
+            }
+
+            // 删除不显示的
+            if (!t.starred && linesMap.containsKey(t.name)){
+                val line = linesMap[t.name]
+                linesMap.remove(t.name)
+                line!!.remove()
+            }
+        }
+    }
+
+    // 添加一条轨迹
+    private fun addTrackLine(t: TracklistElement){
+        val track = FileHelper.readTrack(this, t.trackUriString)
+        if (track.wayPoints.size < 2){
+            return
+        }
+
+        val pts: MutableList<LatLng> = ArrayList()
+        for (p in track.wayPoints){
+            pts.add(LatLng(p.latitude, p.longitude))
+        }
+
+        // 构造 PolylineOpitons
+        val polylineOptions = PolylineOptions()
+            .addAll(pts) // 折线设置圆形线头
+            .lineCap(true) //.lineType(PolylineOptions.LineType.LINE_TYPE_DOTTEDLINE)
+            // 纹理颜色
+            //.color()
+            .color(PolylineOptions.Colors.DARK_BLUE)
+            .width(15f)
+
+        // 绘制折线
+        val polyline = tencentMap!!.addPolyline(polylineOptions)
+        linesMap.put(t.name, polyline)
+
+    }
+
+
 
     // 记录的按钮
     private fun updateRecordButton(){
@@ -998,12 +1100,37 @@ class TencentMapActivity : AppCompatActivity() {
             mMarker.snippet = ""  //"${pos.latitude}, ${pos.longitude}"
             mMarker.isInfoWindowEnable = true
             mMarker.refreshInfoWindow()
+
+            // 获得信号后，如果是跟随模式
+            if (isInitedInfo && isFollowing && (!isInView(lat, lon))){
+                moveCamera(lat, lon)
+            }
+
         }else{
             if (GlobalData.isLocationEnabled)
                 mMarker.snippet = "等待定位信号"
             else
                 mMarker.snippet= "请打开定位权限"
         }
+    }
+
+    // 要判断的目标经纬度
+    private fun isInView(targetLat: Double, targetLng :Double):Boolean{
+        // 获取地图当前显示范围的经纬度坐标
+        val visibleBounds: LatLngBounds = tencentMap!!.projection.visibleRegion.latLngBounds
+        val southwest: LatLng = visibleBounds.southwest // 左下角经纬度
+        val northeast: LatLng = visibleBounds.northeast // 右上角经纬度
+
+
+        // 判断目标经纬度是否在当前显示范围内
+        if (targetLat in southwest.latitude..northeast.latitude &&
+            targetLng in southwest.longitude..northeast.longitude) {
+            // 目标经纬度在当前地图显示范围内
+            return true
+        }
+
+        // 目标经纬度不在当前地图显示范围内
+        return false
     }
 
     // 更新的入口函数
@@ -1166,6 +1293,19 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 更新录制按钮
         updateRecordButton()
+
+        // 更新需要显示的轨迹
+        updateAllStartedTracks()
+
+        // 检查是否中断了，这里是一个补救
+        var tm = DateTimeHelper.getTimestamp()
+        // 如果比预设值超过了30秒，还没有数据，那么后台可能出现问题了
+//        if (isInitedInfo){
+//            var delta = tm - GlobalData.currentTm
+//            if (delta > (GlobalData.intervalOfLocation + 30000) ){
+//                restartService()
+//            }
+//        }
     }
 
     // 当一个 Activity 即将失去焦点并进入后台时，系统会调用 onPause() 方法。
@@ -1272,6 +1412,22 @@ class TencentMapActivity : AppCompatActivity() {
         return
     }
 
+    fun moveCamera(points :MutableList<LatLng>){
+        if (points == null)
+            return
+
+        if (points.size < 2)
+            return
+
+        tencentMap!!.moveCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                LatLngBounds.Builder()
+                    .include(points).build(),
+                100
+            )
+        )
+    }
+
     fun test_addLine() {
         // 构造折线点串
         val latLngs: MutableList<LatLng> = ArrayList()
@@ -1282,7 +1438,7 @@ class TencentMapActivity : AppCompatActivity() {
         latLngs.add(LatLng(39.984122, 116.308224))
         latLngs.add(LatLng(39.984955, 116.308099))
 
-        // 构造 PolylineOpitons
+//        // 构造 PolylineOpitons
 //        PolylineOptions polylineOptions = new PolylineOptions()
 //                .addAll(latLngs)
 //                // 折线设置圆形线头

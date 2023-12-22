@@ -4,23 +4,21 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.ConnectivityManager
 import android.os.*
-import androidx.core.content.ContextCompat.getSystemService
-import com.bird2fish.travelbook.R
-import com.bird2fish.travelbook.helper.LogHelper
-import com.bird2fish.travelbook.helper.NotificationActionReceiver
-import com.bird2fish.travelbook.helper.NotificationHelper
+import com.bird2fish.travelbook.helper.*
 import com.tencent.map.geolocation.TencentLocation
 import com.tencent.map.geolocation.TencentLocationListener
 import com.tencent.map.geolocation.TencentLocationManager
 import com.tencent.map.geolocation.TencentLocationRequest
+import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 
 class TencentLocService : TencentLocationListener, Service() , SensorEventListener {
@@ -43,7 +41,10 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
 
     private val binder = LocalBinder()                 // 用于绑定，返回给客户端的绑定引用
 
-    private val handler: Handler = Handler(Looper.getMainLooper())  // 自己单次调用，而不是持续调用
+    private var bUseBackground = false
+    private var alarmReceiver = AlarmReceiver()
+
+
 
     // 单例模式
     companion object {
@@ -77,8 +78,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         locationManager = TencentLocationManager.getInstance(mContext)
         locationManager!!.enableForegroundLocation(Keys.TRACKER_SERVICE_NOTIFICATION_ID, buildNotification())
         val locationRequest = createReq()
-        val error =
-            locationManager!!.requestLocationUpdates(locationRequest, this, context.mainLooper)
+        val error = locationManager!!.requestLocationUpdates(locationRequest, this, context.mainLooper)
         return isOk(context, error)
     }
 
@@ -105,6 +105,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
             locationManager!!.removeUpdates(this)
             locationManager!!.disableForegroundLocation(true)
         }
+        locationManager = null
     }
 
     private fun createReq(): TencentLocationRequest {
@@ -128,7 +129,10 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
     fun startLocationService(context: Context): Boolean {
         // 创建 TencentLocationManager
         val mContext = context.applicationContext
-        locationManager = TencentLocationManager.getInstance(mContext)
+        if (locationManager == null){
+            locationManager = TencentLocationManager.getInstance(mContext)
+        }
+
         val locationRequest = createReq()
         // 启动定位
         val error = locationManager!!.requestLocationUpdates(locationRequest, this)
@@ -151,31 +155,87 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
 
     // 启动一个循环，自己的定制任务
     fun startLocationLoop(){
-        handler.postDelayed(periodicTrackUpdate, 0)
+
+        getOneTimeLoacation(this)
+        val intent = Intent("tencent_loc_once")
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+
+        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // 设置定时任务，这里以每隔 秒执行一次为例
+
+        val currentTimeMillis = System.currentTimeMillis()
+        //版本适配
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 6.0及以上
+
+            am.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                currentTimeMillis + GlobalData.intervalOfLocation,
+                pendingIntent)
+
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 4.4及以上
+
+            am.setExact(AlarmManager.RTC_WAKEUP,
+                currentTimeMillis + GlobalData.intervalOfLocation,
+                pendingIntent)
+
+        } else {
+
+            am.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeMillis, GlobalData.intervalOfLocation, pendingIntent)
+        }
+
     }
 
-    // TODO: 需要对长期不动的情况进行优化，降低采集频率
-    private val periodicTrackUpdate: Runnable = object : Runnable {
-        override fun run() {
+    fun setTimerNext(){
+        val intent = Intent("tencent_loc_once")
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
 
-            getOneTimeLoacation(this@TencentLocService)
-            //buildNotification()
-            // 下一次定时
-            handler.postDelayed(this, GlobalData.intervalOfLocation)
+        val currentTimeMillis = System.currentTimeMillis()
+
+        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 6.0及以上
+            am.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                currentTimeMillis + GlobalData.intervalOfLocation,
+                pendingIntent
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 4.4及以上
+            am.setExact(AlarmManager.RTC_WAKEUP,
+                currentTimeMillis + GlobalData.intervalOfLocation,
+                pendingIntent)
         }
+    }
+
+    fun stopLoop(){
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent("tencent_loc_once")
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+
+        // 取消定时任务
+        alarmManager.cancel(pendingIntent)
     }
 
     // 启动腾讯的服务
     // 这里做了一个优化，当定位频率小于3秒，使用持续定位，如果频率低，则使用单次定位降低电池消耗。
+
+    fun isShouldUseBackGround() :Boolean {
+        return GlobalData.intervalOfLocation <= 5000
+    }
+
     fun restartLocationService(){
-        stopBackGround()
-        if (GlobalData.intervalOfLocation <= 5000){
-            startBackGround(this)
+        if( bUseBackground){
+            stopBackGround()
         }else{
-            startLocationLoop()
+            stopLoop()
         }
 
-        //startLocationService(this)
+        Thread.sleep(300)
+        if (isShouldUseBackGround()) {
+            bUseBackground = true
+            startBackGround(this)
+        }else{
+            bUseBackground = false
+            startLocationLoop()
+        }
 
     }
 
@@ -243,6 +303,10 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         //registerReceiver(networkChangeReceiver, filter)
         // 注册广播接收者
         registerReceiver(networkChangeReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        alarmReceiver.setService(this)
+
+        val alarmIntentFilter = IntentFilter("tencent_loc_once")
+        registerReceiver(alarmReceiver, alarmIntentFilter)
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationHelper = NotificationHelper(this)
@@ -251,13 +315,29 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
 
         startForeground(Keys.TRACKER_SERVICE_NOTIFICATION_ID, buildNotification());
 
+        // 启动后台线程
+        //startTimer()
+
+        // 在HandlerThread中创建Handler
+        //this.handler = Handler(handlerThread.getLooper());
+
     }
 
     override fun onDestroy() {
         // 取消注册广播接收器，以避免内存泄漏
         TencentLocService.instance = null
         unregisterReceiver(networkChangeReceiver)
+        unregisterReceiver(alarmReceiver)
+        alarmReceiver.setService(null)
+
         super.onDestroy()
+
+        // 在适当的时候停止 HandlerThread
+        //stopTimer()
+        stopLoop()
+
+        // 停止前台服务
+        stopForeground(true);
         System.out.println("服务退出了")
         LogHelper.d("TencentLocService", "服务退出了")
     }
@@ -283,16 +363,16 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         }
         else if (Keys.ACTION_STOP == intent.action)
         {
-            stopTrack()
+            //stopTrack()
         }
         else if (Keys.ACTION_START == intent.action)
         {
-            startTrack()
+            //startTrack()
 
         }
         else if (Keys.ACTION_RESUME == intent.action)
         {
-            resumeTrack()
+            //resumeTrack()
         }
 
         //还可以其他的方式获取命令

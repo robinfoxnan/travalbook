@@ -1,12 +1,17 @@
 package com.bird2fish.travelbook.helper
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import com.bird2fish.travelbook.core.*
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.io.*
@@ -16,8 +21,6 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.math.ln
 import kotlin.math.pow
-import com.bird2fish.travelbook.core.*
-import com.bird2fish.travelbook.core.Keys
 
 
 /*
@@ -145,6 +148,12 @@ object FileHelper {
             else -> {}
         }
         return track
+    }
+
+    fun readTrack(context: Context, filepath: String): Track {
+        // get JSON from text file
+        val file = File(filepath)
+        return readTrack(context, file.toUri())
     }
 
 
@@ -447,20 +456,29 @@ object FileHelper {
     private fun readTextFile(context: Context, fileUri: Uri): String {
         // todo read https://commonsware.com/blog/2016/03/15/how-consume-content-uri.html
         // https://developer.android.com/training/secure-file-sharing/retrieve-info
-        val file: File = fileUri.toFile()
-        // check if file exists
-        if (!file.exists()) {
-            return String()
+        try {
+            val file: File = fileUri.toFile()
+            // check if file exists
+            if (!file.exists()) {
+                return String()
+            }
+            // read until last line reached
+            val stream: InputStream = file.inputStream()
+            val reader: BufferedReader = BufferedReader(InputStreamReader(stream))
+            val builder: StringBuilder = StringBuilder()
+            reader.forEachLine {
+                builder.append(it)
+                builder.append("\n") }
+            stream.close()
+            return builder.toString()
         }
-        // read until last line reached
-        val stream: InputStream = file.inputStream()
-        val reader: BufferedReader = BufferedReader(InputStreamReader(stream))
-        val builder: StringBuilder = StringBuilder()
-        reader.forEachLine {
-            builder.append(it)
-            builder.append("\n") }
-        stream.close()
-        return builder.toString()
+        catch (e: Exception)
+        {
+            System.out.println(e.message)
+            e.printStackTrace()
+            return ""
+        }
+
     }
 
 
@@ -486,6 +504,102 @@ object FileHelper {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    // 获取截图目录
+    fun getScreenshotFolderPath(context: Context): String? {
+        // 定义查询参数
+        //val internalStorageDir = context.filesDir
+
+        val dicmDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "zhitu")
+        if (!dicmDir.exists())
+        {
+            val ret = dicmDir.mkdirs()
+            if (ret == false)
+                return null
+        }
+        return dicmDir.path
+    }
+
+    private fun getSDCardPath(): String? {
+        var sdcardDir: File? = null
+
+//判断SDCard是否存在
+        val sdcardExist = Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+        if (sdcardExist) {
+            sdcardDir = Environment.getExternalStorageDirectory()
+        }
+        return sdcardDir.toString()
+    }
+
+    //  context.getExternalFilesDir(null)
+    // /storage/emulated/0/DCIM/zhitu
+    fun saveImageShot(context:Context, bitmap: Bitmap):Boolean{
+
+        var path = getScreenshotFolderPath(context)
+        if (path == null){
+            UiHelper.showCenterMessage(context, "获取截图目录出错")
+            return false
+        }
+
+        //val file = File(path, DateTimeHelper.getTimeStampLongString() + ".jpg")
+        //writeImageFile(context, bitmap, file, Bitmap.CompressFormat.PNG, 100)
+        // /storage/emulated/0/DCIM/zhitu/2023-12-17 14:04:40.jpg
+        return true
+    }
+
+    fun saveImageInDCIM(context:Context, bitmap: Bitmap):Boolean{
+        val myFileName = DateTimeHelper.getTimeStampLongString() + ".jpg"
+        val savedImagePath = saveImageToMediaStore(context, bitmap, myFileName, "zhitu")
+        if (savedImagePath != null)
+        {
+            UiHelper.showCenterMessage(context, savedImagePath)
+            return true
+        }
+
+        return false
+    }
+
+    fun saveImageToMediaStore(context: Context, bitmap: Bitmap, displayName: String, subdirectory: String): String? {
+        // 获取外部存储目录
+        // 获取外部存储目录
+        val externalStorageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
+
+        // 创建子目录
+        val directory = File(externalStorageDir, subdirectory)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+
+        // 创建一个包含图片元数据的ContentValues对象
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000)
+            put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+            // 注意这里的写法，必须这样写
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/zhitu")
+        }
+
+        // 插入图片元数据到MediaStore
+        val contentResolver = context.contentResolver
+        //
+        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        // 获取图片的OutputStream
+        uri?.let { imageUri ->
+            contentResolver.openOutputStream(imageUri)?.use { outputStream ->
+                // 将Bitmap保存到OutputStream中
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            }
+        }
+
+        // 扫描新图片，使其在相册中可见
+        MediaScannerConnection.scanFile(context, arrayOf(uri?.path), null, null)
+
+        // 返回图片的路径
+        return uri?.path
     }
 
     // 读取收藏点列表

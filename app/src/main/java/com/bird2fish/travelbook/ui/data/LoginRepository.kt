@@ -53,6 +53,9 @@ class LoginRepository(val dataSource: LoginDataSource) {
         PreferencesHelper.saveUserInfo(loggedInUser.userId, loggedInUser.pwd,
             loggedInUser.uid, loggedInUser.sid)
 
+        // 登录成功后设置自动登录
+        PreferencesHelper.saveAutologin(true)
+
     }
 
 

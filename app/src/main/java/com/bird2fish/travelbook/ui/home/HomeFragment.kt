@@ -21,6 +21,7 @@ import com.bird2fish.travelbook.core.Keys
 import com.bird2fish.travelbook.core.TencentLocService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.FragmentHomeBinding
+import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 
 class HomeFragment : Fragment() {
@@ -375,6 +376,8 @@ class HomeFragment : Fragment() {
     private fun updateSteps(){
         val dis = GlobalData.getDistance()
         binding.tvsportAll.setText(dis)
+        val duration = GlobalData.getDuration(requireActivity())
+        binding.tvSportDuration.setText(duration)
     }
 
     override fun onDestroyView() {

@@ -106,6 +106,18 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvsport_all" />
 
+    <TextView
+        android:id="@+id/tv_sport_duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2ec98c"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvsport_info"
+        android:text="时长" />
+
     <include
         android:id="@+id/btn_start"
         layout="@layout/custom_image_button"
