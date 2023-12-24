@@ -74,10 +74,26 @@ object DateTimeHelper {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(differenceInMillis) % 60
 
         return when {
-            days > 0 -> " ($days 天前)"
-            hours > 0 -> " ($hours 小时前)"
-            minutes > 0 -> " ($minutes 分钟前)"
-            else -> " ($seconds 秒前)"
+            days > 0 -> ""
+            hours > 0 -> ""
+            minutes > 0 -> ""
+            else -> ""
+        }.let {
+            // 格式化时间差为几天几小时几分几秒
+            val formattedTimeDifference = StringBuilder()
+            if (days > 0) {
+                formattedTimeDifference.append("${days}天")
+            }
+            if (hours > 0) {
+                formattedTimeDifference.append("${hours}时")
+            }
+            if (minutes > 0) {
+                formattedTimeDifference.append("${minutes}分")
+            }
+            if (seconds > 0 ) {
+                formattedTimeDifference.append("${seconds}秒")
+            }
+            it + formattedTimeDifference.toString() + " 前"
         }
     }
 

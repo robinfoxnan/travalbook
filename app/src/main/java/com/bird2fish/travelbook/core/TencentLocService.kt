@@ -125,7 +125,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         locationRequest.isGpsFirst = true
         return locationRequest
     }
-
+/*
     fun startLocationService(context: Context): Boolean {
         // 创建 TencentLocationManager
         val mContext = context.applicationContext
@@ -144,7 +144,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
             locationManager!!.removeUpdates(this)
         }
     }
-
+*/
     fun getOneTimeLoacation(context: Context): Boolean{
         val mContext = context.applicationContext
         locationManager = TencentLocationManager.getInstance(mContext)
@@ -180,7 +180,10 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
 
         } else {
 
-            am.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeMillis, GlobalData.intervalOfLocation, pendingIntent)
+            am.setRepeating(AlarmManager.RTC_WAKEUP,
+                currentTimeMillis,
+                GlobalData.intervalOfLocation,
+                pendingIntent)
         }
 
     }

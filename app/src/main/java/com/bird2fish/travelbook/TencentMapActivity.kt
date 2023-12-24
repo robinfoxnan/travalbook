@@ -459,7 +459,7 @@ class TencentMapActivity : AppCompatActivity() {
 
                 val tmStr = DateTimeHelper.convertTimestampToDateString(f.tm * 1000)
                 val span = DateTimeHelper.formatTimeDifference(f.tm * 1000);
-                detail = "上报时间：" + tmStr + span
+                detail = "上报时间：${tmStr} (${span}) "
                 if (GlobalData.currentTLocation != null){
                     val distance = LocationHelper.haversine(f.lat, f.lon,
                         GlobalData.currentTLocation!!.latitude, GlobalData.currentTLocation!!.longitude)
