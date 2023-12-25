@@ -301,7 +301,7 @@ class HttpService : Service() {
                 val user = jsonObject.getJSONObject("user")
                 if (user != null) {
                     fakeUser.uid = user.getLong("id").toString()
-                    fakeUser.sid = user.getLong("sid").toString()
+                    //fakeUser.sid = user.getLong("sid").toString()
                     fakeUser.nickName = user.getString("nick")
                     fakeUser.userId = user.getString("name")
                     fakeUser.icon = user.getString("icon")
