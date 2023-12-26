@@ -20,10 +20,11 @@ import java.util.LinkedList
 class HttpWorker {
     private var bRunning: Boolean = false
     private var gpxList0 = ArrayList<TencentLocation>(60)
-    private var gpxList1 = ArrayList<TencentLocation>(60)
-    private var listIndex = 0
-    private var uid = "13800138000"
     val lock = Any()
+
+    private var uid = "13800138000"
+
+
 
     val lockFriendMap = Any()
     private var lastpointList :LinkedList<Friend> = LinkedList()
@@ -76,48 +77,41 @@ class HttpWorker {
 
     public fun pushGpx(location: TencentLocation){
         synchronized(lock) {
-            if (listIndex == 0)
-                gpxList0.add(location)
-            else
-                gpxList1.add(location)
+            gpxList0.add(location)
         }
+    }
+
+    // 清空队列发送
+    public fun doSendWorkOnce(){
+
+        var tmpList = ArrayList<TencentLocation>(10)
+        // 先同步切换入队的队列，
+        synchronized(lock) {
+            tmpList.addAll(this.gpxList0)
+            this.gpxList0.clear()
+        }
+
+        // 将空闲队列清空
+        for(loc in tmpList)
+        {
+            uploadLocation(loc)
+        }
+        tmpList.clear()
+        return
     }
 
     // 这里使用双队列切换
     private fun doWork(){
-        var lastIndex: Int = 0
+
         var lastUpdateTm:Long = 0
         while (bRunning){
-            // 先同步切换入队的队列，
-            synchronized(lock) {
-                lastIndex = listIndex
-                if (listIndex == 0)
-                {
-                    listIndex = 1
-                }
-                else
-                {
-                    listIndex = 0
-                }
-            }
 
-            // 将空闲队列清空
-            if (lastIndex == 0)
-            {
-                for(loc in gpxList0)
-                {
-                    uploadLocation(loc)
-                }
-                gpxList0.clear()
+            // 尝试清空
+            doSendWorkOnce()
 
-            }
-            else
-            {
-                for(loc in gpxList1)
-                {
-                    uploadLocation(loc)
-                }
-                gpxList1.clear()
+            // 长时间工作后需要检查是否需要退出
+            if (!bRunning){
+                return
             }
 
             if (GlobalData.shouldRefresh){
@@ -129,7 +123,6 @@ class HttpWorker {
                     lastUpdateTm = tm
                 }
             }
-
 
             // 长时间工作后需要检查是否需要退出
             if (!bRunning){

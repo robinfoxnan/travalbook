@@ -19,6 +19,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 service!!.getOneTimeLoacation(service!!)
                 service!!.setTimerNext()
             }
+
+            // 睡眠的补救措施
+            HttpWorker.get().doSendWorkOnce()
         }
 
 

@@ -73,11 +73,12 @@ object DateTimeHelper {
         val minutes = TimeUnit.MILLISECONDS.toMinutes(differenceInMillis) % 60
         val seconds = TimeUnit.MILLISECONDS.toSeconds(differenceInMillis) % 60
 
-        return when {
+       return  when {
             days > 0 -> ""
             hours > 0 -> ""
             minutes > 0 -> ""
-            else -> ""
+            seconds > 0 -> ""
+            else -> "1秒"
         }.let {
             // 格式化时间差为几天几小时几分几秒
             val formattedTimeDifference = StringBuilder()

@@ -672,8 +672,11 @@ class TencentMapActivity : AppCompatActivity() {
                 screenSnapShot()
 
                 this.latLngs.clear()
-                this.wayLine!!.remove()
-                this.wayLine = null
+                // 如果只有一个点，则没有添加路线呢
+                if (wayLine != null){
+                    this.wayLine!!.remove()
+                    this.wayLine = null
+                }
 
                 UiHelper.showCenterMessage(this, "停止当前轨迹记录")
                 updateAllStartedTracks()
@@ -786,7 +789,7 @@ class TencentMapActivity : AppCompatActivity() {
 
 
 
-    // 记录的按钮
+    // 记录按钮 录制与停止
     private fun updateRecordButton(){
 
         var btnRecord = findViewById<ImageButton>(R.id.btn_record)
