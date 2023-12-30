@@ -30,6 +30,7 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         //val itemContainer: RelativeLayout = itemView.findViewById(R.id.itemContainer)
         val btnDelete: TextView = itemView.findViewById(R.id.tv_delete)
         var btnShare :TextView = itemView.findViewById(R.id.tv_track_item_share)
+        var btnMemo :TextView = itemView.findViewById(R.id.tv_track_item_memo)
 
         var tvPts :TextView = itemView.findViewById(R.id.tv_track_item_pts)
         var tvEndTime :TextView = itemView.findViewById(R.id.tv_track_item_endtime)
@@ -47,6 +48,9 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
     override fun onBindViewHolder(holder: TrackViewHolder, position: Int) {
         val trackItem = trackList[position]
         holder.tvName.text = trackItem.name
+        if (trackItem.title != null && trackItem.title != ""){
+            holder.tvName.text = trackItem.title
+        }
         holder.tvDate.text = "日期：" + trackItem.dateString
         holder.tvEndTime.setText("结束：" + trackItem?.endTimeString)
 
@@ -88,7 +92,13 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
 
         holder.btnShare.setOnClickListener{
             if (fragment != null){
+                fragment!!.onClickItemShare(position)
+            }
+        }
 
+        holder.btnMemo.setOnClickListener{
+            if (fragment != null){
+                fragment!!.onClickMemo(position)
             }
         }
     }

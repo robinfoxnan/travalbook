@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mobile_navigation"
+    android:id="@+id/action_cover_to_news"
     app:startDestination="@id/nav_home">
 
     <fragment
@@ -22,19 +22,31 @@
         android:id="@+id/nav_playground"
         android:name="com.bird2fish.travelbook.ui.playgroud.PlaygroundFragment"
         android:label="@string/menu_playgrourd"
-        tools:layout="@layout/fragment_playground" />
+        tools:layout="@layout/fragment_playground" >
+        <action
+            android:id="@+id/action_nav_playground_to_newsFragment"
+            app:destination="@id/newsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_favourite"
         android:name="com.bird2fish.travelbook.ui.fav.favFragment"
         android:label="@string/menu_favourite"
-        tools:layout="@layout/fragment_fav" />
+        tools:layout="@layout/fragment_fav" >
+        <action
+            android:id="@+id/action_nav_favourite_to_publishImageNewsFragment"
+            app:destination="@id/publishImageNewsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_track"
         android:name="com.bird2fish.travelbook.ui.tracks.maptrack"
         android:label="@string/menu_track"
-        tools:layout="@layout/fragment_maptrack" />
+        tools:layout="@layout/fragment_maptrack" >
+        <action
+            android:id="@+id/action_nav_track_to_publishImageNewsFragment"
+            app:destination="@id/publishImageNewsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_contract"
@@ -57,4 +69,25 @@
         android:name="com.bird2fish.travelbook.ui.settingFragment"
         android:label="@string/menu_setting"
         tools:layout="@layout/fragment_setting" />
+    <fragment
+        android:id="@+id/newsFragment"
+        android:name="com.bird2fish.travelbook.ui.news.NewsFragment"
+        android:label="详情"
+        tools:layout="@layout/fragment_news" >
+        <action
+            android:id="@+id/action_news_to_coverpage"
+            app:destination="@id/nav_playground" />
+    </fragment>
+    <fragment
+        android:id="@+id/publishImageNewsFragment"
+        android:name="com.bird2fish.travelbook.ui.publish.PublishImageNewsFragment"
+        android:label="发布"
+        tools:layout="@layout/fragment_publish_image_news">
+        <action
+            android:id="@+id/action_publishImageNewsFragment_to_nav_favourite"
+            app:destination="@id/nav_favourite" />
+        <action
+            android:id="@+id/action_publishImageNewsFragment_to_nav_track"
+            app:destination="@id/nav_track" />
+    </fragment>
 </navigation>

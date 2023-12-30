@@ -13,6 +13,8 @@ import java.util.*
 @Keep
 @Parcelize
 data class TracklistElement(@Expose var name: String,
+                            @Expose var title: String,
+                            @Expose var content:String,
                             @Expose var date: Date,
                             @Expose var dateString: String,
                             @Expose var endTimeString:String,

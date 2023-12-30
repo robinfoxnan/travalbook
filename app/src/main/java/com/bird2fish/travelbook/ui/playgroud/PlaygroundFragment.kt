@@ -1,21 +1,35 @@
 package com.bird2fish.travelbook.ui.playgroud
 
-import android.R
+import android.content.ComponentName
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.core.GlobalData
+import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.News
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.ui.playgroud.NewsCoverAdapter.space_item
 import java.util.LinkedList
+
+import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.bird2fish.travelbook.databinding.FragmentPlaygroundBinding
 
 class PlaygroundFragment : Fragment() {
@@ -28,6 +42,9 @@ class PlaygroundFragment : Fragment() {
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var recyclerView: RecyclerView
 
+    private var _changed : MutableLiveData<Long> = MutableLiveData(DateTimeHelper.getTimestamp())
+    var changed : LiveData<Long> =  _changed
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,49 +56,25 @@ class PlaygroundFragment : Fragment() {
         _binding = FragmentPlaygroundBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        testData()
+        // 初始化控件
         initContent()
+
+        this.changed.observe(requireActivity(), Observer {
+            homeAdapter!!.notifyDataSetChanged()
+
+        })
+
+        performNewFindTask()
 
         return root
     }
 
-    val datalist = LinkedList<News>()
 
-    private  fun testData(){
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news1, "1001", "飞鸟真人", "sys:5", DateTimeHelper.getTimestamp(),
-        DateTimeHelper.getTimeStampString(),
-        "颐和园的雪花是最好的", "")
-
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news2, "1002", "天涯刀客", "sys:6", DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
-            "颐和园的雪花是最好的", "")
-
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news3, "1002", "梦里化开", "sys:7", DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
-            "颐和园的雪花是最好的", "")
-
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news4, "1002", "梦里化开", "sys:7", DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
-            "颐和园的雪花是最好的", "")
-
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news5, "1002", "梦里化开", "sys:7", DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
-            "颐和园的雪花是最好的", "")
-
-        datalist += News(
-            com.bird2fish.travelbook.R.drawable.news5, "1002", "梦里化开", "sys:7", DateTimeHelper.getTimestamp(),
-            DateTimeHelper.getTimeStampString(),
-            "颐和园的雪花是最好的", "")
-    }
+    var homeAdapter:NewsCoverAdapter? = null
 
     fun initContent(){
-        val homeAdapter = NewsCoverAdapter(datalist) //创建适配器对象
-        homeAdapter.setView(this)
+        this.homeAdapter = NewsCoverAdapter(GlobalData.newList) //创建适配器对象
+        this.homeAdapter!!.setView(this)
         this.recyclerView = binding.newContainer
 
         //设置为表格布局，列数为2（这个是最主要的，就是这个来展示陈列式布局）
@@ -104,6 +97,39 @@ class PlaygroundFragment : Fragment() {
         }
     }
 
+    fun performNewFindTask() {
+        CoroutineScope(Dispatchers.IO).launch {
+            // 在后台执行异步任务
+            val result = doBackgroundFindWork()
+            _changed.postValue(DateTimeHelper.getTimestamp())
+        }
+    }
+
+    fun sendnews(){
+        val user = CurrentUser.getUser() ?: return
+        val imgList = LinkedList<String>()
+        imgList.add("7807018625998524416.png")
+
+        val tags = LinkedList<String>()
+        tags.add("颐和园")
+        tags.add("大雪")
+        val news = News("", user.uid, user.nickName, user.icon, 40.0, 116.0, 0.0, DateTimeHelper.getTimestamp(), "测试帖子1",
+            "这里仅仅是一个测试，大雪纷飞的一天", imgList, tags, "point", "", 0, 0, false, 0)
+        GlobalData.getHttpServ().postNews(news, user.uid, user.sid)
+    }
+
+    fun doBackgroundFindWork(){
+        val user = CurrentUser.getUser() ?: return
+
+
+
+        val dataList = GlobalData.getHttpServ().getNewsRecent(user.uid, user.sid, 1, 20)
+        if (dataList == null){
+            return
+        }
+        GlobalData.setNewsList(dataList)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -111,6 +137,12 @@ class PlaygroundFragment : Fragment() {
 
     // 当点击了某个按钮
     fun onClickItem(pos: Int){
-        UiHelper.showCenterMessage(requireActivity(), "点击了条目")
+        // 获取 NavController
+        val navController = findNavController()
+        val bundle = Bundle()
+        bundle.putString("key", "test")
+        navController.navigate(R.id.action_nav_playground_to_newsFragment, bundle)
+
+        //UiHelper.showCenterMessage(requireActivity(), "点击了条目${pos}")
     }
 }

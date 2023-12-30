@@ -15,6 +15,7 @@ import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.helper.*
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.bird2fish.travelbook.ui.tracks.FavEditWindow
 import com.tencent.tencentmap.mapsdk.maps.*
 import com.tencent.tencentmap.mapsdk.maps.TencentMap.OnMarkerDragListener
 import com.tencent.tencentmap.mapsdk.maps.model.*
@@ -991,9 +992,15 @@ class TencentMapActivity : AppCompatActivity() {
         if (friend != null){
             if (friend.uid == CurrentUser.getUser()!!.uid)
             {
-                lat = GlobalData.currentTLocation!!.latitude
-                lon = GlobalData.currentTLocation!!.longitude
-                mMarker.position = LatLng(lat, lon)
+                if (GlobalData.currentTLocation != null){
+                    lat = GlobalData.currentTLocation!!.latitude
+                    lon = GlobalData.currentTLocation!!.longitude
+                    mMarker.position = LatLng(lat, lon)
+                }else{
+                    // 没有位置信息呢
+                    return
+                }
+
             }else
             {
                 if (!friend.isShare ){

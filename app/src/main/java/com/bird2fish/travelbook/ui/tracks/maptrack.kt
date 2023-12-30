@@ -1,24 +1,18 @@
 package com.bird2fish.travelbook.ui.tracks
 
-import android.graphics.Canvas
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.view.*
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bird2fish.travelbook.R
-import com.bird2fish.travelbook.core.GlobalData
-import com.bird2fish.travelbook.core.TracklistElement
-import com.bird2fish.travelbook.core.UiHelper
-import com.bird2fish.travelbook.databinding.FragmentContractBinding
+import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.databinding.FragmentMaptrackBinding
 import com.bird2fish.travelbook.helper.DateTimeHelper
+import com.bird2fish.travelbook.helper.FileHelper
 import com.bird2fish.travelbook.ui.SlideRecyclerView
-import com.bird2fish.travelbook.ui.contact.ContactItemAdapter
-import java.lang.Integer.min
+import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import java.util.*
 
 class maptrack : Fragment() {
@@ -56,47 +50,11 @@ class maptrack : Fragment() {
 
     var data :LinkedList<TracklistElement> = LinkedList<TracklistElement>()
 
-    private fun testData(){
+    private fun testData() {
         data += TracklistElement(
             "test2",
-            Date(DateTimeHelper.getTimestamp()),
-            "2023-12-12",
+            title = "",
             "",
-            "23min",
-            5.6f,
-            3,
-            "",
-            "",
-            true
-        )
-        data += TracklistElement(
-            "test2",
-            Date(DateTimeHelper.getTimestamp()),
-            "2023-12-12",
-            "",
-            "23min",
-            5.6f,
-            3,
-            "",
-            "",
-            true
-        )
-
-        data += TracklistElement(
-            "test3",
-            Date(DateTimeHelper.getTimestamp()),
-            "2023-12-12",
-            "",
-            "23min",
-            5.6f,
-            3,
-            "",
-            "",
-            true
-        )
-
-        data += TracklistElement(
-            "test4",
             Date(DateTimeHelper.getTimestamp()),
             "2023-12-12",
             "",
@@ -108,6 +66,7 @@ class maptrack : Fragment() {
             true
         )
     }
+
 
     private fun initData() {
 
@@ -152,6 +111,61 @@ class maptrack : Fragment() {
         }
 
         trackAdapter.notifyDataSetChanged()
+
+    }
+
+    fun loadTrack(item: TracklistElement): Track{
+        return FileHelper.readTrack(requireActivity(), item.trackUriString)
+    }
+
+    // 点击分享
+    fun onClickItemShare(pos: Int){
+        this.recyclerView.closeMenu()
+        val navController = findNavController()
+
+        val user = CurrentUser.getUser()
+
+        val trackList = GlobalData.trackList ?: return
+
+        val item = trackList.tracklistElements[pos]
+        val track = loadTrack(item)
+        if (track.wayPoints == null || track.wayPoints.size < 1){
+            UiHelper.showCenterMessage(requireActivity(), "无法加载轨迹数据，或者无数据点")
+            return
+        }
+
+        val news =  News("", user!!.uid, user.nickName, user.icon,
+            track.wayPoints[0].latitude,
+            track.wayPoints[0].longitude,
+            track.wayPoints[0].altitude,
+            DateTimeHelper.getTimestamp(),
+            item.title,
+            item.content,
+            ArrayList<String>(),
+            ArrayList<String>(),
+            "track",
+            item.trackUriString,
+            0, 0, false, 0)
+
+        val bundle = Bundle()
+        bundle.putParcelable("news", news)
+        navController.navigate(R.id.action_nav_track_to_publishImageNewsFragment, bundle)
+    }
+
+    // 重新设置备注
+    fun onClickMemo(pos: Int){
+        this.recyclerView.closeMenu()
+        val trackList = GlobalData.trackList ?: return
+        val item = trackList.tracklistElements[pos]
+        val window = FavEditWindow(this.requireActivity(), R.layout.fav_edit_info, "")
+        window.setTrack(item)
+        // 设置PopupWindow的结束回调
+        window.setOnCloseListener{
+            // 在这里添加处理 PopupWindow 关闭时的逻辑
+            this.trackAdapter.notifyDataSetChanged()
+        }
+
+        window.showPopupWindow()
 
     }
 

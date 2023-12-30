@@ -1,7 +1,6 @@
-package com.bird2fish.travelbook
+package com.bird2fish.travelbook.ui.tracks
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.text.Spannable
@@ -12,12 +11,13 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.PopupMenu
 import android.widget.PopupWindow
-import android.widget.ScrollView
 import android.widget.TextView
+import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.FavLocation
 import com.bird2fish.travelbook.core.GlobalData
+import com.bird2fish.travelbook.core.TracklistElement
 
 // 这个类是用于一个弹出消息的底部窗口
 class FavEditWindow(private val context: Context, id: Int, txt : String) {
@@ -26,6 +26,7 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
     private var titleInfo:TextView? = null
     private var desInfo :TextView?= null
     private var view:Context? = null
+    private var onDismissListener: PopupWindow.OnDismissListener? = null
 
     init {
         view = context
@@ -57,6 +58,9 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
         // 添加监听器，处理关闭事件
         popupWindow.setOnDismissListener {
             // 在这里添加处理 PopupWindow 关闭时的逻辑
+            if (onDismissListener != null){
+                onDismissListener!!.onDismiss()
+            }
         }
 
         // 如果需要处理点击事件等，可以在这里找到对应的 View 并设置相应的监听器
@@ -67,6 +71,8 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
             if (favLoc != null){
                 favLoc!!.title = titleInfo!!.text.toString()
                 favLoc!!.des = desInfo!!.text.toString()
+
+                GlobalData.saveFavLocations(view!!)
             }
 
             if (marker != null){
@@ -74,15 +80,35 @@ class FavEditWindow(private val context: Context, id: Int, txt : String) {
                 marker!!.showInfoWindow()
             }
 
-            GlobalData.saveFavLocations(view!!)
+            if (trackItem != null){
+                trackItem!!.title = titleInfo!!.text.toString()
+                trackItem!!.content = desInfo!!.text.toString()
+
+                GlobalData.saveTrackList(view!!)
+            }
+
+
             this.dismissPopupWindow()
         }
 
     }
 
+    fun setOnCloseListener(listener: PopupWindow.OnDismissListener?){
+        this.onDismissListener = listener
+    }
+
     // 用于关闭保存时候设置
     private var favLoc :FavLocation? = null
     private var marker: com.tencent.tencentmap.mapsdk.maps.model.Marker? = null
+
+    private var trackItem : TracklistElement? = null
+
+    fun setTrack(item: TracklistElement){
+        this.trackItem = item
+
+        this.titleInfo!!.text = item.title
+        this.desInfo!!.text =  item.content
+    }
 
     fun setLocation(loc :FavLocation, m: com.tencent.tencentmap.mapsdk.maps.model.Marker){
         this.favLoc = loc

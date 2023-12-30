@@ -43,6 +43,8 @@ data class Track (@Expose var trackFormatVersion: Int = Keys.CURRENT_TRACK_FORMA
         var endStr:String  = DateTimeHelper.convertToReadableDateAndTime(recordingStop)
         return TracklistElement(
             name = name,
+            title = name,
+            content = "",
             date = recordingStart,
             dateString = readableDateString,
             endTimeString = endStr,

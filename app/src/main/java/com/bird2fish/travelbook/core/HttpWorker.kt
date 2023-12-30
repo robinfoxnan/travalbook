@@ -6,12 +6,14 @@ import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.google.gson.Gson
 import com.tencent.map.geolocation.TencentLocation
 import com.tencent.map.lib.models.ReturnInfoModelClass.BaseFloatReturnInfo
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.LinkedList
@@ -81,8 +83,14 @@ class HttpWorker {
         }
     }
 
+    fun getListSize():Int{
+        synchronized(lock) {
+            return this.gpxList0.size
+        }
+    }
+
     // 清空队列发送
-    public fun doSendWorkOnce(){
+    fun doSendWorkOnce(){
 
         var tmpList = ArrayList<TencentLocation>(10)
         // 先同步切换入队的队列，
@@ -97,6 +105,7 @@ class HttpWorker {
             uploadLocation(loc)
         }
         tmpList.clear()
+        GlobalData.gpxUploadTm =  DateTimeHelper.getTimestamp()
         return
     }
 
@@ -299,4 +308,6 @@ class HttpWorker {
             lastpointList = lst
         }
     }
+
+
 }

@@ -1,0 +1,8 @@
+<!-- red_dot.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/default_red" /> <!-- 红色 -->
+    <size
+        android:width="8dp"
+        android:height="8dp" /> <!-- 直径为 8dp 的圆点 -->
+</shape>

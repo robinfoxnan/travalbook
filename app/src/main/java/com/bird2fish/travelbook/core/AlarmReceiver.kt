@@ -3,6 +3,10 @@ package com.bird2fish.travelbook.core
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.bird2fish.travelbook.helper.DateTimeHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -21,10 +25,25 @@ class AlarmReceiver : BroadcastReceiver() {
             }
 
             // 睡眠的补救措施
-            HttpWorker.get().doSendWorkOnce()
+            if (HttpWorker.get().getListSize() > 2){
+                val tm = DateTimeHelper.getTimeStamp()
+                if ((tm - GlobalData.gpxUploadTm) > GlobalData.intervalOfLocation + 60000)
+                {
+                    runUploadWork()
+                }
+
+            }
+
         }
+    }
 
+    fun runUploadWork(){
+        GlobalScope.launch(Dispatchers.IO) {
 
+            HttpWorker.get().doSendWorkOnce()
+            GlobalData.gpxUploadTm = DateTimeHelper.getTimeStamp()
+
+        }
     }
 
 }

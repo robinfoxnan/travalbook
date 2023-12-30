@@ -28,6 +28,10 @@ class GlobalData {
 
     companion object{
         var httpServer : HttpService = HttpService()
+
+        @Volatile
+        var gpxUploadTm :Long = 0
+
         @Volatile
         var isLocationEnabled = false          // 定位
 
@@ -46,10 +50,10 @@ class GlobalData {
         var currentFriend :Friend? = null
 
         @Volatile
-        var  intervalOfLocation: Long = 2000         // 采样间隔与上报是一样的获取好友数据
+        var  intervalOfLocation: Long = 60000         // 采样间隔与上报是一样的获取好友数据
 
         @Volatile
-        var  intervalOfRefresh:Long = 2000           // 刷新好友位置,界面的刷新率与httpworker中一致，后台则不刷新
+        var  intervalOfRefresh:Long = 4000           // 刷新好友位置,界面的刷新率与httpworker中一致，后台则不刷新
 
         @Volatile
         var  sportMode :SportModeEnum = SportModeEnum.SPORT_MODE_HIKE
@@ -71,6 +75,13 @@ class GlobalData {
         private var rootDir :String = ""
         private var trackListlock = Any()
         // /storage/emulated/0/Android/data/com.bird2fish.travelbook/files/tracks
+
+        var newList :LinkedList<News> = LinkedList<News>()
+
+        fun setNewsList(lst: LinkedList<News>){
+            newList.clear()
+            newList.addAll(lst)
+        }
 
         // 收藏点的列表
         private var favLocations : FavLocationList = FavLocationList()
@@ -118,6 +129,7 @@ class GlobalData {
             }
             return true
         }
+
         fun setRootDir(dir :String):Boolean{
             this.rootDir = dir
             val ret = FileHelper.createDir(this.rootDir, "tracks")
@@ -146,9 +158,10 @@ class GlobalData {
                 return
             }
             // 协程中运行，也许会比较大
-            GlobalScope.launch{
-                FileHelper.saveTracklistSuspended(context, GlobalData.trackList!!, Date())
-            }
+//            GlobalScope.launch{
+//                FileHelper.saveTracklistSuspended(context, GlobalData.trackList!!, Date())
+//            }
+            FileHelper.saveTracklistSyn(context, GlobalData.trackList!!, Date())
         }
 
         fun removeTrack(context: Context, pos: Int){
@@ -200,8 +213,8 @@ class GlobalData {
 
             // 地图刷新频率
             GlobalData.intervalOfRefresh =  PreferencesHelper.getRefreshInterval()
-            if (GlobalData.intervalOfRefresh < 2000){
-                GlobalData.intervalOfRefresh = 2000
+            if (GlobalData.intervalOfRefresh < 3000){
+                GlobalData.intervalOfRefresh = 3000
             }else if (GlobalData.intervalOfRefresh > 60000){
                 GlobalData.intervalOfRefresh = 60000
             }

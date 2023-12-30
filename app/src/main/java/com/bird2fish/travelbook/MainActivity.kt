@@ -36,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private  var lastFramentid : Int = 0
 
+    // 键盘调整辅助类
+    private var softHideKeyBoardUtil: SoftHideKeyBoardUtil? = null
+
 
     companion object {
         var topActivity: MainActivity? = null
@@ -136,6 +139,9 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+
+        // 在这里初始化 SoftHideKeyBoardUtil 并关联到当前的 Activity
+        softHideKeyBoardUtil = SoftHideKeyBoardUtil(this)
     }
 
     override fun onResume() {

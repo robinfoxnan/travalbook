@@ -226,6 +226,10 @@ object FileHelper {
         }
     }
 
+    fun saveTracklistSyn(context: Context, tracklist: Tracklist, modificationDate: Date) {
+        saveTracklist(context, tracklist, modificationDate)
+    }
+
 
     /* Suspend function: Wrapper for saveTrack */
     suspend fun saveTrackSuspended(track: Track, saveGpxToo: Boolean) {

@@ -2,6 +2,8 @@ package com.bird2fish.travelbook.core
 
 import android.app.Service
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
@@ -11,12 +13,17 @@ import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.bird2fish.travelbook.ui.data.model.LoggedInUser
+import com.google.gson.Gson
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import java.lang.RuntimeException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -30,21 +37,23 @@ import javax.net.ssl.X509TrustManager
 
 class HttpService : Service() {
 
-    private var host :String = "" //""127.0.0.1:7787"
-    private var schema:String = "http"
+    private var host: String = "" //""127.0.0.1:7787"
+    private var schema: String = "http"
 
 
-    fun setSchema(mode :String){
+    fun setSchema(mode: String) {
         this.schema = mode
     }
-    fun setServer(url :String){
+
+    fun setServer(url: String) {
         this.host = url
     }
 
-    fun initServer(){
+    fun initServer() {
         host = PreferencesHelper.getHostName()
         schema = PreferencesHelper.getHostSchema()
     }
+
     // 获取此类的引用
     inner class HttpBinder : Binder() {
         fun getService(): HttpService? {
@@ -124,7 +133,7 @@ class HttpService : Service() {
     // https://blog.csdn.net/yzpbright/article/details/115333339
     // 注册
     // http://localhost:7817/v1/user/regist?type=1&pwd=111111&username=robin
-    fun register(name:String, pwd:String) : LoggedInUser {
+    fun register(name: String, pwd: String): LoggedInUser {
 
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
@@ -144,10 +153,9 @@ class HttpService : Service() {
                 val jsonObject = JSONObject(responseData)
                 val state = jsonObject.getString("state")
                 //LogHelper.d(" upload date response $state")
-                if (state == "ok")
-                {
+                if (state == "ok") {
                     val user = jsonObject.getJSONObject("user")
-                    if (user != null ) {
+                    if (user != null) {
                         fakeUser.uid = user.getLong("id").toString()
                         fakeUser.userId = user.getString("name")
                         fakeUser.pwd = pwd
@@ -155,8 +163,7 @@ class HttpService : Service() {
                     }
                 }
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             //LogHelper.e("$e.message")
         }
@@ -165,7 +172,7 @@ class HttpService : Service() {
 
     // sid登录
     //http://localhost:7817/v1/user/login?uid=1005&sid=6812630841045951575&type=0
-    fun loginWithSid(uid:String, sid:String, pwd:String) : LoggedInUser{
+    fun loginWithSid(uid: String, sid: String, pwd: String): LoggedInUser {
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
         var url = "${schema}://${host}/v1/user/login?type=0&uid=${uid}&sid=${sid}"
@@ -181,29 +188,26 @@ class HttpService : Service() {
                 val jsonObject = JSONObject(responseData)
                 val state = jsonObject.getString("state")
                 //LogHelper.d(" upload date response $state")
-                if (state == "ok")
-                {
+                if (state == "ok") {
                     val user = jsonObject.getJSONObject("session")
-                    if (user != null ) {
+                    if (user != null) {
                         fakeUser.uid = user.getLong("id").toString()
                         fakeUser.sid = user.getLong("sid").toString()
                         fakeUser.pwd = pwd
                     }
-                }else{
+                } else {
                     PreferencesHelper.delUserSid()
                 }
             }
 
             // 直接获取信息
             val userInfo = getUserInfo(fakeUser.uid, fakeUser.sid, fakeUser.uid)
-            if (userInfo.uid == fakeUser.uid)
-            {
+            if (userInfo.uid == fakeUser.uid) {
                 userInfo.sid = fakeUser.sid
                 userInfo.pwd = fakeUser.pwd
                 return userInfo
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             PreferencesHelper.delUserSid()
             //LogHelper.e("Exception")
             LogHelper.e("$e.message")
@@ -214,7 +218,7 @@ class HttpService : Service() {
 
     // 用户名密码登录
     // http://localhost:7817/v1/user/login?uid=1005&pwd=111111&type=1
-    fun loginWithpwd(uid:String, pwd:String) : LoggedInUser {
+    fun loginWithpwd(uid: String, pwd: String): LoggedInUser {
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
         var url1 = //"http://192.168.1.2:7817/v1/user/login?uid=1005&pwd=123456&type=1"
@@ -242,14 +246,12 @@ class HttpService : Service() {
 
             // 直接获取信息
             val userInfo = getUserInfo(fakeUser.uid, fakeUser.sid, fakeUser.uid)
-            if (userInfo.uid == fakeUser.uid)
-            {
+            if (userInfo.uid == fakeUser.uid) {
                 userInfo.sid = fakeUser.sid
                 userInfo.pwd = fakeUser.pwd
                 return userInfo
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -281,7 +283,7 @@ class HttpService : Service() {
     //    }
     //    }
     // 获取某个用户的基本信息
-    fun getUserInfo(uid: String, sid:String, fid:String) : LoggedInUser{
+    fun getUserInfo(uid: String, sid: String, fid: String): LoggedInUser {
         val fakeUser = LoggedInUser("", "", "", "0", "")
         //构建url地址
         var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}&uid=${uid}&sid=${sid}"
@@ -306,10 +308,9 @@ class HttpService : Service() {
                     fakeUser.userId = user.getString("name")
                     fakeUser.icon = user.getString("icon")
 
-                    if (user.getInt("age") != null){
-                        fakeUser.age =user.getInt("age").toString()
-                    }else
-                    {
+                    if (user.getInt("age") != null) {
+                        fakeUser.age = user.getInt("age").toString()
+                    } else {
                         fakeUser.age = "0"
                     }
 
@@ -319,16 +320,14 @@ class HttpService : Service() {
 
                     fakeUser.ip = user.getString("ipv4")
                     fakeUser.region = user.getString("region")
-                    if (user.getInt("gender") == 1){
+                    if (user.getInt("gender") == 1) {
                         fakeUser.gender = "男"
-                    }else
-                    {
+                    } else {
                         fakeUser.gender = "女"
                     }
                 }
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -338,7 +337,7 @@ class HttpService : Service() {
     }
 
     // 解析返回的粉丝数据
-    private fun parseFollower(node:  JSONArray):LinkedList<Friend> {
+    private fun parseFollower(node: JSONArray): LinkedList<Friend> {
         var lst = LinkedList<Friend>()
         for (i in 0 until node.length()) {
             try {
@@ -352,12 +351,13 @@ class HttpService : Service() {
                 fakeUser.isFriend = true
 
                 lst.add(fakeUser)
-            }catch(e: Exception){
+            } catch (e: Exception) {
 
             }
         }
         return lst
     }
+
     // 查询自己关注列表
     /*
         {
@@ -376,7 +376,7 @@ class HttpService : Service() {
         ]
     }
      */
-    fun getFollowList(uid: String, sid:String) : LinkedList<Friend> {
+    fun getFollowList(uid: String, sid: String): LinkedList<Friend> {
         //构建url地址
         var url1 = "${schema}://${host}/v1/user/listfriends?type=1&&uid=${uid}&sid=${sid}"
 
@@ -396,7 +396,7 @@ class HttpService : Service() {
                 var lst = parseFollower(data)
                 return lst
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -405,26 +405,23 @@ class HttpService : Service() {
         return LinkedList<Friend>()
     }
 
-    fun getFollowList(): LinkedList<Friend>{
+    fun getFollowList(): LinkedList<Friend> {
         val user = CurrentUser.getUser()
-        if (user != null)
-        {
+        if (user != null) {
             return getFollowList(user.uid, user.sid)
-        }else
-        {
+        } else {
             return LinkedList<Friend>()
         }
 
     }
 
     // 搜索人员添加好友
-    fun searchForFriend(fid: String): LinkedList<Friend>{
+    fun searchForFriend(fid: String): LinkedList<Friend> {
         val user = CurrentUser.getUser()
-        if (user != null)
-        {
+        if (user != null) {
 
             val tempUser = getUserInfo(user.uid, user.sid, fid)
-            if (tempUser.uid == fid){
+            if (tempUser.uid == fid) {
                 var friend = Friend()
                 friend.fromUser(tempUser)
                 var lst = LinkedList<Friend>()
@@ -443,11 +440,12 @@ class HttpService : Service() {
         if (user == null)
             return false
         var str = "show"
-        if (friend.show == false){
+        if (friend.show == false) {
             str = "ignore"
         }
 
-        var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=${str}"
+        var url1 =
+            "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=${str}"
 
         try {
             var client = HttpsUtil.getClient()
@@ -464,7 +462,7 @@ class HttpService : Service() {
 
                 return true
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -472,11 +470,12 @@ class HttpService : Service() {
         return false
     }
 
-    fun removeFriend(friend: Friend) :Boolean{
+    fun removeFriend(friend: Friend): Boolean {
         val user = CurrentUser.getUser()
         if (user == null)
             return false
-        var url1 = "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=remove"
+        var url1 =
+            "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=remove"
 
         try {
             var client = HttpsUtil.getClient()
@@ -493,7 +492,7 @@ class HttpService : Service() {
 
                 return true
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -510,12 +509,13 @@ class HttpService : Service() {
         "detail": "add friend ok"
     }
      */
-    fun setFollowHim(friend:Friend): Boolean {
+    fun setFollowHim(friend: Friend): Boolean {
         //构建url地址
         val user = CurrentUser.getUser()
         if (user == null)
             return false
-        var url1 = "${schema}://${host}/v1/user/addfriendreq?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
+        var url1 =
+            "${schema}://${host}/v1/user/addfriendreq?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
 
         try {
             var client = HttpsUtil.getClient()
@@ -532,7 +532,7 @@ class HttpService : Service() {
 
                 return true
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
@@ -561,15 +561,15 @@ class HttpService : Service() {
     }
      */
 
-    fun updateInfo(user : LoggedInUser) : Boolean {
+    fun updateInfo(user: LoggedInUser): Boolean {
 
-        var jsonObject= JSONObject()
+        var jsonObject = JSONObject()
 
         try {
             val intNumber = user.uid.toInt()
             jsonObject.put("id", intNumber)
 
-        }catch (e: NumberFormatException) {
+        } catch (e: NumberFormatException) {
             return false
         }
 
@@ -577,7 +577,7 @@ class HttpService : Service() {
             val intNumber = user.sid.toLong()
             jsonObject.put("sid", intNumber)
 
-        }catch (e: NumberFormatException) {
+        } catch (e: NumberFormatException) {
             return false
         }
 
@@ -598,9 +598,9 @@ class HttpService : Service() {
             jsonObject.put("age", 0)
         }
 
-        if (user.gender == "男"){
+        if (user.gender == "男") {
             jsonObject.put("gender", 1)
-        }else{
+        } else {
             jsonObject.put("gender", 0)
         }
 
@@ -609,7 +609,7 @@ class HttpService : Service() {
 
         //System.out.println(tmStr)
         //jsonObject.put("tmStr", tmStr)
-        var jsonStr=jsonObject.toString()
+        var jsonStr = jsonObject.toString()
         //System.out.println(jsonStr)
 
         //调用请求
@@ -634,11 +634,333 @@ class HttpService : Service() {
 
                 return true
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             //LogHelper.e("Exception")
             e.printStackTrace();
             LogHelper.e("$e.message")
         }
         return false
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    fun parseNews(data: JSONArray): LinkedList<News> {
+        val newsList = LinkedList<News>()
+
+        for (i in 0 until data.length()) {
+            val newsObject: JSONObject = data.getJSONObject(i)
+
+            val nid = newsObject.getString("nid")
+            val uid = newsObject.getString("uid")
+            val nick = newsObject.getString("nick")
+            val icon = newsObject.getString("icon")
+            val lat = newsObject.getDouble("lat")
+            val log = newsObject.getDouble("log")
+            val alt = newsObject.getDouble("alt")
+            val tm = newsObject.getLong("tm")
+            val title = newsObject.getString("title")
+            val content = newsObject.getString("content")
+
+            val imagesArray = newsObject.getJSONArray("images")
+            val imagesList = mutableListOf<String>()
+            for (j in 0 until imagesArray.length()) {
+                val imageUrl = imagesArray.getString(j)
+                imagesList.add(imageUrl)
+            }
+
+            val tagsArray = newsObject.getJSONArray("tags")
+            val tagsList = mutableListOf<String>()
+            for (j in 0 until tagsArray.length()) {
+                val tag = tagsArray.getString(j)
+                tagsList.add(tag)
+            }
+
+            val type = newsObject.getString("type")
+            val trackFile = newsObject.getString("trackfile")
+            val likes = newsObject.getInt("likes")
+            val favs = newsObject.getInt("favs")
+            val deleted = newsObject.getBoolean("deleted")
+            val delTm = newsObject.getLong("deltm")
+
+            val news = News(
+                nid, uid, nick, icon, lat, log, alt, tm, title, content,
+                imagesList, tagsList, type, trackFile, likes, favs, deleted, delTm
+            )
+
+            newsList.add(news)
+        }
+
+        return newsList
+    }
+
+    fun getNewsRecent(uid: String, sid: String, page: Int, pagesize: Int): LinkedList<News> {
+        //构建url地址
+        var url1 =
+            "${schema}://${host}/v1/news/recent?&uid=${uid}&sid=${sid}&page=${page}&size=${pagesize}"
+
+        try {
+            var client = HttpsUtil.getClient()
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+
+            System.out.println(responseData)
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+                val data = jsonObject.getJSONArray("data")
+                var lst = parseNews(data)
+                return lst
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+
+        return LinkedList<News>()
+    }
+
+
+    fun convertNewsToJson(news: News): String {
+        val gson = Gson()
+        return gson.toJson(news)
+    }
+
+    fun postNews(news: News, uid: String, sid: String): Boolean {
+
+        val jsonStr = convertNewsToJson(news)
+        //调用请求
+        val contentType = "application/json".toMediaType()
+        var requestBody = jsonStr.toRequestBody(contentType)
+
+        //构建url地址
+        var url1 = "${schema}://${host}/v1/news/publish?&uid=${uid}&sid=${sid}"
+
+        try {
+            var client = HttpsUtil.getClient()
+            val request = Request.Builder()
+                .url(url1)
+                .post(requestBody)
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+
+                return true
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+    }
+
+    fun getImageUrl(fileName: String): String {
+        val url = "${schema}://${host}/file/${fileName}"
+        return url
+    }
+
+    fun uploadAndScaleImageFile(imageFilePath: String) :String {
+
+        val imageFile = File(imageFilePath)
+        // 获取原始图片的尺寸信息
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        System.out.println(imageFile.path)
+        BitmapFactory.decodeFile(imageFile.path, options)
+        if (options.outHeight == 0){
+            return ""
+        }
+
+
+        // 计算缩放比例
+        options.inSampleSize = calculateInSampleSizeByWidth(options, 800)
+
+        // 加载并返回缩放后的图片
+        options.inJustDecodeBounds = false
+        val scaledBitmap = BitmapFactory.decodeFile(imageFile.path, options)
+        if (scaledBitmap == null){
+            return ""
+        }
+
+        // 将 Bitmap 转换为字节数组
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+
+        // 构建 Multipart 请求体
+        val mediaType = "image/*".toMediaTypeOrNull()
+        val requestBody: RequestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", "image.jpg",
+                byteArray.toRequestBody(mediaType, 0,byteArray.size)
+            )
+            .build()
+
+        // 构建请求
+        val url = "${schema}://${host}/uploadfile"
+        val request: Request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        try {
+            var client = HttpsUtil.getClient()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state.equals("ok", ignoreCase = true)) {
+
+                val filename = jsonObject.getString("newname")
+
+                return filename
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+
+        return ""
+    }
+
+//    private fun asytest(){
+//        var client = HttpsUtil.getClient()
+//        client.newCall(request).enqueue(object : Callback {
+//            override fun onFailure(call: Call, e: IOException) {
+//                // 上传失败的处理
+//                e.printStackTrace()
+//            }
+//
+//            override fun onResponse(call: Call, response: Response) {
+//                // 上传成功的处理
+//                if (response.isSuccessful) {
+//                    val responseBody = response.body()?.string()
+//                    // 处理服务器响应数据
+//                } else {
+//                    // 上传失败的处理
+//                }
+//            }
+//        })
+//    }
+
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, maxSize: Long): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var inSampleSize = 1
+
+        val byteCount = height * width * 4 // 每个像素占4字节
+
+        while (byteCount / inSampleSize > maxSize) {
+            inSampleSize *= 2
+        }
+
+        return inSampleSize
+    }
+
+    private fun calculateInSampleSizeByWidth(options: BitmapFactory.Options, maxWidth: Long): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var inSampleSize = 1
+        if (options.outHeight == 0){
+            return inSampleSize
+        }
+
+        val tmp  = options.outWidth.toDouble() / maxWidth.toDouble()
+        inSampleSize = tmp.toInt()
+
+        return inSampleSize
+    }
+
+    fun compressBitmap(bitmap: Bitmap, quality: Int): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
+        return byteArrayOutputStream.toByteArray()
+    }
+
+    fun uploadTextFile(filePath: String): String {
+        val textFile = File(filePath)
+
+        // 构建请求体，指定为纯文本类型
+        //val requestBody: RequestBody = RequestBody.create("text/plain".toMediaType(), textFile)
+
+        val mediaType = "text/plain".toMediaTypeOrNull()
+        val requestBody: RequestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", "track.gpx", textFile.asRequestBody(mediaType))
+            .build()
+
+        val url = "${schema}://${host}/uploadfile"
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        val client = HttpsUtil.getClient()
+
+        try {
+            val response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state.equals("ok", true)) {
+                val filename = jsonObject.getString("newname")
+                return filename
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            LogHelper.e("$e.message")
+        }
+
+        return ""
+    }
+
+    fun uploadImage(imageFilePath: String):String {
+
+        val imageFile = File(imageFilePath)
+        val mediaType = "image/*".toMediaTypeOrNull()
+        val requestBody: RequestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", "image.jpg", imageFile.asRequestBody(mediaType))
+            .build()
+
+        val url = "${schema}://${host}/uploadfile"
+        val request: Request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        var client = HttpsUtil.getClient()
+        try {
+
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state.equals("ok", true)) {
+                val filename = jsonObject.getString("newname")
+                return filename
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+
+        return ""
     }
 }

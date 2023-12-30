@@ -69,17 +69,18 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2"
 
-
+    // 图片浏览器
+    implementation 'androidx.viewpager2:viewpager2:1.0.0'
+    //implementation "com.google.android.material:material:1.4.0"
 
     // okhttp3.14.2
     //implementation 'com.squareup.okhttp3:okhttp:3.14.2'
     implementation "com.squareup.okhttp3:okhttp:4.9.1"
+    implementation 'com.squareup.picasso:picasso:2.8'
 
     //implementation("com.github.kittinunf.fuel:fuel:3.0.0-alpha1")
 
-
-
-
     // Gson
     implementation 'com.google.code.gson:gson:2.9.0'
+
 }

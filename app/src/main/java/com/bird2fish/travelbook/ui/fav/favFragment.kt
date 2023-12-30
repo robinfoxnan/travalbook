@@ -6,16 +6,20 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.FavLocation
 import com.bird2fish.travelbook.core.GlobalData
+import com.bird2fish.travelbook.core.News
 import com.bird2fish.travelbook.core.TracklistElement
 import com.bird2fish.travelbook.databinding.FragmentFavBinding
 import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.ui.SlideRecyclerView
+import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.bird2fish.travelbook.ui.tracks.TrackItemAdapter
 import java.util.*
+import kotlin.collections.ArrayList
 
 class favFragment : Fragment() {
 
@@ -73,6 +77,26 @@ class favFragment : Fragment() {
         this.recyclerView.closeMenu()
 
         this.favAdapter.notifyDataSetChanged()
+
+        val navController = findNavController()
+        val bundle = Bundle()
+        val user = CurrentUser.getUser()
+
+        val favDataList = GlobalData.getLocations()
+        val item = favDataList[pos]
+        val news =  News("", user!!.uid, user.nickName, user.icon,
+            item.lat,
+            item.lon,
+            item.alt,
+            DateTimeHelper.getTimestamp(),
+            item.title,
+            item.des,
+            ArrayList<String>(),
+            ArrayList<String>(),
+            "point",
+            "", 0, 0, false, 0)
+        bundle.putParcelable("news", news)
+        navController.navigate(R.id.action_nav_favourite_to_publishImageNewsFragment, bundle)
 
     }
 
