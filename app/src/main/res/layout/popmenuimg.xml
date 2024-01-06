@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/popup_menu.xml -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rounded_background"
+    android:orientation="vertical"
+    android:padding="0dp">
+
+
+    <TextView
+        android:id="@+id/tv_delete_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:background="@drawable/rounded_background_gray_input"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="3dp"
+        android:text="移除图片"
+        android:textColor="@android:color/black"
+        android:textSize="16sp" />
+
+    <!-- 这里可以添加其他菜单项 -->
+
+</LinearLayout>

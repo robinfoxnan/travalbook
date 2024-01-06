@@ -1,4 +1,4 @@
-package com.bird2fish.travelbook
+package com.bird2fish.travelbook.widgets
 
 import android.content.Context
 import android.content.res.Resources
@@ -6,9 +6,9 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.bird2fish.travelbook.R
 
 // 这个类是用于一个弹出消息的底部窗口
 class BottomWindow(private val context: Context, id: Int, txt : String) {

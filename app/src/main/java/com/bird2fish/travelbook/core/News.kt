@@ -18,12 +18,12 @@ data class News(
     @SerializedName("content") @Expose var content: String,
     @SerializedName("images") @Expose var images: List<String>,
     @SerializedName("tags") @Expose var tags: List<String>,
-    @SerializedName("type") @Expose val type: String,
+    @SerializedName("type") @Expose var type: String,
     @SerializedName("trackfile") @Expose var trackFile: String,
-    @SerializedName("likes") @Expose val likes: Int,
-    @SerializedName("favs") @Expose val favs: Int,
-    @SerializedName("deleted") @Expose val deleted: Boolean,
-    @SerializedName("deltm") @Expose val delTm: Long
+    @SerializedName("likes") @Expose var likes: Int,
+    @SerializedName("favs") @Expose var favs: Int,
+    @SerializedName("deleted") @Expose var deleted: Boolean,
+    @SerializedName("deltm") @Expose var delTm: Long
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
@@ -152,5 +152,23 @@ data class Comment(
     }
 }
 
+data class NewsFav(
+    @SerializedName("nid") val nid: String,
+    @SerializedName("uid") val uid: String,
+    @SerializedName("like") var like: Boolean,
+    @SerializedName("fav") var fav: Boolean,
+    @SerializedName("hate") var hate: Boolean,
+    @SerializedName("reason") var reason: Int
+)
 
+//data class ShareDataItem(
+//    @SerializedName("p") var latlon: MutableList<Double> = mutableListOf<Double>()
+//)
 
+data class ShareData(
+    @SerializedName("uid") val uid: String = "",
+    @SerializedName("nick") var nick: String = "",
+    @SerializedName("icon") var icon: String = "sys:1",
+    @SerializedName("points") var points: MutableList<MutableList<Double>> = mutableListOf<MutableList<Double> >(),
+    @SerializedName("title") var title: String = ""
+)

@@ -27,6 +27,10 @@ class GlobalData {
     }
 
     companion object{
+
+
+        var usePublish:Boolean = false   // 是否使用社区功能
+
         var httpServer : HttpService = HttpService()
 
         @Volatile
@@ -77,10 +81,20 @@ class GlobalData {
         // /storage/emulated/0/Android/data/com.bird2fish.travelbook/files/tracks
 
         var newList :LinkedList<News> = LinkedList<News>()
+        var currentPageIndex:Int = 1
 
         fun setNewsList(lst: LinkedList<News>){
             newList.clear()
             newList.addAll(lst)
+        }
+
+        fun delNewsInlist(news: News){
+            for (i in 0 until newList.size){
+                if (newList[i].nid == news.nid){
+                    newList.removeAt(i)
+                    return
+                }
+            }
         }
 
         // 收藏点的列表
@@ -425,6 +439,33 @@ class GlobalData {
                 }
             }
 
+        }
+
+        // 导入的数据
+        fun addTrack(context: Context, track:Track, title:String){
+            if (trackList == null){
+                return
+            }
+            synchronized(tracklock){
+                val name = track.generateName()
+
+                val ret = FileHelper.createDir(this.rootDir, "tracks")
+                if (ret == false){
+                    return
+                }
+
+                val dir = File(rootDir, "tracks")
+                val file = File(dir, name + ".json")
+                track.trackUriString = file.toString()
+                track.gpxUriString = File(dir, name + ".gpx").toString()
+                //UiHelper.showCenterMessage(context, curTrack.trackUriString)
+                FileHelper.saveTrack(track, false)
+
+            }
+            // 更新列表
+            synchronized(trackListlock){
+                FileHelper.addTrackAndSave(context, trackList!!, track, title)
+            }
         }
 
         fun stopTrack(context: Context){

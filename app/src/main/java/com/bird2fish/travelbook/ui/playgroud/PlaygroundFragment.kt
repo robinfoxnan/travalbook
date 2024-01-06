@@ -45,6 +45,9 @@ class PlaygroundFragment : Fragment() {
     private var _changed : MutableLiveData<Long> = MutableLiveData(DateTimeHelper.getTimestamp())
     var changed : LiveData<Long> =  _changed
 
+    var homeAdapter:NewsCoverAdapter? = null
+    //var dataList:LinkedList<News>? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,16 +64,23 @@ class PlaygroundFragment : Fragment() {
 
         this.changed.observe(requireActivity(), Observer {
             homeAdapter!!.notifyDataSetChanged()
-
+            swipeRefreshLayout.isRefreshing = false
         })
 
-        performNewFindTask()
+        if (GlobalData.newList.isEmpty())
+            performNewFindTask()
 
         return root
     }
 
+    override fun onResume() {
+        super.onResume()
 
-    var homeAdapter:NewsCoverAdapter? = null
+        if (homeAdapter != null){
+            homeAdapter!!.notifyDataSetChanged()
+        }
+
+    }
 
     fun initContent(){
         this.homeAdapter = NewsCoverAdapter(GlobalData.newList) //创建适配器对象
@@ -89,11 +99,15 @@ class PlaygroundFragment : Fragment() {
         this.swipeRefreshLayout = binding.swipeRefreshLayout
         // 设置下拉刷新监听器
         swipeRefreshLayout.setOnRefreshListener {
-            // 在这里执行刷新数据的操作
-            // 通常是异步的网络请求或其他刷新逻辑
 
-            // 刷新完成后，调用 setRefreshing(false) 结束刷新动画
-            swipeRefreshLayout.isRefreshing = false
+            if (GlobalData.newList.size < 20){
+                UiHelper.showCenterMessage(requireActivity(), "没有更多的帖子了")
+                swipeRefreshLayout.isRefreshing = false
+            }else{
+                GlobalData.currentPageIndex += 1
+                performNewFindTask()
+            }
+
         }
     }
 
@@ -105,28 +119,9 @@ class PlaygroundFragment : Fragment() {
         }
     }
 
-    fun sendnews(){
-        val user = CurrentUser.getUser() ?: return
-        val imgList = LinkedList<String>()
-        imgList.add("7807018625998524416.png")
-
-        val tags = LinkedList<String>()
-        tags.add("颐和园")
-        tags.add("大雪")
-        val news = News("", user.uid, user.nickName, user.icon, 40.0, 116.0, 0.0, DateTimeHelper.getTimestamp(), "测试帖子1",
-            "这里仅仅是一个测试，大雪纷飞的一天", imgList, tags, "point", "", 0, 0, false, 0)
-        GlobalData.getHttpServ().postNews(news, user.uid, user.sid)
-    }
-
     fun doBackgroundFindWork(){
         val user = CurrentUser.getUser() ?: return
-
-
-
-        val dataList = GlobalData.getHttpServ().getNewsRecent(user.uid, user.sid, 1, 20)
-        if (dataList == null){
-            return
-        }
+        val dataList = GlobalData.getHttpServ().getNewsRecent(user.uid, user.sid, GlobalData.currentPageIndex, 20)
         GlobalData.setNewsList(dataList)
     }
 
@@ -135,12 +130,14 @@ class PlaygroundFragment : Fragment() {
         _binding = null
     }
 
-    // 当点击了某个按钮
+    // 当点击了某个帖子的图片，执行跳转
     fun onClickItem(pos: Int){
         // 获取 NavController
         val navController = findNavController()
+
+        val news = GlobalData.newList[pos]
         val bundle = Bundle()
-        bundle.putString("key", "test")
+        bundle.putParcelable("news", news)
         navController.navigate(R.id.action_nav_playground_to_newsFragment, bundle)
 
         //UiHelper.showCenterMessage(requireActivity(), "点击了条目${pos}")

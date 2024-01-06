@@ -19,11 +19,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.bird2fish.travelbook.BottomWindow
+import com.bird2fish.travelbook.widgets.BottomWindow
 import com.bird2fish.travelbook.R
-import com.bird2fish.travelbook.ServerSettingView
+import com.bird2fish.travelbook.widgets.ServerSettingView
 import com.bird2fish.travelbook.TencentMapActivity
-import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.ActivityLoginBinding

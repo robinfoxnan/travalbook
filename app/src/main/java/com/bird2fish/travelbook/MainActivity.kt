@@ -19,13 +19,14 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
+import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.HttpService
 import com.bird2fish.travelbook.core.UiHelper
-import com.bird2fish.travelbook.databinding.ActivityMainBinding
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
-import com.bird2fish.travelbook.ui.login.LoginActivity
+import com.bird2fish.travelbook.widgets.SoftHideKeyBoardUtil
+import com.bird2fish.travelbook.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,6 +52,15 @@ class MainActivity : AppCompatActivity() {
 
     public fun closeDrawer(){
         binding.drawerLayout.closeDrawer(GravityCompat.START)
+    }
+
+    // 隐藏特定菜单项的方法
+    private fun hideMenuItem(menuItemId: Int) {
+
+        var navigationView = this.findViewById<NavigationView>(R.id.nav_view);
+        val menu: Menu = navigationView.menu
+        val menuItem: MenuItem? = menu.findItem(menuItemId)
+        menuItem?.isVisible = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,15 +94,18 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
+
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 // 这里先隐藏一组，暂时用不这么多
                 //R.id.nav_newgroup,
-                R.id.nav_home,  R.id.nav_playground, R.id.nav_favourite,
+                R.id.nav_home,  R.id.nav_playground, R.id.importFragment, R.id.nav_favourite,
                 R.id.nav_map, R.id.nav_track,
                 R.id.nav_me, R.id.nav_contract, R.id.settingFragment
             ), drawerLayout
         )
+
+
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
@@ -142,6 +155,9 @@ class MainActivity : AppCompatActivity() {
 
         // 在这里初始化 SoftHideKeyBoardUtil 并关联到当前的 Activity
         softHideKeyBoardUtil = SoftHideKeyBoardUtil(this)
+        if (!GlobalData.usePublish){
+            hideMenuItem(R.id.nav_playground)
+        }
     }
 
     override fun onResume() {

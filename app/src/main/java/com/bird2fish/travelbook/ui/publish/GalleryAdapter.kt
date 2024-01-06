@@ -61,9 +61,16 @@ class GalleryAdapter (private val dataList: List<ImagePathPair>) : RecyclerView.
                 e.printStackTrace()
             }
 
+
+
             holder.img.setOnClickListener{
+                val location = IntArray(2)
+                holder.img.getLocationOnScreen(location)
+
+                val x = location[0] // 获取View在屏幕上的X坐标
+                val y = location[1] // 获取View在屏幕上的Y坐标
                 if (view != null){
-                    view!!.showPopupMenu(position)
+                    view!!.showPopupMenu(position, x, y)
                 }
             }
 

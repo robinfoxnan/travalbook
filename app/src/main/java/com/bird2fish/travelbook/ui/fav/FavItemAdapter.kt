@@ -19,7 +19,7 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
     }
 
     // 创建 ViewHolder
-    class FavViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class FavViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // ViewHolder 中的视图元素，例如 TextView、ImageView 等
         val imgIcon :ImageView = itemView.findViewById(R.id.img_fav_icon)
         val tvUid : TextView =  itemView.findViewById(R.id.tv_fav_uid)
@@ -28,6 +28,17 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
         val tvTitle : TextView = itemView.findViewById(R.id.tv_fav_title)
         val tvDes : TextView = itemView.findViewById(R.id.tv_fav_des)
         val tvDelete :TextView = itemView.findViewById(R.id.tv_fav_share)
+        var index: Int = 0
+
+        init {
+            // 在构造函数中为整个 ViewHolder 的根视图设置点击事件
+            itemView.setOnClickListener {
+                // 处理点击事件
+                if (fragment != null){
+                    fragment!!.onClickItem(index)
+                }
+            }
+        }
 
     }
 
@@ -41,6 +52,7 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
     // 绑定数据到 ViewHolder
     override fun onBindViewHolder(holder: FavViewHolder, position: Int) {
         val item = dataList[position]
+        holder.index = position
 
         holder.tvUid.setText(item!!.uId)
         holder.tvUid.visibility = View.INVISIBLE

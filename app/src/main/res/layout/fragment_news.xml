@@ -1,38 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="@color/white">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <!-- 主要布局的根节点 -->
         <!-- 内容布局 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-    <!-- ViewPager2 for Image Browser -->
-
-            <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
-        android:layout_width="match_parent"
-        android:layout_height="500dp"
-        android:layout_weight="1" />
-
-    <LinearLayout
-        android:id="@+id/index_dot"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:gravity="center|center_horizontal"
-        android:orientation="horizontal" />
+            <!-- 图片浏览器 -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
 
 
-    <!-- Title -->
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/viewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="500dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_news_pages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|top"
+                    android:layout_margin="20dp"
+                    android:background="@drawable/rounded_background_gray_fill"
+                    android:padding="5dp"
+                    android:text="1/2" />
+
+            </FrameLayout>
+
+
+            <LinearLayout
+                android:id="@+id/index_dot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center|center_horizontal"
+                android:orientation="horizontal" />
+
+
+            <!-- Title -->
             <TextView
                 android:id="@+id/titleTextView"
                 android:layout_width="match_parent"
@@ -41,76 +61,131 @@
                 android:text="颐和园雪后"
                 android:textSize="20sp" />
 
-    <!-- Content Text -->
-    <TextView
-        android:id="@+id/contentTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Content text goes here."
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp" />
-
-    <!-- Tags -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/tagsTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tags:"
-            android:textStyle="bold"
-            android:paddingEnd="8dp" />
-
-        <TextView
-            android:id="@+id/tagsContentTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Tag1, Tag2, Tag3"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-    </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-            <!--头像图片，这个CricleImageView是另写的一个类继承自ImageView，用来实现圆形的图片效果和缩放效果的-->
-            <ImageView
-                android:id="@+id/news_item_icon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:layout_margin="2dp"
-                android:scaleType="centerCrop"
-                app:srcCompat="@drawable/icon4" />
-            <!--昵称区域-->
+            <!-- Content Text -->
             <TextView
-                android:id="@+id/news_item_username"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:maxLines="2"
-                android:text="飞鸟真人"
-                android:textColor="#333333"
-                android:textSize="12sp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/news_item_tm"
-                android:layout_width="wrap_content"
+                android:id="@+id/contentTextView"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="8dp"
-                android:text="昨天 19:48" />
+                android:text="Content text goes here."
+                android:textSize="16sp" />
+
+            <!-- 位置信息 -->
+            <LinearLayout
+                android:id="@+id/point_track_line"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="start|center_horizontal"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/news_item_point_img"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="2dp"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/marker" />
+                <!--位置信息-->
+                <TextView
+                    android:id="@+id/news_item_point_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:maxLines="2"
+                    android:text="(40.0, 116.1)"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+
+            <!-- Tags -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/news_item_tag_img"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="2dp"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/tag" />
+
+                <TextView
+                    android:id="@+id/tagsContentTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="3"
+                    android:text="Tag1, Tag2, Tag3" />
+
+            </LinearLayout>
+
+            <!-- 昵称区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+                <!--头像图片，这个CricleImageView是另写的一个类继承自ImageView，用来实现圆形的图片效果和缩放效果的-->
+                <ImageView
+                    android:id="@+id/news_item_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="2dp"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/icon5" />
+                <!--昵称区域-->
+                <TextView
+                    android:id="@+id/news_item_username"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:maxLines="2"
+                    android:text="飞鸟真人"
+                    android:textColor="#333333"
+                    android:textSize="16sp" />
+
+
+            </LinearLayout>
+
+            <!-- 时间与删除按钮一组 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/news_item_tm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="8dp"
+                    android:text="昨天 19:48" />
+
+                <ImageView
+                    android:id="@+id/news_item_del_img"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_horizontal|center_vertical"
+                    android:layout_margin="2dp"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@android:drawable/ic_menu_delete" />
+            </LinearLayout>
 
             <!-- Comment List -->
             <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -118,7 +193,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <!-- Your content goes here -->
+                <!--  -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -137,9 +212,167 @@
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-        </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_margin="7dp"
+                android:layout_marginRight="7dp"
+                android:background="@drawable/gradient_line" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="The End"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_margin="7dp" />
+
+        </LinearLayout> <!-- 主要布局的根节点 -->
 
     </androidx.core.widget.NestedScrollView>
 
 
-</LinearLayout>
+    <!-- 输入框控件 -->
+    <LinearLayout
+        android:id="@+id/ctl_news_input_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="start"
+        android:orientation="horizontal"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_default="spread">
+
+        <!-- 输入框 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_background_gray_input"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/tv_new_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/no_border_edit"
+                android:hint="输入"
+                android:paddingStart="8dp" />
+
+            <!-- 图标1 -->
+            <ImageView
+                android:id="@+id/img_news_input_at"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center_vertical"
+                android:paddingEnd="4dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/matrix_ic_comment_at" />
+
+            <!-- 图标2 -->
+            <ImageView
+                android:id="@+id/img_news_input_stick"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center_vertical"
+                android:paddingEnd="4dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/matrix_ic_comment_emotion" />
+
+            <!-- 图标3 -->
+            <ImageView
+                android:id="@+id/img_news_input_image"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center_vertical"
+                android:paddingEnd="4dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/matrix_ic_comment_picture" />
+        </LinearLayout>
+
+        <!--输入框右侧的三个图标-->
+        <ImageView
+            android:id="@+id/img_news_likes"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="0"
+            app:srcCompat="@drawable/heart72_grey" />
+
+        <TextView
+            android:id="@+id/tv_news_item_likes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:maxLines="1"
+            android:text="123"
+            android:textColor="#AAAAAA"
+            android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/img_new_favs"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="0"
+            app:srcCompat="@drawable/star72_grey" />
+
+        <TextView
+            android:id="@+id/tv_news_item_favs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:maxLines="1"
+            android:text="123"
+            android:textColor="#AAAAAA"
+            android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/img_news_comments"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="0"
+            android:visibility="gone"
+            app:srcCompat="@drawable/comment_grey" />
+
+        <TextView
+            android:id="@+id/tv_news_item_comments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:maxLines="1"
+            android:text="123"
+            android:textColor="#AAAAAA"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+
+    </LinearLayout><!--结束最下一行-->
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

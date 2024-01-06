@@ -7,28 +7,27 @@ import android.graphics.BitmapFactory
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PreferencesHelper
 import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.bird2fish.travelbook.ui.data.model.LoggedInUser
 import com.google.gson.Gson
-import okhttp3.*
+import com.google.gson.GsonBuilder
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
-import java.lang.RuntimeException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.LinkedList
-import java.util.concurrent.TimeUnit
+import java.util.*
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
@@ -140,7 +139,7 @@ class HttpService : Service() {
         var url = "${schema}://${host}/v1/user/regist?type=1&pwd=${pwd}&username=${name}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
 
 
             val request = Request.Builder()
@@ -177,7 +176,7 @@ class HttpService : Service() {
         //构建url地址
         var url = "${schema}://${host}/v1/user/login?type=0&uid=${uid}&sid=${sid}"
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url)
                 .get() //以post的形式添加requestBody
@@ -225,7 +224,7 @@ class HttpService : Service() {
             "${schema}://${host}/v1/user/login?type=1&pwd=${pwd}&uid=${uid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)  // "http://www.baidu.com"
                 .get() //以post的形式添加requestBody
@@ -289,7 +288,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/searchfriends?fid=${fid}&uid=${uid}&sid=${sid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -381,7 +380,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/listfriends?type=1&&uid=${uid}&sid=${sid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -448,7 +447,7 @@ class HttpService : Service() {
             "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=${str}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -478,7 +477,7 @@ class HttpService : Service() {
             "${schema}://${host}/v1/user/setfriendinfo?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}&param=remove"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -518,7 +517,7 @@ class HttpService : Service() {
             "${schema}://${host}/v1/user/addfriendreq?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -620,7 +619,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/user/setbaseinfo"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .post(requestBody)
@@ -693,13 +692,41 @@ class HttpService : Service() {
         return newsList
     }
 
+    fun removeNews(uid: String, sid: String, nid:String):Boolean{
+        //构建url地址
+        var url1 =  "${schema}://${host}/v1/news/delete?&uid=${uid}&sid=${sid}&nid=${nid}"
+        try {
+            var client = HttpsUtil.getClient(null)
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+
+            System.out.println(responseData)
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state.equals("ok", true)) {
+                return true
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+
+        return false
+    }
+
     fun getNewsRecent(uid: String, sid: String, page: Int, pagesize: Int): LinkedList<News> {
         //构建url地址
         var url1 =
             "${schema}://${host}/v1/news/recent?&uid=${uid}&sid=${sid}&page=${page}&size=${pagesize}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()
@@ -742,7 +769,7 @@ class HttpService : Service() {
         var url1 = "${schema}://${host}/v1/news/publish?&uid=${uid}&sid=${sid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .post(requestBody)
@@ -814,7 +841,7 @@ class HttpService : Service() {
             .build()
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             var response = client.newCall(request).execute()
             val responseData = response.body?.string()
             val jsonObject = JSONObject(responseData)
@@ -908,7 +935,7 @@ class HttpService : Service() {
             .post(requestBody)
             .build()
 
-        val client = HttpsUtil.getClient()
+        val client = HttpsUtil.getClient(null)
 
         try {
             val response = client.newCall(request).execute()
@@ -943,7 +970,7 @@ class HttpService : Service() {
             .post(requestBody)
             .build()
 
-        var client = HttpsUtil.getClient()
+        var client = HttpsUtil.getClient(null)
         try {
 
             var response = client.newCall(request).execute()
@@ -963,4 +990,124 @@ class HttpService : Service() {
 
         return ""
     }
+
+    fun getGpxFile(filename: String):Track{
+            //构建url地址
+            var url1 = this.getImageUrl(filename)
+
+            try {
+                var client = HttpsUtil.getClient(null)
+                val request = Request.Builder()
+                    .url(url1)
+                    .get()
+                    .build()
+                var response = client.newCall(request).execute()
+                val responseData = response.body?.string()
+
+                System.out.println(responseData)
+                val gson = GsonBuilder()
+                    .setDateFormat("MM/dd/yy hh:mm a")
+                    .create()
+                return gson.fromJson(responseData, Track::class.java)
+
+            } catch (e: Exception) {
+                //LogHelper.e("Exception")
+                e.printStackTrace();
+                LogHelper.e("$e.message")
+            }
+
+            return Track()
+        }
+
+    fun getUserFav(uid:String, nid:String, sid:String): NewsFav{
+        var url1 = "${schema}://${host}/v1/news/getfav?&uid=${uid}&sid=${sid}&nid=${nid}"
+        val newsFav = NewsFav(nid, uid, false, false, false, 0)
+        try {
+            var client = HttpsUtil.getClient(null)
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+
+            System.out.println(responseData)
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state.equals("ok", true)) {
+                val data = jsonObject.getJSONObject("data")
+                if (data != null){
+                    newsFav.fav = data.getBoolean("fav")
+                    newsFav.like = data.getBoolean("like")
+                    newsFav.hate = data.getBoolean("hate")
+                    newsFav.reason = data.getInt("reason")
+                }
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return newsFav
+    }
+
+    fun updateUserFav(uid:String, nid:String, sid:String, opt :String):Boolean{
+        var url1 = "${schema}://${host}/v1/news/setfav?&uid=${uid}&sid=${sid}&nid=${nid}&opt=${opt}"
+        val newsFav = NewsFav(nid, uid, false, false, false, 0)
+        try {
+            var client = HttpsUtil.getClient(null)
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+
+            System.out.println(responseData)
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+                val data = jsonObject.getJSONObject("data")
+                return true
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+    }
+
+    fun updateUserLike(uid:String, nid:String, sid:String, opt :String):Boolean{
+        var url1 = "${schema}://${host}/v1/news/setlike?&uid=${uid}&sid=${sid}&nid=${nid}&opt=${opt}"
+        val newsFav = NewsFav(nid, uid, false, false, false, 0)
+        try {
+            var client = HttpsUtil.getClient(null)
+            val request = Request.Builder()
+                .url(url1)
+                .get()
+                .build()
+            var response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+
+            System.out.println(responseData)
+            val jsonObject = JSONObject(responseData)
+            val state = jsonObject.getString("state")
+
+            if (state == "ok") {
+                val data = jsonObject.getJSONObject("data")
+                return true
+            }
+        } catch (e: Exception) {
+            //LogHelper.e("Exception")
+            e.printStackTrace();
+            LogHelper.e("$e.message")
+        }
+        return false
+    }
+
+
 }
+

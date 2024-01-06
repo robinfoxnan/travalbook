@@ -1,7 +1,6 @@
-package com.bird2fish.travelbook
+package com.bird2fish.travelbook.widgets
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
@@ -9,8 +8,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.PopupWindow
-import android.widget.ScrollView
 import android.widget.TextView
+import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.helper.PreferencesHelper
 
 class ServerSettingView(context: Context) {

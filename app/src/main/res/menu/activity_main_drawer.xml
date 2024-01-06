@@ -18,6 +18,10 @@
             android:icon="@drawable/run"
             android:title="@string/menu_home" />
         <item
+            android:id="@+id/importFragment"
+            android:icon="@android:drawable/ic_menu_myplaces"
+            android:title="导入数据" />
+        <item
             android:id="@+id/nav_playground"
             android:icon="@drawable/ic_menu_slideshow"
             android:title="@string/menu_playgrourd" />

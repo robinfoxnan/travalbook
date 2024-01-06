@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 按钮-->
+
+    <LinearLayout
+        android:id="@+id/layout_bt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tv_news_import"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/cancel_image"
+            android:gravity="center|center_horizontal|center_vertical"
+            android:text="  从剪切板拷贝  " />
+
+        <TextView
+            android:id="@+id/tv_news_save"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/publish_image"
+            android:gravity="center|center_horizontal|center_vertical"
+            android:text="保存" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_bt">
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tv_news_edit_title_v"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/no_border_edit"
+            android:hint="标题"
+            android:inputType="textPersonName"
+            android:padding="5dp"
+            android:text=""
+            android:textIsSelectable="true"
+            android:textSize="20sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/gradient_line" />
+
+
+        <TextView
+            android:id="@+id/tv_news_edit_info_v"
+            style="@android:style/Widget.EditText"
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/no_border_edit"
+            android:gravity="top|left"
+            android:hint="详情"
+            android:inputType="textMultiLine"
+            android:padding="5dp"
+            android:textIsSelectable="true"
+            android:textSize="16sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/gradient_line" />
+        <!-- 正文 -->
+        <com.bird2fish.travelbook.widgets.ClearEditText
+            android:id="@+id/tv_news_edit_des_v"
+            style="@android:style/Widget.EditText"
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/no_border_edit"
+            android:gravity="top|left"
+            android:hint="粘贴到这里"
+            android:inputType="textMultiLine"
+            android:padding="5dp"
+            android:textIsSelectable="true"
+            android:textSize="16sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/gradient_line" />
+
+
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

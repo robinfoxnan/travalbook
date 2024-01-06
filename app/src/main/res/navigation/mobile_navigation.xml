@@ -36,6 +36,9 @@
         <action
             android:id="@+id/action_nav_favourite_to_publishImageNewsFragment"
             app:destination="@id/publishImageNewsFragment" />
+        <action
+            android:id="@+id/action_nav_favourite_to_newsMapFragment"
+            app:destination="@id/newsMapFragment" />
     </fragment>
 
     <fragment
@@ -46,6 +49,9 @@
         <action
             android:id="@+id/action_nav_track_to_publishImageNewsFragment"
             app:destination="@id/publishImageNewsFragment" />
+        <action
+            android:id="@+id/action_nav_track_to_newsMapFragment"
+            app:destination="@id/newsMapFragment" />
     </fragment>
 
     <fragment
@@ -77,6 +83,9 @@
         <action
             android:id="@+id/action_news_to_coverpage"
             app:destination="@id/nav_playground" />
+        <action
+            android:id="@+id/action_newsFragment_to_newsMapFragment"
+            app:destination="@id/newsMapFragment" />
     </fragment>
     <fragment
         android:id="@+id/publishImageNewsFragment"
@@ -90,4 +99,23 @@
             android:id="@+id/action_publishImageNewsFragment_to_nav_track"
             app:destination="@id/nav_track" />
     </fragment>
+    <fragment
+        android:id="@+id/newsMapFragment"
+        android:name="com.bird2fish.travelbook.ui.news.NewsMapFragment"
+        android:label="分享的信息"
+        tools:layout="@layout/fragment_news_map">
+        <action
+            android:id="@+id/action_newsMapFragment_to_newsFragment"
+            app:destination="@id/newsFragment" />
+        <action
+            android:id="@+id/action_newsMapFragment_to_nav_favourite"
+            app:destination="@id/nav_favourite" />
+        <action
+            android:id="@+id/action_newsMapFragment_to_nav_track"
+            app:destination="@id/nav_track" />
+    </fragment>
+    <fragment
+        android:id="@+id/importFragment"
+        android:name="com.bird2fish.travelbook.ui.news.ImportFragment"
+        android:label="导入数据" />
 </navigation>

@@ -102,6 +102,39 @@ object TrackHelper {
         return Pair(shouldBeAdded, track)
     }
 
+    fun addWayPointToTrack(track: Track, lat:Double, lon:Double){
+        val location = Location("provider") // 你可以指定一个提供者，这里使用字符串 "provider" 作为示例
+        location.latitude = lat
+        location.longitude = lon
+        location.altitude = 0.0
+
+        val previousLocation: Location?
+        var numberOfWayPoints: Int = track.wayPoints.size
+
+        // CASE: First location
+        if (numberOfWayPoints == 0) {
+            previousLocation = null
+        } else {
+            previousLocation = track.wayPoints[numberOfWayPoints - 1].toLocation()
+        }
+
+        // Step 2: Update duration
+        val now: Date = GregorianCalendar.getInstance().time
+        track.duration = 0
+        track.recordingStop = now
+
+
+        track.length = track.length + LocationHelper.calculateDistance(previousLocation, location)
+
+        // Step 3.4: Add current location as point to center on for later display
+        track.latitude = location.latitude
+        track.longitude = location.longitude
+
+        // Step 3.5: Add location as new waypoint
+        track.wayPoints.add(WayPoint(location = location, distanceToStartingPoint = track.length))
+        return
+    }
+
 
     /* Calculates time passed since last stop of recording */
     fun calculateDurationOfPause(recordingStop: Date): Long = GregorianCalendar.getInstance().time.time - recordingStop.time

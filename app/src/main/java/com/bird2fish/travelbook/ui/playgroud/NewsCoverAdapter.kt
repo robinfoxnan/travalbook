@@ -1,29 +1,27 @@
 package com.bird2fish.travelbook.ui.playgroud
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import androidx.recyclerview.widget.RecyclerView
-import com.bird2fish.travelbook.ui.playgroud.NewsCoverAdapter.MyViewHolder
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnFocusChangeListener
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
-import com.bird2fish.travelbook.R
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
-import com.bird2fish.travelbook.core.FavLocation
+import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.GlobalData
 import com.bird2fish.travelbook.core.News
 import com.bird2fish.travelbook.core.UiHelper
-import com.bird2fish.travelbook.helper.LogHelper
 import com.bird2fish.travelbook.helper.PicassoHelper
-import com.squareup.picasso.Callback
-import com.squareup.picasso.MemoryPolicy
-import com.squareup.picasso.NetworkPolicy
+import com.bird2fish.travelbook.ui.playgroud.NewsCoverAdapter.MyViewHolder
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+
 
 class NewsCoverAdapter(private val dataList: List<News>) : RecyclerView.Adapter<MyViewHolder>() {
 
@@ -54,32 +52,21 @@ class NewsCoverAdapter(private val dataList: List<News>) : RecyclerView.Adapter<
         holder.likes.setText(likeCount)
 
         // 创建一个实现了 Target 接口的匿名类对象
-        val target = object : Target {
-            override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
-                // 图片加载成功，可以在这里执行操作
-                if (bitmap != null) {
-                    holder.img.setImageBitmap(bitmap)
-                }
-            }
 
-            override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
-                setErrorImage(holder, R.drawable.noimg)
-            }
-
-            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-                // 图片加载之前的准备工作
-            }
-        }
 
         if (news.images != null && news.images.size > 0){
             val url = GlobalData.getHttpServ().getImageUrl(news.images[0])
 
             val picasso = PicassoHelper.getInstance(view!!.requireActivity())
-            picasso.load(url).error(R.drawable.noimg)
+            //picasso.setIndicatorsEnabled(true)
+            picasso.load(url)
+                //.placeholder(R.drawable.loading1)
                 //.resize(200, 200)
                 //.networkPolicy(NetworkPolicy.NO_CACHE)  // Disable cache for network requests
                 //.memoryPolicy(MemoryPolicy.NO_CACHE)    // Disable cache in memory
-                .into(target)
+                .into(holder.target!!)
+                //.error(R.drawable.noimg) // 设置加载错误时的占位图
+                //.into(holder.img);
         }else{
             if (view != null){
                 setErrorImage(holder, R.drawable.point1)
@@ -91,6 +78,8 @@ class NewsCoverAdapter(private val dataList: List<News>) : RecyclerView.Adapter<
                 view!!.onClickItem(position)
             }
         }
+
+
 
     }
 
@@ -119,6 +108,7 @@ class NewsCoverAdapter(private val dataList: List<News>) : RecyclerView.Adapter<
         var container: LinearLayout
 
         var likes:TextView
+        var target: Target?= null
 
         init {
             img = itemView.findViewById(R.id.news_item_img)
@@ -127,6 +117,29 @@ class NewsCoverAdapter(private val dataList: List<News>) : RecyclerView.Adapter<
             username = itemView.findViewById(R.id.news_item_username)
             container = itemView.findViewById(R.id.news_item_root)
             likes = itemView.findViewById(R.id.home_item_count)
+            this.target = object : Target {
+                override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+                    // 图片加载成功，可以在这里执行操作
+                    if (bitmap != null) {
+                        img.setImageBitmap(bitmap)
+                        //img.invalidate()
+
+                        val layoutParams = img.getLayoutParams()
+                        val delta =  UiHelper.computeHeight(bitmap, layoutParams.width) - layoutParams.height
+                        layoutParams.height += delta
+                        img.layoutParams = layoutParams
+
+                    }
+                }
+
+                override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+                    setErrorImage(this@MyViewHolder, R.drawable.noimg)
+                }
+
+                override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                    // 图片加载之前的准备工作
+                }
+            }
         }
     }
 

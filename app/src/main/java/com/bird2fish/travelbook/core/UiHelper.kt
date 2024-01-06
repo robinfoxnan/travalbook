@@ -1,5 +1,7 @@
 package com.bird2fish.travelbook.core
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -20,6 +22,29 @@ import com.google.android.material.internal.ViewUtils.dpToPx
 
 
 public object UiHelper {
+
+    fun copyToClipboard(context: Context, text: String) {
+        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipData = ClipData.newPlainText("label", text)
+        clipboardManager.setPrimaryClip(clipData)
+    }
+
+    fun getClipboardText(context: Context): String {
+        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        // 检查剪贴板中是否有数据
+        if (clipboardManager.hasPrimaryClip()) {
+            val clipData = clipboardManager.primaryClip
+
+            // 获取剪贴板中的第一条数据
+            val clipItem = clipData?.getItemAt(0)
+
+            // 返回文本数据
+            return clipItem?.text?.toString() ?: ""
+        }
+
+        return ""
+    }
 
     fun showMessage(applicationContext: Context, str:CharSequence){
         var toast = Toast.makeText(
@@ -185,6 +210,13 @@ public object UiHelper {
     fun computeHeight(img :Drawable, width: Int):Int{
         val scaleFactor = width * 1.0 / img.intrinsicWidth
         val height = scaleFactor * img.intrinsicHeight
+
+        return height.toInt()
+    }
+
+    fun computeHeight(img :Bitmap, width: Int):Int{
+        val scaleFactor = width * 1.0 / img.width
+        val height = scaleFactor * img.height
 
         return height.toInt()
     }

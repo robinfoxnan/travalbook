@@ -1,5 +1,7 @@
 package com.bird2fish.travelbook.core;
 
+import android.content.Context;
+
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -13,6 +15,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 
 public class HttpsUtil{
@@ -28,17 +31,24 @@ public class HttpsUtil{
         }
     }
 
-    public static OkHttpClient getClient(){
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+    public static OkHttpClient getClient(Context context){
+        int diskCacheSize = 50 * 1024 * 1024;
+        OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder()
                 .readTimeout(60, TimeUnit.SECONDS)
                 .connectTimeout(60, TimeUnit.SECONDS)
                 // 自定义SSLSocket, 忽略验证客户端和服务端证书。
 //            .sslSocketFactory(HttpsUtil.getSSLSocketFactory())
                 .sslSocketFactory(HttpsUtil.getSSLSocketFactory(), HttpsUtil.getX509TrustManager())
                 // 信任手机所有CA证书
-                .hostnameVerifier(HttpsUtil.getHostnameVerifier())
+                .hostnameVerifier(HttpsUtil.getHostnameVerifier());
 //                .hostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-                .build();
+
+        if (context != null){
+            okHttpClientBuilder.cache(new Cache(context.getCacheDir(), diskCacheSize));
+        }
+
+
+        OkHttpClient okHttpClient = okHttpClientBuilder.build();
 
         return okHttpClient;
 

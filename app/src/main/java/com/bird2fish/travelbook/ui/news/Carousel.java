@@ -1,4 +1,4 @@
-package com.bird2fish;
+package com.bird2fish.travelbook.ui.news;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.content.ContextCompat;
@@ -32,10 +33,12 @@ public class Carousel {
     private List<String> originalImages = new ArrayList<>();   //存放这需要轮播的图片
 
     private ViewPager2 viewPager2;
+    private TextView pagesIndexView;
 
     private long AUTO_SCROLL_INTERVAL = 1_500; // 设置自动滚动的间隔时间，单位为毫秒
 
     private boolean AUTO_SCROLL = false;    //是否设置自动播放
+    private int count = 1;
 
 
     /**
@@ -45,12 +48,19 @@ public class Carousel {
         this.AUTO_SCROLL_INTERVAL = AUTO_SCROLL_INTERVAL;
     }
 
-    public Carousel(Context mContext, LinearLayout dotLinearLayout, ViewPager2 viewPager2) {
+    public Carousel(Context mContext, LinearLayout dotLinearLayout, ViewPager2 viewPager2, TextView pageIndex) {
         this.mContext = mContext;
         this.dotLinearLayout = dotLinearLayout;
         this.viewPager2 = viewPager2;
+        this.pagesIndexView = pageIndex;
 
         autoScrollHandler = new Handler(Looper.getMainLooper());
+    }
+
+    private void clear(){
+        originalImages.clear();
+        mDotViewList.clear();
+        dotLinearLayout.removeAllViews();
     }
 
     /**
@@ -60,31 +70,38 @@ public class Carousel {
      */
     public void initViews(List<String> resource, RecyclerView.Adapter adapter) {
 
-        //加载初始化绑定轮播图
-        for (String id : resource) {
-            originalImages.add(id);
+        this.count = resource.size();
 
-            //制作标志点的ImageView，并且初始化加载第一张图片标志点
-            ImageView dotImageView = new ImageView(mContext);
-            if (originalImages.size() == 1) {
-                dotImageView.setImageResource(R.drawable.red_dot);
-            } else {
-                dotImageView.setImageResource(R.drawable.grey_dot);
+        if (resource.size() != originalImages.size())
+        {
+            clear();
+            //加载初始化绑定轮播图
+            for (String id : resource) {
+                originalImages.add(id);
+
+                //制作标志点的ImageView，并且初始化加载第一张图片标志点
+                ImageView dotImageView = new ImageView(mContext);
+                if (originalImages.size() == 1) {
+                    dotImageView.setImageResource(R.drawable.red_dot);
+                } else {
+                    dotImageView.setImageResource(R.drawable.grey_dot);
+                }
+
+                //设置标志点的布局参数
+                LinearLayout.LayoutParams dotImageLayoutParams = new LinearLayout.LayoutParams(10, 10);
+                dotImageLayoutParams.setMargins(5, 0, 5, 0);
+
+                //将布局参数绑定到标志点视图
+                dotImageView.setLayoutParams(dotImageLayoutParams);
+
+                //保存标志点便于后续动态修改
+                mDotViewList.add(dotImageView);
+
+                //将标志点的视图绑定在Layout中
+                dotLinearLayout.addView(dotImageView);
             }
-
-            //设置标志点的布局参数
-            LinearLayout.LayoutParams dotImageLayoutParams = new LinearLayout.LayoutParams(10, 10);
-            dotImageLayoutParams.setMargins(5, 0, 5, 0);
-
-            //将布局参数绑定到标志点视图
-            dotImageView.setLayoutParams(dotImageLayoutParams);
-
-            //保存标志点便于后续动态修改
-            mDotViewList.add(dotImageView);
-
-            //将标志点的视图绑定在Layout中
-            dotLinearLayout.addView(dotImageView);
         }
+
 
         //originalImages.add(0, originalImages.get(originalImages.size() - 1));  //将originalImages的最后一张照片插入到开头
         //originalImages.add(originalImages.get(1));  //将originalImages的第2张照片插入到结尾
@@ -148,6 +165,9 @@ public class Carousel {
                         mDotViewList.get(i).setImageResource(R.drawable.grey_dot);
                     }
                 }
+
+                String buffer =  String.format("%d/%d", position+1, count);
+                pagesIndexView.setText(buffer);
 
                 // 在滑动到最后一个元素时，跳转到第一个元素
 //                if (position == originalImages.size() - 1) {

@@ -1,4 +1,4 @@
-package com.bird2fish.travelbook
+package com.bird2fish.travelbook.widgets
 
 import android.app.Activity
 import android.graphics.Rect

@@ -210,6 +210,15 @@ object FileHelper {
         saveTracklist(context, tracklist, track.recordingStop)
     }
 
+    fun addTrackAndSave(context: Context, tracklist :Tracklist, track: Track, title:String){
+        val item = track.toTracklistElement(context)
+        item.title = title
+        tracklist.tracklistElements.add(item)
+        tracklist.totalDistanceAll += track.length
+
+        saveTracklist(context, tracklist, track.recordingStop)
+    }
+
 
     /* Suspend function: Wrapper for renameTrack */
     suspend fun renameTrackSuspended(context: Context, track: Track, newName: String) {

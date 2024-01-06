@@ -20,7 +20,7 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         this.fragment = view
     }
     // 创建 ViewHolder
-    class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner  class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // ViewHolder 中的视图元素，例如 TextView、ImageView 等
         val tvName: TextView = itemView.findViewById(R.id.tv_name)
         val tvDate : TextView= itemView.findViewById(R.id.tv_time)
@@ -34,7 +34,17 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
 
         var tvPts :TextView = itemView.findViewById(R.id.tv_track_item_pts)
         var tvEndTime :TextView = itemView.findViewById(R.id.tv_track_item_endtime)
+        var index: Int = 0
 
+        init {
+            // 在构造函数中为整个 ViewHolder 的根视图设置点击事件
+            itemView.setOnClickListener {
+                // 处理点击事件
+                if (fragment != null){
+                    fragment!!.onClickItem(index)
+                }
+            }
+        }
     }
 
     // 创建 ViewHolder
@@ -46,6 +56,7 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
 
     // 绑定数据到 ViewHolder
     override fun onBindViewHolder(holder: TrackViewHolder, position: Int) {
+        holder.index = position
         val trackItem = trackList[position]
         holder.tvName.text = trackItem.name
         if (trackItem.title != null && trackItem.title != ""){

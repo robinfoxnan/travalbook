@@ -24,7 +24,7 @@ object PicassoHelper {
 
             try {
                 // 初始化 TLS 协议的 SSL 上下文
-                val okHttpClient = HttpsUtil.getClient()
+                val okHttpClient = HttpsUtil.getClient(context)
 
                 // 创建 OkHttpDownloader，并将其设置为 Picasso 的下载器
                 val okHttpDownloader = OkHttp3Downloader(okHttpClient)

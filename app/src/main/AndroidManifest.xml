@@ -92,15 +92,6 @@
                 android:value="" />
         </activity> <!-- TRACKER SERVICE -->
 
-        <activity
-            android:name=".TrackMapActivity"
-            android:exported="true"
-            android:label="@string/title_activity_track_map"
-            android:theme="@style/Theme.TravelBook.NoActionBar">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
 
         <service
             android:name=".core.HttpService"

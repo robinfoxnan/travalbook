@@ -13,6 +13,7 @@ import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.FileHelper
 import com.bird2fish.travelbook.ui.SlideRecyclerView
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.google.gson.Gson
 import java.util.*
 
 class maptrack : Fragment() {
@@ -121,10 +122,17 @@ class maptrack : Fragment() {
     // 点击分享
     fun onClickItemShare(pos: Int){
         this.recyclerView.closeMenu()
-        val navController = findNavController()
 
-        val user = CurrentUser.getUser()
+        if (GlobalData.usePublish)
+        {
+            jumpToPublish(pos)
+        }else{
+            copyToClipboard(pos)
+        }
 
+    }
+
+    private fun copyToClipboard(pos: Int){
         val trackList = GlobalData.trackList ?: return
 
         val item = trackList.tracklistElements[pos]
@@ -134,22 +142,88 @@ class maptrack : Fragment() {
             return
         }
 
+        var user = CurrentUser.getUser()
+        var data = ShareData(user!!.uid, user!!.nickName)
+        data.icon = user!!.icon
+
+        if (item.title != null){
+            data.title = item.title
+        }else{
+            data.title = item.name
+        }
+
+        for (p in track.wayPoints){
+            val pair = mutableListOf<Double>()
+            pair.add(p.latitude)
+            pair.add(p.longitude)
+            data.points.add(pair)
+        }
+        val gson = Gson()
+        val str = gson.toJson(data)
+
+        UiHelper.copyToClipboard(requireActivity(), str)
+        UiHelper.showCenterMessage(requireActivity(), "数据已经拷贝到剪切板")
+    }
+
+
+    private fun getNews(pos: Int, show: Boolean) : News?{
+        val user = CurrentUser.getUser()
+
+        val trackList = GlobalData.trackList ?: return null
+
+        val item = trackList.tracklistElements[pos]
+        val track = loadTrack(item)
+        if (track.wayPoints == null || track.wayPoints.size < 1){
+            UiHelper.showCenterMessage(requireActivity(), "无法加载轨迹数据，或者无数据点")
+            return null
+        }
+
+        var title = ""
+        if (item.title != null){
+            title = item.title
+        }
+        var content = ""
+        if (item.content != null){
+            content  = item.content
+        }
+
         val news =  News("", user!!.uid, user.nickName, user.icon,
             track.wayPoints[0].latitude,
             track.wayPoints[0].longitude,
             track.wayPoints[0].altitude,
             DateTimeHelper.getTimestamp(),
-            item.title,
-            item.content,
+            title,
+            content,
             ArrayList<String>(),
             ArrayList<String>(),
             "track",
             item.trackUriString,
             0, 0, false, 0)
 
+        if (show){
+            news.type = "localtrack"
+        }
+        return news
+    }
+
+    private fun jumpToPublish(pos: Int){
+        val navController = findNavController()
+
+        val news = getNews(pos, false) ?: return
+
         val bundle = Bundle()
         bundle.putParcelable("news", news)
         navController.navigate(R.id.action_nav_track_to_publishImageNewsFragment, bundle)
+    }
+
+    fun onClickItem(pos:Int){
+        val navController = findNavController()
+
+        val news = getNews(pos, true) ?: return
+
+        val bundle = Bundle()
+        bundle.putParcelable("news", news)
+        navController.navigate(R.id.action_nav_track_to_newsMapFragment, bundle)
     }
 
     // 重新设置备注

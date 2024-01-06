@@ -194,7 +194,7 @@ class HttpWorker {
         var requestBody = jsonStr.toRequestBody(contentType)
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url)
                 .post(requestBody) //以post的形式添加requestBody
@@ -250,7 +250,7 @@ class HttpWorker {
         var url1 = "${schema}://${host}/v1/gpx/position?uid=${user.uid}&sid=${user.sid}&fid=${friend.uid}"
 
         try {
-            var client = HttpsUtil.getClient()
+            var client = HttpsUtil.getClient(null)
             val request = Request.Builder()
                 .url(url1)
                 .get()

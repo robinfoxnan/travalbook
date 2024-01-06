@@ -1,16 +1,29 @@
 package com.bird2fish.travelbook.ui.news
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.bird2fish.Carousel
 import com.bird2fish.travelbook.R
+import com.bird2fish.travelbook.core.GlobalData
+import com.bird2fish.travelbook.core.News
+import com.bird2fish.travelbook.core.NewsFav
+import com.bird2fish.travelbook.core.UiHelper
 import com.bird2fish.travelbook.databinding.FragmentNewsBinding
+import com.bird2fish.travelbook.helper.DateTimeHelper
 import com.bird2fish.travelbook.helper.PicassoHelper
+import com.bird2fish.travelbook.ui.data.model.CurrentUser
+import com.bird2fish.travelbook.widgets.MyDialogFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class NewsFragment : Fragment() {
@@ -18,6 +31,11 @@ class NewsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private  var  imgplayer: Carousel? = null
+    private var newsContent:News? = null
+    private var newsFav : NewsFav?= null
+
+    private var _changed : MutableLiveData<Long> = MutableLiveData(DateTimeHelper.getTimestamp())
+    var changed : LiveData<Long> =  _changed
 
 
     inner class ImagePagerAdapter(private val imageList: List<String>) : RecyclerView.Adapter<ImagePagerAdapter.ImageViewHolder>() {
@@ -34,8 +52,9 @@ class NewsFragment : Fragment() {
         override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
             // 使用 Picasso 加载网络图片
 
+            val url = GlobalData.getHttpServ().getImageUrl(imageList[position])
             PicassoHelper.getInstance(this@NewsFragment.requireActivity())
-                .load(imageList[position])
+                .load(url)
                 .into(holder.imageView)
         }
 
@@ -49,6 +68,21 @@ class NewsFragment : Fragment() {
 
     }
 
+    // 提取数据
+    override fun onResume() {
+        super.onResume()
+        // 获取传递的 Intent
+        val arg = getArguments()
+        if (arg != null) {
+
+            val obj = arg!!.getParcelable<News>("news")
+            newsContent = obj
+            //UiHelper.showCenterMessage(requireActivity(), str!!)
+            updateData()
+        }
+
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -56,23 +90,237 @@ class NewsFragment : Fragment() {
         _binding = FragmentNewsBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val imageList = listOf(
-            "https://8.140.203.92:7817/file/7807018625998524416.png",
-            "https://8.140.203.92:7817/file/14594012524371251200.png"
-        )
-        val adapter = ImagePagerAdapter(imageList)
+        // 加载数据结束后
+        this.changed.observe(requireActivity(), Observer {
+            updateStar()
+        })
 
-        imgplayer = Carousel(requireActivity(), binding.indexDot, binding.viewPager)
-        //binding.viewPager.adapter = adapter
-        imgplayer!!.initViews(imageList, adapter)
+        // 点击位置图标
+        binding.newsItemPointImg.setOnClickListener{
+            showNewsPointInMap()
+        }
 
-        binding.titleTextView.text = "颐和园雪后"
-        binding.contentTextView.text = "雪后与湖面融合 若遇上日落更是散发着烂漫的金光 谐趣园 颐和园东北角 是园中zui静谧的一处园中园 宫门西开 轩堂亭榭一应俱全 在冬天在那三步一曲 五步一折的游廊里看雪景 甚是有.."
-        binding.tagsTextView.text = "#颐和园 #大雪"
+        // 点击文字
+        binding.newsItemPointInfo.setOnClickListener{
+            showNewsPointInMap()
+        }
+
+        // 喜欢
+        binding.imgNewsLikes.setOnClickListener{
+            if (newsFav!=null){
+                newsFav!!.like = !newsFav!!.like
+
+                if(newsFav!!.like){
+                    newsContent!!.likes += 1
+                }else{
+                    newsContent!!.likes -= 1
+                }
+
+                updateStar()
+                updateLike()
+            }
+        }
+
+        // 收藏
+        binding.imgNewFavs.setOnClickListener{
+            if (newsFav!=null){
+                newsFav!!.fav = !newsFav!!.fav
+
+                if (newsFav!!.fav){
+                    newsContent!!.favs += 1
+                }else{
+                    newsContent!!.favs -= 1
+                }
+                if (newsFav!!.fav){
+                    addNewsToFoler()
+                }
+                updateStar()
+                updateFav()
+            }
+        }
+
+        // 删除
+        binding.newsItemDelImg.setOnClickListener{
+            delNews()
+        }
+
+
+        binding.tvNewInput.setOnFocusChangeListener(View.OnFocusChangeListener { view, hasFocus ->
+//            if (hasFocus) {
+//                binding.tvNewsItemLikes.visibility =  View.GONE
+//                binding.tvNewsItemFavs.visibility = View.GONE
+//                binding.imgNewFavs.visibility =  View.GONE
+//                binding.imgNewsLikes.visibility =  View.GONE
+//            } else {
+//                binding.tvNewsItemLikes.visibility = View.VISIBLE
+//                binding.tvNewsItemFavs.visibility = View.VISIBLE
+//                binding.imgNewFavs.visibility = View.VISIBLE
+//                binding.imgNewsLikes.visibility = View.VISIBLE
+//            }
+        })
+
+
         return root
     }
 
-    fun InitData () {
+    private fun updateStar(){
+        if (newsFav != null){
+            if (newsFav!!.like){
+                binding.imgNewsLikes.setImageResource(R.drawable.heart72_red)
+            }else{
+                binding.imgNewsLikes.setImageResource(R.drawable.heart72_grey)
+            }
+            binding.tvNewsItemLikes.setText(newsContent!!.likes.toString())
+
+            if (newsFav!!.fav){
+                binding.imgNewFavs.setImageResource(R.drawable.star72_y)
+            }else{
+                binding.imgNewFavs.setImageResource(R.drawable.star72_grey)
+            }
+            binding.tvNewsItemFavs.setText(newsContent!!.favs.toString())
+        }
+    }
+    private fun showNewsPointInMap(){
+        val navController = findNavController()
+
+        if (newsContent != null){
+            val bundle = Bundle()
+            bundle.putParcelable("news", newsContent)
+            navController.navigate(R.id.action_newsFragment_to_newsMapFragment, bundle)
+        }
+    }
+
+    fun updateData () {
+        if (newsContent == null)
+            return
+
+        // 图片显示与那个点点一起捆绑，
+        imgplayer = Carousel(
+            requireActivity(),
+            binding.indexDot,
+            binding.viewPager,
+            binding.tvNewsPages
+        )
+
+        val adapter = ImagePagerAdapter(newsContent!!.images)
+        //binding.viewPager.adapter = adapter
+
+        // 图片
+        imgplayer!!.initViews(newsContent!!.images, adapter)
+
+        // 标题和文本TAG
+        binding.titleTextView.text = newsContent!!.title
+        binding.contentTextView.text = newsContent!!.content
+
+        var tagBuf = StringBuffer()
+        for (str in newsContent!!.tags){
+            tagBuf.append(str)
+            tagBuf.append(" ")
+        }
+        binding.tagsContentTextView.text = tagBuf.toString()
+        // 位置信息
+        if (newsContent!!.type == "point"){
+            binding.newsItemPointImg.setImageResource(R.drawable.mark_red)
+            val info = "点击查看 位置(${newsContent!!.lat}, ${newsContent!!.log})"
+            binding.newsItemPointInfo.setText(info)
+        }else{
+            binding.newsItemPointImg.setImageResource(R.drawable.mark_track)
+            val info = "点击查看 轨迹"
+            binding.newsItemPointInfo.setText(info)
+        }
+
+        // 时间
+        var tmStr = "发布于 " + DateTimeHelper.convertTimestampToDateString(newsContent!!.tm)
+        binding.newsItemTm.setText(tmStr)
+
+        // 用户图标与昵称
+        val id = UiHelper.getIconResId(newsContent!!.icon)
+        binding.newsItemIcon.setImageResource(id)
+        binding.newsItemUsername.setText(newsContent!!.nick)
+
+        // 输入框右侧的按钮
+        val likeCount = newsContent!!.likes.toString()
+        var favCount = newsContent!!.favs.toString()
+        binding.tvNewsItemLikes.setText(likeCount)
+        binding.tvNewsItemFavs.setText(favCount)
+
+        // 不是自己的数据，不能删除
+        val user = CurrentUser.getUser()
+        if (user!!.uid != newsContent!!.uid){
+            binding.newsItemDelImg.visibility = View.GONE
+        }
+
+        doGetFav()
+    }
+
+    // 获取用户的喜欢与收藏
+    private  fun doGetFav(){
+        val user = CurrentUser.getUser()
+        CoroutineScope(Dispatchers.IO).launch {
+            newsFav =  GlobalData.getHttpServ().getUserFav(user!!.uid, newsContent!!.nid, user!!.sid)
+            _changed.postValue(DateTimeHelper.getTimestamp())
+        }
+    }
+
+    private fun updateFav(){
+        val user = CurrentUser.getUser()
+        var opt = ""
+
+        if (newsFav!!.fav){
+            opt = "inc"
+        }else{
+            opt = "dec"
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            GlobalData.getHttpServ().updateUserFav(user!!.uid, newsContent!!.nid, user!!.sid, opt)
+        }
+    }
+
+    private fun updateLike(){
+        val user = CurrentUser.getUser()
+
+        var opt = ""
+
+        if (newsFav!!.like){
+            opt = "inc"
+        }else{
+            opt = "dec"
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            GlobalData.getHttpServ().updateUserLike(user!!.uid, newsContent!!.nid, user!!.sid, opt)
+        }
+    }
+
+    private  fun doDelete(){
+        val user = CurrentUser.getUser()
+        if (user!!.uid != newsContent!!.uid){
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            GlobalData.getHttpServ().removeNews(user.uid, user.sid, newsContent!!.nid)
+        }
+
+        GlobalData.delNewsInlist(newsContent!!)
+
+        // 返回封面页
+        val navController = findNavController()
+        navController.navigate(R.id.action_news_to_coverpage)
+    }
+
+    fun delNews(){
+        MyDialogFragment.showConfirmationDialog(
+            context,
+            "确认",
+            "您确定删除这个帖子吗？"
+        ) { dialog, which ->
+            // 用户点击了确认按钮，执行相应操作
+            doDelete()
+        }
+    }
+
+    // 把收藏的东西放到本地的文件夹
+    fun addNewsToFoler(){
 
     }
 

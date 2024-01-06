@@ -1,5 +1,6 @@
 package com.bird2fish.travelbook.ui.publish
 
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -22,12 +23,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bird2fish.travelbook.R
 import com.bird2fish.travelbook.core.*
 import com.bird2fish.travelbook.databinding.FragmentPublishImageNewsBinding
 import com.bird2fish.travelbook.helper.DateTimeHelper
@@ -37,7 +35,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
-
+import com.bird2fish.travelbook.R
 
 class PublishImageNewsFragment : Fragment() {
     private var _binding: FragmentPublishImageNewsBinding? = null
@@ -183,25 +181,72 @@ class PublishImageNewsFragment : Fragment() {
 
     }
 
+    // 浏览选择图片
+    private fun getImagePickerIntent(): Intent {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        return intent
+    }
+
     fun onClickItemAdd(position: Int){
-        getContent.launch("image/*");
+        //getContent.launch("image/*");
+
+        val intent = getImagePickerIntent()
+        pickImages.launch(intent)
     }
 
 
-    private val getContent = registerForActivityResult<String, Uri>(
-        ActivityResultContracts.GetContent()
-    ) { result: Uri? ->
-        if (result != null) {
-            // 处理选择的图片
-            val actualUri: Uri? = getActualPath(result)
-            if (actualUri != null){
-                var path = actualUri.toString()
-                System.out.println(path)
-                val index = this.dataList.size - 1
-                this.dataList.add(index, ImagePathPair(path!!, "", ""))
-                this.homeAdapter!!.notifyDataSetChanged()
-            }
+//    private val getContent = registerForActivityResult<String, Uri>(
+//        ActivityResultContracts.GetContent()
+//    ) { result: Uri? ->
+//        if (result != null) {
+//            // 处理选择的图片
+//            val actualUri: Uri? = getActualPath(result)
+//            if (actualUri != null){
+//                var path = actualUri.toString()
+//                System.out.println(path)
+//                val index = this.dataList.size - 1
+//                this.dataList.add(index, ImagePathPair(path!!, "", ""))
+//                this.homeAdapter!!.notifyDataSetChanged()
+//            }
+//
+//        }
+//    }
 
+    private val pickImages = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            if (data != null) {
+
+                if (data.clipData != null) {
+                    // 用户选择了多个文件
+                    val clipData = data.clipData!!
+                    for (i in 0 until clipData.itemCount) {
+                        val uri = clipData.getItemAt(i).uri
+                        //selectedUris.add(uri)
+                        //Log.d("SelectedImage", "Image Uri: $uri")
+                        addImageToList(uri)
+                    }
+                } else if (data.data != null) {
+                    // 用户只选择了一个文件
+                    val uri = data.data!!
+                    addImageToList(uri)
+                }
+
+                // 在这里处理选择的文件
+            }
+        }
+    }
+
+    private fun addImageToList(uri: Uri){
+        val actualUri: Uri? = getActualPath(uri)
+        if (actualUri != null) {
+            var path = actualUri.toString()
+            System.out.println(path)
+            val index = this.dataList.size - 1
+            this.dataList.add(index, ImagePathPair(path!!, "", ""))
+            this.homeAdapter!!.notifyDataSetChanged()
         }
     }
 
@@ -224,9 +269,9 @@ class PublishImageNewsFragment : Fragment() {
     }
 
     // 显示marker的 PopupWindow 的方法
-    fun showPopupMenu(position: Int) {
+    fun showPopupMenu(position: Int, x:Int, y:Int) {
         // 创建布局
-        val popupView: View = layoutInflater.inflate(R.layout.popup_menu, null)
+        val popupView: View = layoutInflater.inflate(R.layout.popmenuimg, null)
 
         // 创建 PopupWindow
         val popupWindow = PopupWindow(
@@ -237,33 +282,26 @@ class PublishImageNewsFragment : Fragment() {
         )
 
         // 设置菜单项点击事件
-        val deleteTextView = popupView.findViewById<TextView>(R.id.tv_delete_mark)
+        val deleteTextView = popupView.findViewById<TextView>(R.id.tv_delete_img)
         deleteTextView.setOnClickListener {
             popupWindow.dismiss() // 关闭 菜单
             // 在这里执行删除标记的操作
             this.dataList.removeAt(position)
-        }
-
-        val editTextView = popupView.findViewById<TextView>(R.id.tv_mark_info)
-        editTextView.setOnClickListener {
-            popupWindow.dismiss() // 关闭 菜单
-
+            this.homeAdapter!!.notifyDataSetChanged()
         }
 
         // 显示 PopupWindow
         // 显示 PopupWindow 在标记位置上方
 
 // 现在，screenLocation 包含了 Marker 在屏幕上的坐标
-        val screenX = 0
-        val screenY = 0
         val offsetX = 50
         val offsetY = 50
 
         popupWindow.showAtLocation(
             recyclerView,
             Gravity.NO_GRAVITY,
-            screenX + offsetX,
-            screenY + offsetY
+            x + offsetX,
+            y + offsetY
         )
     }
 
@@ -274,7 +312,14 @@ class PublishImageNewsFragment : Fragment() {
 
         newsContent!!.title = binding.tvNewsEditTitleV.text.toString()
         newsContent!!.content = binding.tvNewsEditDesV.text.toString()
-        //newsContent!!.tags =
+
+        val tagStr =  binding.tvNewsEditTagV.text.toString()
+        val spaceSeparatedArray = tagStr.split(" ")
+        val lst = LinkedList<String>()
+        for (i in spaceSeparatedArray){
+            lst.add(i)
+        }
+        newsContent!!.tags = lst
 
         GlobalScope.launch(Dispatchers.IO) {
             doSendWork()
@@ -297,13 +342,14 @@ class PublishImageNewsFragment : Fragment() {
     }
 
     fun doSendWork(){
+        // 先对图片列表进行上传
         for (i in 0 until dataList.size-1){
             if ( dataList[i].remoteName != ""){
                 continue
             }
 
             val uri = getRealPathFromUri(requireActivity(), dataList[i].localPath.toUri())
-            System.out.println(uri)
+            //System.out.println(uri)
             if (uri == null){
                 return
             }
@@ -322,11 +368,12 @@ class PublishImageNewsFragment : Fragment() {
             _changed.postValue(DateTimeHelper.getTimeStamp())
         }
 
+        // 对图片列表赋值
+        val list = kotlin.collections.ArrayList<String>()
         for (i in 0 until dataList.size-1){
-            val list = kotlin.collections.ArrayList<String>()
             list.add(dataList[i].remoteName)
-            this.newsContent!!.images = list
         }
+        this.newsContent!!.images = list
 
         // 尝试上传轨迹文件
         if (newsContent!!.trackFile != "") {
@@ -340,8 +387,6 @@ class PublishImageNewsFragment : Fragment() {
                 }
             }
         }
-
-
 
         val user = CurrentUser.getUser()
         val ret = GlobalData.getHttpServ().postNews(newsContent!!, user!!.uid, user!!.sid)
