@@ -574,7 +574,7 @@ class HttpService : Service() {
 
         try {
             val intNumber = user.sid.toLong()
-            jsonObject.put("sid", intNumber)
+            jsonObject.put("session", intNumber)
 
         } catch (e: NumberFormatException) {
             return false
@@ -615,8 +615,11 @@ class HttpService : Service() {
         val contentType = "application/json".toMediaType()
         var requestBody = jsonStr.toRequestBody(contentType)
 
+        val uid = user.uid
+        val sid = user.sid
+
         //构建url地址
-        var url1 = "${schema}://${host}/v1/user/setbaseinfo"
+        var url1 = "${schema}://${host}/v1/user/setbaseinfo?&uid=${uid}&sid=${sid}"
 
         try {
             var client = HttpsUtil.getClient(null)
