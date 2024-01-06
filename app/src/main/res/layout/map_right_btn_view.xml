@@ -25,7 +25,7 @@
         android:layout_width="50dp"
         android:layout_height="45dp"
         android:layout_weight="1"
-        app:srcCompat="@android:drawable/ic_menu_add" />
+        app:srcCompat="@android:drawable/ic_menu_edit" />
 
     <ImageButton
         android:id="@+id/btn_follow_friend"

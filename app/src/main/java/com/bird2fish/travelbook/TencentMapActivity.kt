@@ -39,6 +39,7 @@ class TencentMapActivity : AppCompatActivity() {
 
     private var isInitedInfo = false
 
+    private var favLocMap = mutableMapOf<Long, com.tencent.tencentmap.mapsdk.maps.model.Marker>()   // 反向查找
     private var favMarkers = mutableMapOf<com.tencent.tencentmap.mapsdk.maps.model.Marker, FavLocation>()  // 收藏点
     private var isFavOn :Boolean = false
     private var isFollowing :Boolean = false
@@ -65,7 +66,7 @@ class TencentMapActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tencent_map)
 
-        // 加载
+        // 加载运动模式和参数
         GlobalData.InitLoad()
 
         // 取得LinearLayout 物件
@@ -94,25 +95,14 @@ class TencentMapActivity : AppCompatActivity() {
         // 底部图标
         initBottomView()
 
-        // 开始请求权限
-        if (PermissionHelper.checkLoctionPermission(this))
-        {
-            startTencentLocaionService()
-        }else{
-            val ret = PermissionHelper.requestLocationPermission(this)
-            if (ret){
-                startTencentLocaionService()
-            }
-        }
-
         // 自己的位置
         initMyMarker()
 
         // 地图右侧边栏
         initSideToolbar()
 
-        // 日志与轨迹文件的访问权限
-        tryInitFiles()
+        // 开始请求权限
+        requestAllPermission()
 
         // 地图点击添加标记，移动标记，在标记上弹出右键菜单
         initMapEvent()
@@ -136,6 +126,9 @@ class TencentMapActivity : AppCompatActivity() {
 
             return@addOnPreDrawListener true
         }
+
+        // 启动开始
+        startRefreshInfo()
 
     }
 
@@ -225,6 +218,7 @@ class TencentMapActivity : AppCompatActivity() {
             val loc = favMarkers[marker]
             marker.remove()
             if (loc != null){
+                favLocMap.remove(loc.favId)
                 GlobalData.removeFavLocation(this, loc!!)
             }
 
@@ -643,7 +637,7 @@ class TencentMapActivity : AppCompatActivity() {
         btnMark.setOnClickListener {
             isFavOn =  !isFavOn
             if (isFavOn){
-                btnMark.setImageResource(android.R.drawable.ic_menu_compass)
+                btnMark.setImageResource(android.R.drawable.ic_menu_edit) // ic_menu_compass
                 UiHelper.showCenterMessage(this, "开启收藏点编辑模式")
 
                 for ((m, loc) in favMarkers){
@@ -926,6 +920,9 @@ class TencentMapActivity : AppCompatActivity() {
     // 初始化时候添加或者移除收藏的点，为了同步方便，在点界面不再提供删除功能，只是显示
     private fun updateFavMarkers(){
         for (loc in GlobalData.getLocations()){
+            if (favLocMap.containsKey(loc.favId) ){
+                continue
+            }
             val latLng = LatLng(loc.lat, loc.lon)
 
             val options = MarkerOptions(latLng)
@@ -939,8 +936,18 @@ class TencentMapActivity : AppCompatActivity() {
             val marker = tencentMap!!.addMarker(options)
             marker.tag = "fav"
             favMarkers.put(marker, loc)
+            favLocMap.put(loc.favId, marker)
         }
     }
+
+    private fun clearFavMarkers(){
+        for (m in favMarkers.keys){
+            m.remove()
+        }
+        favMarkers.clear()
+        favLocMap.clear()
+    }
+
     // 手动长按添加的标签
     protected fun addFavMarker(latLng: LatLng){
         if (!isFavOn){
@@ -974,6 +981,7 @@ class TencentMapActivity : AppCompatActivity() {
             ""
         )
         favMarkers.put(marker, loc)
+        favLocMap.put(loc.favId, marker)
         GlobalData.addFavLocation(this, loc)
 
         //开启信息窗口
@@ -1168,6 +1176,42 @@ class TencentMapActivity : AppCompatActivity() {
         return
     }
 
+    fun requestAllPermission(){
+        var ret = false
+
+        // 先请求文件读写
+        if (!GlobalData.isFileReadWriteEnabaled){
+            ret = PermissionHelper.requestFile(this)
+            if (ret){
+                initFiles()
+            }else{
+                return
+            }
+        }
+
+        // 系统精确丁时器, 这里在测试过程中，不会弹窗的
+        if (!GlobalData.isAlarmEnable){
+            ret = PermissionHelper.requestAlarmPermisson(this)
+
+            GlobalData.isAlarmEnable= true
+
+        }
+
+        // 位置
+        if (!GlobalData.isLocationEnabled){
+            ret = PermissionHelper.requestLocationPermission(this)
+            if (ret){
+                GlobalData.isLocationEnabled = true
+                startTencentLocaionService()
+            }else{
+                return
+            }
+        }
+
+
+
+    }
+
     // 请求权限的回调函数
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -1176,21 +1220,57 @@ class TencentMapActivity : AppCompatActivity() {
     ) {
 
         when (requestCode) {
+            PermissionHelper.PERMISSION_REQUEST_CODE_STORAGE ->{
+                GlobalData.isFileReadWriteEnabaled  = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                if (GlobalData.isFileReadWriteEnabaled){
+                    initFiles()
+                }else{
+                    UiHelper.showCenterMessage(this, "未授权文件读写则无法记录轨迹数据")
+                }
+                requestAllPermission()
+            }
+
+            // 这里注释是因为某些机器需要申请直接成功，有些机器根本不弹窗返回错误但是可以直接用！
+            PermissionHelper.PERMISSION_REQUEST_CODE_ALARM ->{
+ //               GlobalData.isAlarmEnable = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+//                if (!GlobalData.isAlarmEnable )
+//                {
+//                    UiHelper.showCenterMessage(this, "没有精确定时器！后台将持续获取位置，将非常费电")
+//                }
+                GlobalData.isAlarmEnable = true
+                requestAllPermission()
+            }
+
+            // 小米11需要申请ACCESS_FINE_LOCATION， 而小米6需要申请Background
             PermissionHelper.PERMISSION_REQUEST_CODE_LOCATION -> {
                 // 检查用户是否授予 ACTIVITY_RECOGNITION 权限
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    GlobalData.isLocationEnabled = true
-                    PermissionHelper.requestBackgroundPermission(this)
-                } else {
-                    // 用户拒绝了活动识别权限，需要处理相应逻辑
-                    GlobalData.isLocationEnabled = false
+                GlobalData.isLocationEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+
+                if (!GlobalData.isLocationEnabled){
                     UiHelper.showCenterMessage(this, "目前无法定位！请开始软件定位权限为一直允许，并在耗电选项设置为不限制")
+                    // 后台位置,这个不能执行，会造成不弹出提示窗口，直接出错。
+                    var ret = false
+                    if (!GlobalData.isLocationBackgroudEnabled){
+                        ret = PermissionHelper.requestBackgroundPermission(this)
+                        if (ret){
+                            GlobalData.isLocationBackgroudEnabled = true
+                            startTencentLocaionService()
+                        }else{
+                            return
+                        }
+                    }
+                }else{
+                    startTencentLocaionService()
                 }
+
             }
             PermissionHelper.PERMISSION_REQUEST_CODE_BACKGROUND ->{
-
                 GlobalData.isLocationBackgroudEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                startTencentLocaionService()
+                if (GlobalData.isLocationBackgroudEnabled)
+                {
+                    startTencentLocaionService()
+                }
+
             }
             PermissionHelper.PERMISSION_REQUEST_CODE_BODY_SENSORS ->{
                 GlobalData.isBodySensorEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
@@ -1198,19 +1278,14 @@ class TencentMapActivity : AppCompatActivity() {
             PermissionHelper.PERMISSION_REQUEST_CODE_RECOGNITION ->{
                 GlobalData.isRecognitionEnabled = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
             }
-            PermissionHelper.PERMISSION_REQUEST_CODE_STORAGE ->{
-                GlobalData.isFileReadWriteEnabaled  = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
 
-                if (GlobalData.isFileReadWriteEnabaled){
-                    initFiles()
-                }else{
-                    UiHelper.showCenterMessage(this, "未授权文件读写则无法记录轨迹数据")
-                }
-            }
             // 处理其他权限请求结果...
         }
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        // 继续尝试请求
+
     }
 
 
@@ -1239,7 +1314,7 @@ class TencentMapActivity : AppCompatActivity() {
     // 启动轮训机制
     fun startRefreshInfo(){
         GlobalData.shouldRefresh = true
-        handler.postDelayed(periodicLocationRequestRunnable, 10)
+        handler.postDelayed(periodicLocationRequestRunnable, 1000)
     }
 
     fun stopRefreshInfo() {
@@ -1292,8 +1367,8 @@ class TencentMapActivity : AppCompatActivity() {
     // Activity 完全可见并处于前台时，系统会调用 onResume() 方法
     override fun onResume() {
         super.onResume()
-        initToolBar()
         mapView!!.onResume()
+        initToolBar()
 
         // 在恢复时重新启动任务
         startRefreshInfo()
@@ -1307,8 +1382,12 @@ class TencentMapActivity : AppCompatActivity() {
         // 更新需要显示的轨迹
         updateAllStartedTracks()
 
+        // 更新所有的收藏点
+        //clearFavMarkers()
+        updateFavMarkers()
+
         // 检查是否中断了，这里是一个补救
-        var tm = DateTimeHelper.getTimestamp()
+       // var tm = DateTimeHelper.getTimestamp()
         // 如果比预设值超过了30秒，还没有数据，那么后台可能出现问题了
 //        if (isInitedInfo){
 //            var delta = tm - GlobalData.currentTm

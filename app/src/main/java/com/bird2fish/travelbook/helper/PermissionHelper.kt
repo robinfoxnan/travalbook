@@ -17,6 +17,7 @@ object PermissionHelper {
     val PERMISSION_REQUEST_CODE_BODY_SENSORS = 3
     val PERMISSION_REQUEST_CODE_RECOGNITION = 4
     val PERMISSION_REQUEST_CODE_STORAGE = 5
+    val PERMISSION_REQUEST_CODE_ALARM = 6
     // IN_VEHICLE：用户正在驾驶车辆。
     //ON_BICYCLE：用户正在骑自行车。
     //ON_FOOT：用户正在步行。
@@ -174,10 +175,30 @@ object PermissionHelper {
         return false
     }
 
+    fun requestAlarmPermisson(activity: ComponentActivity):Boolean{
+        if (ContextCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.SCHEDULE_EXACT_ALARM
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // 已经获取了 系统定时器
+            GlobalData.isAlarmEnable = true
+            return true
+        } else {
+            // 请求 ACTIVITY_RECOGNITION 权限
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
+                PERMISSION_REQUEST_CODE_ALARM
+            )
+            return false
+        }
+    }
 
 
 
     // 另一种方式
+    /*
     private fun requestPermission(activity: ComponentActivity, code: Int){
         /* Register the permission launcher for requesting location 在onstart中使用  */
         val requestLocationPermissionLauncher = activity.registerForActivityResult(
@@ -193,7 +214,9 @@ object PermissionHelper {
             //layout.toggleLocationErrorBar(gpsProviderActive, networkProviderActive)
         }
 
-    }
+    }*/
+
+
 
 
 }

@@ -65,6 +65,12 @@ class ImportFragment : Fragment() {
     }
 
     fun parseData(txt:String){
+        if (txt == null || txt.length == 0){
+            binding.tvNewsEditTitleV.setText("")
+            binding.tvNewsEditInfoV.setText("")
+            return
+        }
+
         val gSon = Gson()
         val shareData = gSon.fromJson(txt, ShareData::class.java)
         if (shareData == null || shareData.points.isEmpty()){
@@ -110,32 +116,37 @@ class ImportFragment : Fragment() {
             return
         }
 
-            if (shareData.points.size == 1){
+        var title = binding.tvNewsEditTitleV.text.toString()
+        if (title == null && title == ""){
+            title = shareData.title
+        }
 
-                val p = shareData.points[0]
-                val lat = p[0]
-                val lon = p[1]
-                val favLoc = FavLocation()
-                favLoc.uId = shareData.uid
-                favLoc.uNick = shareData.nick
-                favLoc.uIcon = shareData.icon
-                favLoc.lat = p[0]
-                favLoc.lon =p[1]
-                favLoc.alt = 0.0
-                favLoc.des = ""
-                favLoc.title = shareData.title
-                favLoc.favId = DateTimeHelper.getTimestamp()
-                favLoc.tm = favLoc.favId
-                favLoc.tmStr = DateTimeHelper.getTimeStampLongString()
+        if (shareData.points.size == 1){
 
-                GlobalData.addFavLocation(requireActivity(), favLoc)
+            val p = shareData.points[0]
+            val lat = p[0]
+            val lon = p[1]
+            val favLoc = FavLocation()
+            favLoc.uId = shareData.uid
+            favLoc.uNick = shareData.nick
+            favLoc.uIcon = shareData.icon
+            favLoc.lat = p[0]
+            favLoc.lon =p[1]
+            favLoc.alt = 0.0
+            favLoc.des = ""
+            favLoc.title = title
+            favLoc.favId = DateTimeHelper.getTimestamp()
+            favLoc.tm = favLoc.favId
+            favLoc.tmStr = DateTimeHelper.getTimeStampLongString()
 
-                binding.tvNewsEditDesV.setText("")
-                UiHelper.showCenterMessage(requireActivity(), "收藏点导入完毕，请在相关页面查看")
+            GlobalData.addFavLocation(requireActivity(), favLoc)
 
-            }else{
-                ShareData2Track(shareData)
-            }
+            binding.tvNewsEditDesV.setText("")
+            UiHelper.showCenterMessage(requireActivity(), "收藏点导入完毕，请在相关页面查看")
+
+        }else{
+            ShareData2Track(shareData)
+        }
 
 
     }

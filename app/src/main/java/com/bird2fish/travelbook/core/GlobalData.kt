@@ -49,6 +49,9 @@ class GlobalData {
         var isRecognitionEnabled = false       // 状态
 
         @Volatile
+        var isAlarmEnable = false            // android.permission.SCHEDULE_EXACT_ALARM
+
+        @Volatile
         var isFileReadWriteEnabaled = false    // 文件读写
 
         var currentFriend :Friend? = null

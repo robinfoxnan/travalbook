@@ -43,6 +43,8 @@
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" /> <!--休眠通知-->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
 
     <!-- log-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
