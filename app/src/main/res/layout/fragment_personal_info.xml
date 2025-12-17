@@ -42,11 +42,11 @@
                     android:id="@+id/iconSpinner"
                     android:layout_width="wrap_content"
                     android:layout_height="25dp"
-                    android:paddingLeft="200dp"
                     android:layout_gravity="right"
                     android:layout_marginTop="20dp"
                     android:background="@android:color/white"
-                    android:gravity="right|center_vertical" />
+                    android:gravity="right|center_vertical"
+                    android:paddingLeft="200dp" />
 
             </LinearLayout>
 

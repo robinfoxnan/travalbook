@@ -28,6 +28,7 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
         val tvTitle : TextView = itemView.findViewById(R.id.tv_fav_title)
         val tvDes : TextView = itemView.findViewById(R.id.tv_fav_des)
         val tvDelete :TextView = itemView.findViewById(R.id.tv_fav_share)
+        val tvCopy :TextView = itemView.findViewById(R.id.tv_fav_copy)
         var index: Int = 0
 
         init {
@@ -69,6 +70,14 @@ class FavItemAdapter(private val dataList: List<FavLocation>) : RecyclerView.Ada
                 fragment!!.onClickItemShare(holder.tvDelete.tag as Int)
             }
         }
+
+        holder.tvCopy.setOnClickListener{
+            if (fragment != null){
+                fragment!!.onClickCopy(holder.tvDelete.tag as Int)
+            }
+        }
+
+
     }
 
     // 返回数据项数量

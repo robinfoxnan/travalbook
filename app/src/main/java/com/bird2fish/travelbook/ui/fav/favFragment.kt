@@ -111,6 +111,15 @@ class favFragment : Fragment() {
         }
     }
 
+    fun onClickCopy(pos: Int){
+
+        val favDataList = GlobalData.getLocations()
+        val item = favDataList[pos]
+        val str = Fav2ShareData(item)
+        UiHelper.copyToClipboard(requireActivity(), str)
+        UiHelper.showCenterMessage(requireActivity(), "数据已经拷贝到剪切板")
+    }
+
     private fun Fav2ShareData(item: FavLocation): String {
         var data = ShareData(item.uId, item.uNick)
 //        val pair: Pair<Double, Double> = Pair(item.lat, item.lon)

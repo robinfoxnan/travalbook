@@ -6,13 +6,15 @@
  -->
     <group android:id="@+id/nav_group_session">
         <!--
+
         <item
             android:id="@+id/nav_newgroup"
             android:enabled="true"
             android:icon="@drawable/groups_create"
             android:title="@string/menu_newgroup"
             android:visible="true" />
-            -->
+        -->
+        
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/run"

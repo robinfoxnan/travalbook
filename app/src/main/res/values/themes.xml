@@ -20,6 +20,13 @@
         <item name="colorPrimary">@color/gray_title</item>
         <item name="colorPrimaryVariant">@color/default_neutral_lighter</item>
         <item name="colorOnPrimary">@color/white</item>
+        <!-- 状态栏背景颜色（浅色） -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- 或者 -->
+        <!-- <item name="android:statusBarColor">@color/white</item> -->
+
+        <!-- 关键：浅色状态栏 → 深色字体 -->
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.TravelBook.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

@@ -1,0 +1,97 @@
+<resources>
+    <string name="app_name">知途</string>
+    <string name="login">知途</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">登录的昵称</string>
+    <string name="nav_header_subtitle">登录邮箱@android.com</string>
+    <string name="nav_header_desc">导航栏</string>
+    <string name="action_settings">设置</string>
+    <string name="action_logout">退出</string>
+
+    <string name="menu_newgroup">新建群组</string>
+    <string name="menu_home">运动</string>
+    <string name="menu_playgrourd">周边</string>
+    <string name="menu_favourite">地点</string>
+
+    <string name="menu_contract">通信簿</string>
+    <string name="menu_setting">设置</string>
+    <string name="menu_setting_person">个人信息</string>
+
+    <string name="menu_map">地图</string>
+    <string name="menu_track">轨迹</string>
+    <!-- Preference Titles -->
+    <string name="setting_header1">信号采集与同步</string>
+    <string name="setting_header2">测试</string>
+    <string name="setting_schema">通信模式</string>
+    <string name="setting_host">地址域名</string>
+    <string name="setting_schema_def">http</string>
+    <string name="setting_host_def">8.140.203.92:7817</string>
+    <string name="setting_server_save">保存</string>
+    <string name="setting_server_cancel">取消</string>
+
+    <string name="setting_use_net_signal">是否使用WIFI提供的位置</string>
+    <string name="setting_use_gps_signal">是否使用GPS提供的位置</string>
+    <string name="setting_signal_interval">上报位置信息周期</string>
+    <string name="setting_refresh_interval">获取好友位置信息周期</string>
+
+    <!-- Notification -->
+    <string name="notification_title_trackbook_running">正在录制轨迹</string>
+    <string name="notification_title_trackbook_not_running">无在录轨迹</string>
+    <string name="notification_pause">暂停</string>
+    <string name="notification_resume">开始/继续</string>
+    <string name="notification_show">显示</string>
+    <string name="notification_channel_recording_name">运动状态</string>
+    <string name="notification_channel_recording_description">显示时长和距离</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails</string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+    <!-- Abbreviations -->
+    <string name="abbreviation_hours">hrs</string>
+    <string name="abbreviation_minutes">min</string>
+    <string name="abbreviation_seconds">sec</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_message_copied_to_clipboard">Copied to clipboard.</string>
+    <string name="toast_message_elevation_info">Hint: The accuracy of elevation data depends on your device. The uphill and downhill elevation of the whole route is measured.</string>
+    <string name="toast_message_install_file_helper">Unable to save. Please install a file manager first.</string>
+    <string name="toast_message_poi_added">Point of interest marker added.</string>
+    <string name="toast_message_poi_removed">Point of interest marker removed.</string>
+    <string name="toast_message_save_gpx">Saving recording as GPX.</string>
+    <string name="title_activity_login">登录</string>
+    <string name="prompt_email">填号码登录，或填名字注册</string>
+    <string name="prompt_search_user">通过号码搜索</string>
+    <string name="prompt_password">密码</string>
+    <string name="action_sign_in">登录或注册</string>
+    <string name="action_sign_in_short">登录</string>
+    <string name="welcome">"欢迎"</string>
+    <string name="invalid_username">号码不对</string>
+    <string name="invalid_password">密码长度要大于5个字符</string>
+    <string name="login_failed">"登录失败"</string>
+    <string name="title_activity_track_map">TrackMapActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    <string name="start_to_hike">开始徒步</string>
+    <string name="start_to_run">开始跑步</string>
+    <string name="start_to_bike">开始骑车</string>
+    <string name="start_to_motor">开始骑行</string>
+    <string name="start_to_car">开始自驾</string>
+    <string name="start_to_lasy">省电模式记录</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

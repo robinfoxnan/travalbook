@@ -11,28 +11,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" /> <!-- Needed for video calls, adding an avatar pic when registering new accounts reading attachments. -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- Enable installation on devices without the camera: some features won't be available -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" /> <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
-    <uses-permission android:name="android.permission.READ_CONTACTS" /> <!-- Store tinode IM id as a record in the address book -->
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" /> <!-- Creating and storing tinode credentials in the AccountManager -->
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" /> <!-- Accessing Tinode-authenticated accounts on Android pre-M (23). -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.USE_CREDENTIALS" /> <!-- Make current user discoverable by other users -->
-    <uses-permission android:name="android.permission.READ_PROFILE" /> <!-- Check if account sync is enabled -->
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" /> <!-- Enable sync if it's disabled -->
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" /> <!-- Record audio messages -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- Needed for audio visualization and audio recording adjustments. -->
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- Needed for incoming call notifications -->
+
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-feature android:name="android.hardware.location.network" /> <!-- NORMAL PERMISSIONS, automatically granted -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -41,10 +26,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" /> <!--休眠通知-->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
 
     <!-- log-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

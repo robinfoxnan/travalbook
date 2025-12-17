@@ -164,7 +164,7 @@ class ImportFragment : Fragment() {
         }
         GlobalData.addTrack(requireActivity(), track, title)
         binding.tvNewsEditDesV.setText("")
-        UiHelper.showCenterMessage(requireActivity(), "收藏点导入完毕，请在相关页面查看")
+        UiHelper.showCenterMessage(requireActivity(), "收藏轨迹导入完毕，请在相关页面查看")
 
         return track
     }

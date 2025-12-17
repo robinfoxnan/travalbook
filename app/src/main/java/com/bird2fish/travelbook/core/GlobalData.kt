@@ -29,7 +29,7 @@ class GlobalData {
     companion object{
 
 
-        var usePublish:Boolean = false   // 是否使用社区功能
+        var usePublish:Boolean = true   // 是否使用社区功能
 
         var httpServer : HttpService = HttpService()
 
