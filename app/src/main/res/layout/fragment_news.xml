@@ -277,6 +277,15 @@
                 android:hint="输入"
                 android:paddingStart="8dp" />
 
+            <ImageView
+                android:id="@+id/img_news_input_send"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center_vertical"
+                android:paddingEnd="4dp"
+                android:visibility="visible"
+                app:srcCompat="@drawable/ic_send" />
+
             <!-- 图标1 -->
             <ImageView
                 android:id="@+id/img_news_input_at"

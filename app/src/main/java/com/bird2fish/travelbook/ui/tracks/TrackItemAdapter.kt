@@ -31,6 +31,7 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         val btnDelete: TextView = itemView.findViewById(R.id.tv_delete)
         var btnShare :TextView = itemView.findViewById(R.id.tv_track_item_share)
         var btnMemo :TextView = itemView.findViewById(R.id.tv_track_item_memo)
+        var btnCopy :TextView = itemView.findViewById(R.id.tv_track_item_copy)
 
         var tvPts :TextView = itemView.findViewById(R.id.tv_track_item_pts)
         var tvEndTime :TextView = itemView.findViewById(R.id.tv_track_item_endtime)
@@ -104,6 +105,13 @@ class TrackItemAdapter(private val trackList: List<TracklistElement>) : Recycler
         holder.btnShare.setOnClickListener{
             if (fragment != null){
                 fragment!!.onClickItemShare(position)
+            }
+        }
+
+        // 复制到剪切板
+        holder.btnCopy.setOnClickListener{
+            if (fragment != null){
+                fragment!!.onClickCopy(position)
             }
         }
 

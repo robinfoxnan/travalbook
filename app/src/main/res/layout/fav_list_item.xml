@@ -95,7 +95,7 @@
             android:layout_height="match_parent"
             android:background="@color/back_bike"
             android:gravity="center"
-            android:text="分享"
+            android:text="发帖"
             android:textColor="@color/white"
             android:textSize="16dp" />
 

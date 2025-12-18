@@ -151,6 +151,11 @@ class NewsFragment : Fragment() {
             }
         }
 
+        // 点击发送按钮
+        binding.imgNewsInputSend.setOnClickListener{
+
+        }
+
         // 删除
         binding.newsItemDelImg.setOnClickListener{
             delNews()
@@ -274,6 +279,7 @@ class NewsFragment : Fragment() {
         }
     }
 
+    // 发送单击了收藏了或者喜欢了
     private fun updateFav(){
         val user = CurrentUser.getUser()
         var opt = ""

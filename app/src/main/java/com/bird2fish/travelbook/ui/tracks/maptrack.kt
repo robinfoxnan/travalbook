@@ -132,6 +132,12 @@ class maptrack : Fragment() {
 
     }
 
+    // 复制到剪切板
+    fun onClickCopy(pos: Int){
+        this.recyclerView.closeMenu()
+        copyToClipboard(pos)
+    }
+
     private fun copyToClipboard(pos: Int){
         val trackList = GlobalData.trackList ?: return
 
