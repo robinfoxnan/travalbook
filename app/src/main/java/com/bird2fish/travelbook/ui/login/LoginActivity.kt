@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.IBinder
 import android.text.*
@@ -70,8 +71,14 @@ class LoginActivity : AppCompatActivity() {
         val password = binding.password
         val login = binding.login
         val loading = binding.loading
+
         var imageview = binding.imageViewTitle
-        imageview!!.setImageResource(R.drawable.logo)
+        if (isLandscape()){
+            imageview!!.visibility = View.GONE
+        }else{
+            imageview!!.setImageResource(R.drawable.travel_book)
+        }
+
 
         this.checkPrivacy = binding.checkBoxAgree!!
 
@@ -198,11 +205,21 @@ class LoginActivity : AppCompatActivity() {
         bindHttp()
     }
 
+
+    // 在 Activity 里直接用
+    fun isLandscape(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
+    fun isPortrait(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    }
+
     // 尝试自动登录，
     private fun tryAutoLogin(){
-        val bAuto = PreferencesHelper.getAutologin()
-        if (bAuto == false)
-            return
+//        val bAuto = PreferencesHelper.getAutologin()
+//        if (bAuto == false)
+//            return
 
         val olduser = PreferencesHelper.getUserInfo()
         if (olduser != null && olduser.sid != ""){

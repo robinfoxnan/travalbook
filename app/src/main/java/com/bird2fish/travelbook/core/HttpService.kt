@@ -25,6 +25,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.*
@@ -193,6 +194,7 @@ class HttpService : Service() {
                         fakeUser.uid = user.getLong("id").toString()
                         fakeUser.sid = user.getLong("sid").toString()
                         fakeUser.pwd = pwd
+                        fakeUser.hasLogin = true;
                     }
                 } else {
                     PreferencesHelper.delUserSid()
@@ -206,7 +208,18 @@ class HttpService : Service() {
                 userInfo.pwd = fakeUser.pwd
                 return userInfo
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            // 👇 无网络、超时、域名解析失败 全部走这里
+            fakeUser.nickName = "无网络未登录"
+            fakeUser.uid = uid
+            fakeUser.sid = sid
+            fakeUser.pwd = pwd
+            fakeUser.hasLogin = false;
+            //e.printStackTrace()
+
+            // 你可以在这里返回失败状态
+        }
+        catch (e: Exception) {
             PreferencesHelper.delUserSid()
             //LogHelper.e("Exception")
             LogHelper.e("$e.message")

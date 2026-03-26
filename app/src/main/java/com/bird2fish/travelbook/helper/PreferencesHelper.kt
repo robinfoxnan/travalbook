@@ -310,6 +310,27 @@ object PreferencesHelper {
         editor.commit() //提交修改
     }
 /////////////////////////////////////////////////////////////////////////////
+    fun setShowTraffic(b:Boolean){
+        val editor = sharedPreferences.edit()
+        editor.putBoolean("showTraffic", b)
+        editor.commit() //提交修改
+    }
+
+    fun getShowTraffic():Boolean{
+        return sharedPreferences.getBoolean("showTraffic", true)
+    }
+
+    fun setShowFriendInfo(b:Boolean){
+        val editor = sharedPreferences.edit()
+        editor.putBoolean("showFriends", b)
+        editor.commit() //提交修改
+    }
+
+    fun getShowFriendsInfo():Boolean{
+        return sharedPreferences.getBoolean("showFriends", true)
+    }
+
+
     // 运行模式
     fun setSportMode(t :String) {
         val editor = sharedPreferences.edit()

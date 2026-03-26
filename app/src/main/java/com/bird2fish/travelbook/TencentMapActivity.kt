@@ -84,7 +84,7 @@ class TencentMapActivity : AppCompatActivity() {
         tencentMap = mapView!!.map
         initToolBar()
         initMapOutlook()
-        tencentMap!!.isTrafficEnabled = false;
+        tencentMap!!.isTrafficEnabled = PreferencesHelper.getShowTraffic()
         //tencentMap!!.setMapType(TencentMap.MAP_TYPE_SATELLITE);
         //tencentMap.setMapType(TencentMap.MAP_TYPE_NORMAL);
 
@@ -126,6 +126,11 @@ class TencentMapActivity : AppCompatActivity() {
 
             return@addOnPreDrawListener true
         }
+
+        // 加载是否显示底部好友信息
+        val friendInfoCiew = findViewById<View>(R.id.pop_friends_info_upper)
+        val isShowing = PreferencesHelper.getShowFriendsInfo()
+        friendInfoCiew.visibility = if (isShowing ) View.GONE else View.VISIBLE
 
         // 启动开始
         startRefreshInfo()
@@ -449,8 +454,10 @@ class TencentMapActivity : AppCompatActivity() {
         {
             if (f.isShare){
 
-                info = String.format("位置：(%.6f, %.6f) 海拔：%.0f 速度：%.1f", f.lat, f.lon,
-                    f.ele, f.speed)
+                var speedStr = UiHelper.formatSpeed(f.speed.toFloat())
+
+                info = String.format("位置：(%.6f, %.6f) 海拔：%.0f 速度：%s", f.lat, f.lon,
+                    f.ele, speedStr)
 
                 val tmStr = DateTimeHelper.convertTimestampToDateString(f.tm * 1000)
                 val span = DateTimeHelper.formatTimeDifference(f.tm * 1000);
@@ -565,6 +572,7 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
     // 自定义工具条图标点击的事件：放大，缩小，工具条
+    // 显示与隐藏底部工具条
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.getItemId() == android.R.id.home) {
             backToMainActivity()
@@ -580,8 +588,13 @@ class TencentMapActivity : AppCompatActivity() {
             // 这里节省了一个清空按钮
             val tvMsg = this.findViewById<TextView>(R.id.tv_friend_msg)
             tvMsg.setText("")
-            val overlayView = findViewById<View>(R.id.overlayView)
-            overlayView.visibility = if (overlayView.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            //val overlayView = findViewById<View>(R.id.overlayView)
+            //overlayView.visibility = if (overlayView.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+
+            val friendInfoCiew = findViewById<View>(R.id.pop_friends_info_upper)
+            val isShowing = friendInfoCiew.visibility == View.VISIBLE
+            friendInfoCiew.visibility = if (isShowing ) View.GONE else View.VISIBLE
+            PreferencesHelper.setShowFriendInfo(isShowing)
         }
         return super.onOptionsItemSelected(item)
     }
@@ -690,10 +703,16 @@ class TencentMapActivity : AppCompatActivity() {
 
         // 测试
         var btnTrafic = findViewById<ImageButton>(R.id.btn_trafic)
+        if (PreferencesHelper.getShowTraffic()){
+            btnTrafic.setImageResource(R.drawable.trafic1)
+        }else{
+            btnTrafic.setImageResource(R.drawable.trafics)
+        }
         btnTrafic.setOnClickListener {
             //UiHelper.showCenterMessage(this, "分享")
             //val info = "共${latLngs.size}个点"
             tencentMap!!.isTrafficEnabled = !tencentMap!!.isTrafficEnabled
+            PreferencesHelper.setShowTraffic(tencentMap!!.isTrafficEnabled)
             if (tencentMap!!.isTrafficEnabled){
                 btnTrafic.setImageResource(R.drawable.trafic1)
                 //UiHelper.showCenterMessage(this, "将显示路况")

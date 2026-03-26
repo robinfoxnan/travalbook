@@ -17,7 +17,8 @@ data class LoggedInUser(
     var ip : String = "",
     var region : String = "",
     var mask : Int = 0,
-    var isChanged: Boolean = false
+    var isChanged: Boolean = false,
+    var hasLogin:Boolean = false
 )
 
 class CurrentUser {
