@@ -8,7 +8,6 @@ import com.bird2fish.travelbook.ui.contact.Friend
 import com.bird2fish.travelbook.ui.data.model.CurrentUser
 import com.google.gson.Gson
 import com.tencent.map.geolocation.TencentLocation
-import com.tencent.map.lib.models.ReturnInfoModelClass.BaseFloatReturnInfo
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -169,7 +168,8 @@ class HttpWorker {
         jsonObject.put("lon",location.longitude)
         jsonObject.put("ele", location.altitude)
         jsonObject.put("accuracy", location.accuracy)
-        jsonObject.put("src", location.sourceProvider)
+        jsonObject.put("src", "unknow")
+       // jsonObject.put("src", location.sourceProvider)
         //System.out.printf("位置的方向：%f \n", location.direction)
         //jsonObject.put("direction", location.direction)
 

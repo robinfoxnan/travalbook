@@ -61,7 +61,22 @@ class TencentMapActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        TencentMapInitializer.setAgreePrivacy(true)
+
+
+
+        // 4.4.1 旧版用法
+        // 不需要初始化与合规
+
+        //代码中动态配置appkey
+        //TencentLocationManagerOptions.setKey("您申请的Key")
+        // 5.2版本
+        //TencentMapInitializer.setAgreePrivacy(true)
+
+        // 新双参方法（6.9.0 唯一正确写法）
+        //TencentMapInitializer.setAgreePrivacy(getApplicationContext(), true);
+        //TencentMapInitializer.start(getApplicationContext());
+         //定位 SDK 隐私接口（必须单独调用）
+        //TencentLocationManager.setUserAgreePrivacy(true);
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tencent_map)
@@ -75,8 +90,9 @@ class TencentMapActivity : AppCompatActivity() {
         val options = TencentMapOptions()
         options.isOfflineMapEnable = true
 
+
         mapView = TextureMapView(this, options)
-        mapView!!.isOpaque = false
+        //mapView!!.isOpaque = true
 
         ll.addView(mapView)
 
@@ -745,13 +761,14 @@ class TencentMapActivity : AppCompatActivity() {
 
     }
 
-    // 保存当前截图
+    // 保存当前截图5.2
     private fun screenSnapShot(){
         tencentMap!!.snapshot(object : TencentMap.SnapshotReadyCallback {
             // 截图准备完成
-            override fun onSnapshotReady(bitmap: Bitmap) {
+            override fun onSnapshotReady(bitmap: Bitmap?) {
                 //imgView.setImageBitmap(bitmap)
-                FileHelper.saveImageInDCIM(this@TencentMapActivity, bitmap);
+                if (bitmap != null)
+                    FileHelper.saveImageInDCIM(this@TencentMapActivity, bitmap);
             }
         }, Bitmap.Config.ARGB_8888)
     }

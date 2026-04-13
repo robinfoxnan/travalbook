@@ -117,12 +117,12 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         locationRequest.isAllowDirection = true
         //是否需要开启室内定位
         locationRequest.isIndoorLocationMode = true
-        // 设置定位模式
-        val locMode = TencentLocationRequest.HIGH_ACCURACY_MODE
-        locationRequest.locMode = locMode
+        // 5.2 以上设置定位模式
+//        val locMode = TencentLocationRequest.HIGH_ACCURACY_MODE
+//        locationRequest.locMode = locMode
         locationRequest.requestLevel = TencentLocationRequest.REQUEST_LEVEL_ADMIN_AREA // 设置定位精度等级
         // 设置GPS优先
-        locationRequest.isGpsFirst = true
+        //locationRequest.isGpsFirst = true
         return locationRequest
     }
 /*
@@ -154,38 +154,91 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
     }
 
     // 启动一个循环，自己的定制任务
-    fun startLocationLoop(){
+//    fun startLocationLoop(){
+//
+//        getOneTimeLoacation(this)
+//        val intent = Intent("tencent_loc_once")
+//        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+//
+//        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//        // 设置定时任务，这里以每隔 秒执行一次为例
+//
+//        val currentTimeMillis = System.currentTimeMillis()
+//        //版本适配
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 6.0及以上
+//
+//            am.setExactAndAllowWhileIdle(
+//                AlarmManager.RTC_WAKEUP,
+//                currentTimeMillis + GlobalData.intervalOfLocation,
+//                pendingIntent)
+//
+//        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 4.4及以上
+//
+//            am.setExact(AlarmManager.RTC_WAKEUP,
+//                currentTimeMillis + GlobalData.intervalOfLocation,
+//                pendingIntent)
+//
+//        } else {
+//
+//            am.setRepeating(AlarmManager.RTC_WAKEUP,
+//                currentTimeMillis,
+//                GlobalData.intervalOfLocation,
+//                pendingIntent)
+//        }
+//
+//
+//    }
 
-        getOneTimeLoacation(this)
-        val intent = Intent("tencent_loc_once")
-        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+    fun startLocationLoop() {
+        try {
+            getOneTimeLoacation(this)
 
-        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        // 设置定时任务，这里以每隔 秒执行一次为例
+            val intent = Intent("tencent_loc_once")
+            val pendingIntent: PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12+ 必须用 IMMUTABLE
+                PendingIntent.getBroadcast(
+                    this, 0, intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            } else {
+                PendingIntent.getBroadcast(
+                    this, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            }
 
-        val currentTimeMillis = System.currentTimeMillis()
-        //版本适配
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 6.0及以上
+            val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val delayTime = GlobalData.intervalOfLocation
+            val triggerAt = System.currentTimeMillis() + delayTime
 
-            am.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                currentTimeMillis + GlobalData.intervalOfLocation,
-                pendingIntent)
+            // ====================== 关键修复：Android 12+ 检查权限 ======================
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // 先检查是否允许精确闹钟
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+                } else {
+                    // 不允许 → 用不精确的，不崩溃
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+                }
+            }
+            // =========================================================================
 
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 4.4及以上
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            }
 
-            am.setExact(AlarmManager.RTC_WAKEUP,
-                currentTimeMillis + GlobalData.intervalOfLocation,
-                pendingIntent)
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            } else {
+                am.setRepeating(AlarmManager.RTC_WAKEUP, triggerAt, delayTime, pendingIntent)
+            }
 
-        } else {
-
-            am.setRepeating(AlarmManager.RTC_WAKEUP,
-                currentTimeMillis,
-                GlobalData.intervalOfLocation,
-                pendingIntent)
+        } catch (e: SecurityException) {
+            // 车机权限不足，安全兜底
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
     }
 
     fun setTimerNext(){
@@ -302,7 +355,7 @@ class TencentLocService : TencentLocationListener, Service() , SensorEventListen
         // 设置单例模式
         TencentLocService.instance = this
 
-        TencentLocationManager.setUserAgreePrivacy(true)
+        //TencentLocationManager.setUserAgreePrivacy(true)
 
         // 注册广播接收器
         //val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)

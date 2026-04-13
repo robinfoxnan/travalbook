@@ -9,6 +9,7 @@ buildscript {
         maven { url 'https://maven.aliyun.com/repository/kotlin' }
         google()
         mavenCentral() // 关键：必须保留，Kotlin 官方在这
+
     }
     dependencies {
         classpath "com.android.tools.build:gradle:7.2.2"

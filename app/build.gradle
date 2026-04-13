@@ -15,6 +15,10 @@ android {
         targetSdk 32
         versionCode 1
         versionName "1.0"
+        // 加上这个
+//        ndk {
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+//        }
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -54,8 +58,26 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.2.0'
 
-    implementation files('libs\\tencent-mapsdk-android-official-release.5.2.1.18c8cd09.jar')
-    implementation files('libs\\TencentLocationSDK_v7.5.3.2_re68728c45_20230927114248_release.jar')
+
+    // 稳定、轻量、车机专用（4.3.1 / 4.4.1 二选一）
+    // 车机 100% 稳定版，TencentMapInitializer 一定存在
+    implementation 'com.tencent.map:tencent-map-vector-sdk:4.4.1'
+    // 定位（替换成这个！）7.4.6版本以下不用隐私函数
+    implementation 'com.tencent.map.geolocation:TencentLocationSdk-openplatform:7.2.6'
+
+// 可选：工具包（配套 4.x 稳定）
+    implementation 'com.tencent.map:sdk-utilities:1.0.5'
+
+    // 地图
+//    implementation 'com.tencent.map:tencent-map-vector-sdk:6.9.0.260312.237cbc9d.205120930'
+//    // 基础库
+//    implementation 'com.tencent.openmap:foundation:0.9.0.e5ea763'
+//    // 地图组件库，包括小车平移、点聚合等组件功能，详见开发指南。
+//    implementation 'com.tencent.map:sdk-utilities:1.0.12'
+//    implementation 'com.tencent.map.geolocation:TencentLocationSdk-openplatform:7.6.1.7'
+
+//    implementation files('libs\\tencent-mapsdk-android-official-release.5.2.1.18c8cd09.jar')
+//    implementation files('libs\\TencentLocationSDK_v7.5.3.2_re68728c45_20230927114248_release.jar')
     // 地图组件库，包括小车平移、点聚合等组件功能，详见开发指南。
     //implementation 'com.tencent.map:sdk-utilities:1.0.9'
 

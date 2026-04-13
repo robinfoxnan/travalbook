@@ -80,7 +80,7 @@ class NewsMapFragment : Fragment() {
         options.isOfflineMapEnable = true
 
         mapView = TextureMapView(this.requireActivity(), options)
-        mapView!!.isOpaque = false
+        //mapView!!.isOpaque = false
 
         ll.addView(mapView)
 
